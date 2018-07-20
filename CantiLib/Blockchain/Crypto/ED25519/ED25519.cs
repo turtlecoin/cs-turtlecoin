@@ -950,12 +950,12 @@ namespace Canti.Blockchain.Crypto.ED25519
                 if (bslide[i] > 0)
                 {
                     ge_p1p1_to_p3(u, t);
-                    ge_madd(t, u, ge_Bi[bslide[i]/2]);
+                    ge_madd(t, u, Constants.ge_Bi[bslide[i]/2]);
                 }
                 else if (bslide[i] < 0)
                 {
                     ge_p1p1_to_p3(u, t);
-                    ge_msub(t, u, ge_Bi[(-bslide[i])/2]);
+                    ge_msub(t, u, Constants.ge_Bi[(-bslide[i])/2]);
                 }
 
                 ge_p1p1_to_p2(r, t);
@@ -1007,12 +1007,12 @@ namespace Canti.Blockchain.Crypto.ED25519
                 if (bslide[i] > 0)
                 {
                     ge_p1p1_to_p3(u, t);
-                    ge_madd(t, u, ge_Bi[bslide[i]/2]);
+                    ge_madd(t, u, Constants.ge_Bi[bslide[i]/2]);
                 }
                 else if (bslide[i] < 0)
                 {
                     ge_p1p1_to_p3(u, t);
-                    ge_msub(t, u, ge_Bi[(-bslide[i])/2]);
+                    ge_msub(t, u, Constants.ge_Bi[(-bslide[i])/2]);
                 }
 
                 if (i == 0)
@@ -1225,6 +1225,2314 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_sub(r.YminusX, p.Y, p.X);
             fe_copy(r.Z, p.Z);
             fe_mul(r.T2d, p.T, Constants.fe_d2);
+        }
+
+        /* r = p */
+        static void ge_p3_to_p2(ge_p2 r, ge_p3 p)
+        {
+            fe_copy(r.X, p.X);
+            fe_copy(r.Y, p.Y);
+            fe_copy(r.Z, p.Z);
+        }
+
+        static void ge_p3_tobytes(byte[] s, ge_p3 h)
+        {
+            int[] recip = new int[10];
+            int[] x = new int[10];
+            int[] y = new int[10];
+
+            fe_invert(recip, h.Z);
+            fe_mul(x, h.X, recip);
+            fe_mul(y, h.Y, recip);
+            fe_tobytes(s, y);
+            s[31] ^= (byte)(fe_isnegative(x) << 7);
+        }
+
+        static void ge_precomp_0(ge_precomp h)
+        {
+            fe_1(h.yplusx);
+            fe_1(h.yminusx);
+            fe_0(h.xy2d);
+        }
+
+        static byte equal(sbyte b, sbyte c)
+        {
+            return (byte)(b == c ? 1 : 0);
+        }
+
+        static byte negative(sbyte b)
+        {
+            long x = (long)b;
+            x >>= 63;
+            return (byte)x;
+        }
+
+        static void ge_precomp_cmov(ge_precomp t, ge_precomp u, byte b)
+        {
+            fe_cmov(t.yplusx, u.yplusx, b);
+            fe_cmov(t.yminusx, u.yminusx, b);
+            fe_cmov(t.xy2d, u.xy2d, b);
+        }
+
+        static void select(ge_precomp t, int pos, sbyte b)
+        {
+            ge_precomp minust = new ge_precomp();
+
+            byte bnegative = negative(b);
+            byte babs = (byte)(b - (((-bnegative) & b) << 1));
+
+            ge_precomp_0(t);
+
+            for (int i = 0; i < 8; i++)
+            {
+                ge_precomp_cmov(t, Constants.ge_base[pos,i], equal((sbyte)babs, (sbyte)(i+1)));
+            }
+
+            fe_copy(minust.yplusx, t.yminusx);
+            fe_copy(minust.yminusx, t.yplusx);
+
+            fe_neg(minust.xy2d, t.xy2d);
+
+            ge_precomp_cmov(t, minust, bnegative);
+        }
+        
+        /* h = a * B
+           where a = a[0]+256*a[1]+...+256^31 a[31]
+           B is the Ed25519 base point (x,4/5) with x positive. */
+        static void ge_scalarmult_base(ge_p3 h, byte[] a)
+        {
+            sbyte[] e = new sbyte[64];
+            sbyte carry;
+
+            ge_p1p1 r = new ge_p1p1();
+            ge_p2 s = new ge_p2();
+            ge_precomp t = new ge_precomp();
+
+            for (int i = 0; i < 32; ++i)
+            {
+                e[2 * i + 0] = (sbyte)((a[i] >> 0) & 15);
+                e[2 * i + 1] = (sbyte)((a[i] >> 4) & 15);
+            }
+            /* each e[i] is between 0 and 15 */
+            /* e[63] is between 0 and 7 */
+
+            carry = 0;
+
+            for (int i = 0; i < 63; ++i)
+            {
+                e[i] += carry;
+                carry = (sbyte)(e[i] + 8);
+                carry >>= 4;
+                e[i] -= (sbyte)(carry << 4);
+            }
+
+            e[63] += carry;
+            /* each e[i] is between -8 and 8 */
+
+            ge_p3_0(h);
+
+            for (int i = 1; i < 64; i += 2)
+            {
+                select(t, i / 2, e[i]);
+                ge_madd(r, h, t);
+                ge_p1p1_to_p3(h, r);
+            }
+
+            ge_p3_dbl(r, h);
+            ge_p1p1_to_p2(s, r);
+
+            ge_p2_dbl(r, s);
+            ge_p1p1_to_p2(s, r);
+
+            ge_p2_dbl(r, s);
+            ge_p1p1_to_p2(s, r);
+
+            ge_p2_dbl(r, s);
+            ge_p1p1_to_p3(h, r);
+
+            for (int i = 0; i < 64; i += 2)
+            {
+                select(t, i / 2, e[i]);
+                ge_madd(r, h, t);
+                ge_p1p1_to_p3(h, r);
+            }
+        }
+
+        /* r = p - q */
+        static void ge_sub(ge_p1p1 r, ge_p3 p, ge_cached q)
+        {
+            int[] t0 = new int[10];
+            
+            fe_add(r.X, p.Y, p.X);
+            fe_sub(r.Y, p.Y, p.X);
+            fe_mul(r.Z, r.X, q.YminusX);
+            fe_mul(r.Y, r.Y, q.YplusX);
+            fe_mul(r.T, q.T2d, p.T);
+            fe_mul(r.X, p.Z, q.Z);
+            fe_add(t0, r.X, r.X);
+            fe_sub(r.X, r.Z, r.Y);
+            fe_add(r.Y, r.Z, r.Y);
+            fe_sub(r.Z, t0, r.T);
+            fe_add(r.T, t0, r.T);
+        }
+
+        static void ge_tobytes(byte[] s, ge_p2 h)
+        {
+            int[] recip = new int[10];
+            int[] x = new int[10];
+            int[] y = new int[10];
+
+            fe_invert(recip, h.Z);
+            fe_mul(x, h.X, recip);
+            fe_mul(y, h.Y, recip);
+            fe_tobytes(s, y);
+            s[31] ^= (byte)(fe_isnegative(x) << 7);
+        }
+
+        static void sc_reduce(byte[] s)
+        {
+            long s0 = 2097151 & (long)(load_3(s));
+            long s1 = 2097151 & (long)((load_4(s, 2) >> 5));
+            long s2 = 2097151 & (long)((load_3(s, 5) >> 2));
+            long s3 = 2097151 & (long)((load_4(s, 7) >> 7));
+            long s4 = 2097151 & (long)((load_4(s, 10) >> 4));
+            long s5 = 2097151 & (long)((load_3(s, 13) >> 1));
+            long s6 = 2097151 & (long)((load_4(s, 15) >> 6));
+            long s7 = 2097151 & (long)((load_3(s, 18) >> 3));
+            long s8 = 2097151 & (long)(load_3(s, 21));
+            long s9 = 2097151 & (long)((load_4(s, 23) >> 5));
+            long s10 = 2097151 & (long)((load_3(s, 26) >> 2));
+            long s11 = 2097151 & (long)((load_4(s, 28) >> 7));
+            long s12 = 2097151 & (long)((load_4(s, 31) >> 4));
+            long s13 = 2097151 & (long)((load_3(s, 34) >> 1));
+            long s14 = 2097151 & (long)((load_4(s, 36) >> 6));
+            long s15 = 2097151 & (long)((load_3(s, 39) >> 3));
+            long s16 = 2097151 & (long)(load_3(s, 42));
+            long s17 = 2097151 & (long)((load_4(s, 44) >> 5));
+            long s18 = 2097151 & (long)((load_3(s, 47) >> 2));
+            long s19 = 2097151 & (long)((load_4(s, 49) >> 7));
+            long s20 = 2097151 & (long)((load_4(s, 52) >> 4));
+            long s21 = 2097151 & (long)((load_3(s, 55) >> 1));
+            long s22 = 2097151 & (long)((load_4(s, 57) >> 6));
+            long s23 = (long)((load_4(s, 60) >> 3));
+            long carry0;
+            long carry1;
+            long carry2;
+            long carry3;
+            long carry4;
+            long carry5;
+            long carry6;
+            long carry7;
+            long carry8;
+            long carry9;
+            long carry10;
+            long carry11;
+            long carry12;
+            long carry13;
+            long carry14;
+            long carry15;
+            long carry16;
+
+            s11 += s23 * 666643;
+            s12 += s23 * 470296;
+            s13 += s23 * 654183;
+            s14 -= s23 * 997805;
+            s15 += s23 * 136657;
+            s16 -= s23 * 683901;
+
+            s10 += s22 * 666643;
+            s11 += s22 * 470296;
+            s12 += s22 * 654183;
+            s13 -= s22 * 997805;
+            s14 += s22 * 136657;
+            s15 -= s22 * 683901;
+
+            s9 += s21 * 666643;
+            s10 += s21 * 470296;
+            s11 += s21 * 654183;
+            s12 -= s21 * 997805;
+            s13 += s21 * 136657;
+            s14 -= s21 * 683901;
+
+            s8 += s20 * 666643;
+            s9 += s20 * 470296;
+            s10 += s20 * 654183;
+            s11 -= s20 * 997805;
+            s12 += s20 * 136657;
+            s13 -= s20 * 683901;
+
+            s7 += s19 * 666643;
+            s8 += s19 * 470296;
+            s9 += s19 * 654183;
+            s10 -= s19 * 997805;
+            s11 += s19 * 136657;
+            s12 -= s19 * 683901;
+
+            s6 += s18 * 666643;
+            s7 += s18 * 470296;
+            s8 += s18 * 654183;
+            s9 -= s18 * 997805;
+            s10 += s18 * 136657;
+            s11 -= s18 * 683901;
+
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
+            carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
+            carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+            carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
+            carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+
+            s5 += s17 * 666643;
+            s6 += s17 * 470296;
+            s7 += s17 * 654183;
+            s8 -= s17 * 997805;
+            s9 += s17 * 136657;
+            s10 -= s17 * 683901;
+
+            s4 += s16 * 666643;
+            s5 += s16 * 470296;
+            s6 += s16 * 654183;
+            s7 -= s16 * 997805;
+            s8 += s16 * 136657;
+            s9 -= s16 * 683901;
+
+            s3 += s15 * 666643;
+            s4 += s15 * 470296;
+            s5 += s15 * 654183;
+            s6 -= s15 * 997805;
+            s7 += s15 * 136657;
+            s8 -= s15 * 683901;
+
+            s2 += s14 * 666643;
+            s3 += s14 * 470296;
+            s4 += s14 * 654183;
+            s5 -= s14 * 997805;
+            s6 += s14 * 136657;
+            s7 -= s14 * 683901;
+
+            s1 += s13 * 666643;
+            s2 += s13 * 470296;
+            s3 += s13 * 654183;
+            s4 -= s13 * 997805;
+            s5 += s13 * 136657;
+            s6 -= s13 * 683901;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            s[0] = (byte)(s0 >> 0);
+            s[1] = (byte)(s0 >> 8);
+            s[2] = (byte)((s0 >> 16) | (s1 << 5));
+            s[3] = (byte)(s1 >> 3);
+            s[4] = (byte)(s1 >> 11);
+            s[5] = (byte)((s1 >> 19) | (s2 << 2));
+            s[6] = (byte)(s2 >> 6);
+            s[7] = (byte)((s2 >> 14) | (s3 << 7));
+            s[8] = (byte)(s3 >> 1);
+            s[9] = (byte)(s3 >> 9);
+            s[10] = (byte)((s3 >> 17) | (s4 << 4));
+            s[11] = (byte)(s4 >> 4);
+            s[12] = (byte)(s4 >> 12);
+            s[13] = (byte)((s4 >> 20) | (s5 << 1));
+            s[14] = (byte)(s5 >> 7);
+            s[15] = (byte)((s5 >> 15) | (s6 << 6));
+            s[16] = (byte)(s6 >> 2);
+            s[17] = (byte)(s6 >> 10);
+            s[18] = (byte)((s6 >> 18) | (s7 << 3));
+            s[19] = (byte)(s7 >> 5);
+            s[20] = (byte)(s7 >> 13);
+            s[21] = (byte)(s8 >> 0);
+            s[22] = (byte)(s8 >> 8);
+            s[23] = (byte)((s8 >> 16) | (s9 << 5));
+            s[24] = (byte)(s9 >> 3);
+            s[25] = (byte)(s9 >> 11);
+            s[26] = (byte)((s9 >> 19) | (s10 << 2));
+            s[27] = (byte)(s10 >> 6);
+            s[28] = (byte)((s10 >> 14) | (s11 << 7));
+            s[29] = (byte)(s11 >> 1);
+            s[30] = (byte)(s11 >> 9);
+            s[31] = (byte)(s11 >> 17);
+        }
+
+        static void fe_divpowm1(int[] r, int[] u, int[] v)
+        {
+            int[] v3 = new int[10];
+            int[] uv7 = new int[10];
+            int[] t0 = new int[10];
+            int[] t1 = new int[10];
+            int[] t2 = new int[10];
+
+            fe_sq(v3, v);
+            fe_mul(v3, v3, v); /* v3 = v^3 */
+            fe_sq(uv7, v3);
+            fe_mul(uv7, uv7, v);
+            fe_mul(uv7, uv7, u); /* uv7 = uv^7 */
+
+            /*fe_pow22523(uv7, uv7);*/
+
+            /* From fe_pow22523.c */
+
+            fe_sq(t0, uv7);
+            fe_sq(t1, t0);
+            fe_sq(t1, t1);
+            fe_mul(t1, uv7, t1);
+            fe_mul(t0, t0, t1);
+            fe_sq(t0, t0);
+            fe_mul(t0, t1, t0);
+            fe_sq(t1, t0);
+
+            for (int i = 0; i < 4; ++i)
+            {
+                fe_sq(t1, t1);
+            }
+
+            fe_mul(t0, t1, t0);
+            fe_sq(t1, t0);
+
+            for (int i = 0; i < 9; ++i)
+            {
+                fe_sq(t1, t1);
+            }
+
+            fe_mul(t1, t1, t0);
+            fe_sq(t2, t1);
+
+            for (int i = 0; i < 19; ++i)
+            {
+                fe_sq(t2, t2);
+            }
+
+            fe_mul(t1, t2, t1);
+
+            for (int i = 0; i < 10; ++i)
+            {
+                fe_sq(t1, t1);
+            }
+
+            fe_mul(t0, t1, t0);
+            fe_sq(t1, t0);
+
+            for (int i = 0; i < 49; ++i)
+            {
+                fe_sq(t1, t1);
+            }
+
+            fe_mul(t1, t1, t0);
+            fe_sq(t2, t1);
+
+            for (int i = 0; i < 99; ++i) {
+                fe_sq(t2, t2);
+            }
+
+            fe_mul(t1, t2, t1);
+
+            for (int i = 0; i < 50; ++i)
+            {
+                fe_sq(t1, t1);
+            }
+
+            fe_mul(t0, t1, t0);
+            fe_sq(t0, t0);
+            fe_sq(t0, t0);
+            fe_mul(t0, t0, uv7);
+
+            /* t0 = (uv^7)^((q-5)/8) */
+            fe_mul(t0, t0, v3);
+            fe_mul(r, t0, u); /* u^(m+1)v^(-(m+1)) */
+        }
+
+        static void ge_cached_0(ge_cached r)
+        {
+            fe_1(r.YplusX);
+            fe_1(r.YminusX);
+            fe_1(r.Z);
+            fe_0(r.T2d);
+        }
+
+        static void ge_cached_cmov(ge_cached t, ge_cached u, byte b)
+        {
+            fe_cmov(t.YplusX, u.YplusX, b);
+            fe_cmov(t.YminusX, u.YminusX, b);
+            fe_cmov(t.Z, u.Z, b);
+            fe_cmov(t.T2d, u.T2d, b);
+        }
+
+        static void ge_scalarmult(ge_p2 r, byte[] a, ge_p3 A)
+        {
+            sbyte[] e = new sbyte[64];
+
+            int carry = 0;
+            int carry2;
+
+            ge_cached[] Ai = new ge_cached[8]; /* 1 * A, 2 * A, ..., 8 * A */
+            ge_p1p1 t = new ge_p1p1();
+            ge_p3 u = new ge_p3();
+
+            for (int i = 0; i < 31; i++)
+            {
+                carry += a[i]; /* 0..256 */
+                carry2 = (carry + 8) >> 4; /* 0..16 */
+                e[2 * i] = (sbyte)(carry - (carry2 << 4)); /* -8..7 */
+                carry = (carry2 + 8) >> 4; /* 0..1 */
+                e[2 * i + 1] = (sbyte)(carry2 - (carry << 4)); /* -8..7 */
+            }
+
+            carry += a[31]; /* 0..128 */
+            carry2 = (carry + 8) >> 4; /* 0..8 */
+            e[62] = (sbyte)(carry - (carry2 << 4)); /* -8..7 */
+            e[63] = (sbyte)carry2; /* 0..8 */
+
+            ge_p3_to_cached(Ai[0], A);
+
+            for (int i = 0; i < 7; i++)
+            {
+                ge_add(t, A, Ai[i]);
+                ge_p1p1_to_p3(u, t);
+                ge_p3_to_cached(Ai[i + 1], u);
+            }
+
+            ge_p2_0(r);
+
+            for (int i = 63; i >= 0; i--)
+            {
+                sbyte b = e[i];
+                byte bnegative = negative(b);
+                byte babs = (byte)(b - (((-bnegative) & b) << 1));
+                ge_cached cur = new ge_cached();
+                ge_cached minuscur = new ge_cached();
+                ge_p2_dbl(t, r);
+                ge_p1p1_to_p2(r, t);
+                ge_p2_dbl(t, r);
+                ge_p1p1_to_p2(r, t);
+                ge_p2_dbl(t, r);
+                ge_p1p1_to_p2(r, t);
+                ge_p2_dbl(t, r);
+                ge_p1p1_to_p3(u, t);
+                ge_cached_0(cur);
+
+                for (int j = 0; j < 8; j++)
+                {
+                    ge_cached_cmov(cur, Ai[j], equal((sbyte)babs, (sbyte)(j+1)));
+                }
+
+                fe_copy(minuscur.YplusX, cur.YminusX);
+                fe_copy(minuscur.YminusX, cur.YplusX);
+                fe_copy(minuscur.Z, cur.Z);
+                fe_neg(minuscur.T2d, cur.T2d);
+                ge_cached_cmov(cur, minuscur, bnegative);
+                ge_add(t, u, cur);
+                ge_p1p1_to_p2(r, t);
+            }
+        }
+
+        static void ge_scalarmult_p3(ge_p3 r3, byte[] a, ge_p3 A)
+        {
+            sbyte[] e = new sbyte[64];
+            int carry = 0;
+            int carry2;
+
+            ge_cached[] Ai = new ge_cached[8];
+            ge_p1p1 t = new ge_p1p1();
+            ge_p3 u = new ge_p3();
+            ge_p2 r = new ge_p2();
+
+            for (int i = 0; i < 31; i++)
+            {
+                carry += a[i]; /* 0..256 */
+                carry2 = (carry + 8) >> 4; /* 0..16 */
+                e[2 * i] = (sbyte)(carry - (carry2 << 4)); /* -8..7 */
+                carry = (carry2 + 8) >> 4; /* 0..1 */
+                e[2 * i + 1] = (sbyte)(carry2 - (carry << 4)); /* -8..7 */
+            }
+
+            carry += a[31]; /* 0..128 */
+            carry2 = (carry + 8) >> 4; /* 0..8 */
+            e[62] = (sbyte)(carry - (carry2 << 4)); /* -8..7 */
+            e[63] = (sbyte)carry2; /* 0..8 */
+
+            ge_p3_to_cached(Ai[0], A);
+
+            for (int i = 0; i < 7; i++)
+            {
+                ge_add(t, A, Ai[i]);
+                ge_p1p1_to_p3(u, t);
+                ge_p3_to_cached(Ai[i + 1], u);
+            }
+
+            ge_p2_0(r);
+            
+            for (int i = 63; i >= 0; i--)
+            {
+                sbyte b = e[i];
+                byte bnegative = negative(b);
+                byte babs = (byte)(b - (((-bnegative) & b) << 1));
+
+                ge_cached cur = new ge_cached();
+                ge_cached minuscur = new ge_cached();
+
+                ge_p2_dbl(t, r);
+                ge_p1p1_to_p2(r, t);
+                ge_p2_dbl(t, r);
+                ge_p1p1_to_p2(r, t);
+                ge_p2_dbl(t, r);
+                ge_p1p1_to_p2(r, t);
+                ge_p2_dbl(t, r);
+                ge_p1p1_to_p3(u, t);
+                ge_cached_0(cur);
+
+                for (int j = 0; j < 8; j++)
+                {
+                    ge_cached_cmov(cur, Ai[j], equal((sbyte)babs, (sbyte)(j+1)));
+                }
+
+                fe_copy(minuscur.YplusX, cur.YminusX);
+                fe_copy(minuscur.YminusX, cur.YplusX);
+                fe_copy(minuscur.Z, cur.Z);
+                fe_neg(minuscur.T2d, cur.T2d);
+                ge_cached_cmov(cur, minuscur, bnegative);
+                ge_add(t, u, cur);
+
+                if (i == 0)
+                {
+                    ge_p1p1_to_p3(r3, t);
+                }
+                else
+                {
+                    ge_p1p1_to_p2(r, t);
+                }
+            }
+        }
+
+        static void ge_double_scalarmult_precomp_vartime2(ge_p2 r, byte[] a, ge_cached[] Ai, byte[] b, ge_cached[] Bi)
+        {
+            sbyte[] aslide = new sbyte[256];
+            sbyte[] bslide = new sbyte[256];
+
+            ge_p1p1 t = new ge_p1p1();
+            ge_p3 u = new ge_p3();
+
+            int i;
+
+            slide(aslide, a);
+            slide(bslide, b);
+
+            ge_p2_0(r);
+
+            for (i = 255; i >= 0; --i)
+            {
+                if (aslide[i] != 0 || bslide[i] != 0)
+                {
+                    break;
+                }
+            }
+
+            for (; i >= 0; --i)
+            {
+                ge_p2_dbl(t, r);
+
+                if (aslide[i] > 0)
+                {
+                    ge_p1p1_to_p3(u, t);
+                    ge_add(t, u, Ai[aslide[i]/2]);
+                }
+                else if (aslide[i] < 0)
+                {
+                    ge_p1p1_to_p3(u, t);
+                    ge_sub(t, u, Ai[(-aslide[i]) / 2]);
+                }
+            }
+
+            if (bslide[i] > 0)
+            {
+                ge_p1p1_to_p3(u, t);
+                ge_add(t, u, Bi[bslide[i]/2]);
+            }
+            else if (bslide[i] < 0)
+            {
+                ge_p1p1_to_p3(u, t);
+                ge_sub(t, u, Bi[(-bslide[i])/2]);
+            }
+
+            ge_p1p1_to_p2(r, t);
+        }
+
+        static void ge_double_scalarmult_precomp_vartime2_p3(ge_p3 r3, byte[] a, ge_cached[] Ai, byte[] b, ge_cached[] Bi)
+        {
+            sbyte[] aslide = new sbyte[256];
+            sbyte[] bslide = new sbyte[256];
+
+            ge_p1p1 t = new ge_p1p1();
+            ge_p3 u = new ge_p3();
+            ge_p2 r = new ge_p2();
+
+            int i;
+
+            slide(aslide, a);
+            slide(bslide, b);
+
+            ge_p2_0(r);
+
+            for (i = 255; i >= 0; --i)
+            {
+                if (aslide[i] != 0 || bslide[i] != 0)
+                {
+                    break;
+                }
+            }
+
+            for (; i >= 0; --i)
+            {
+                ge_p2_dbl(t, r);
+
+                if (aslide[i] > 0)
+                {
+                    ge_p1p1_to_p3(u, t);
+                    ge_add(t, u, Ai[aslide[i]/2]);
+                }
+                else if (aslide[i] < 0)
+                {
+                    ge_p1p1_to_p3(u, t);
+                    ge_sub(t, u, Ai[(-aslide[i])/2]);
+                }
+
+                if (bslide[i] > 0)
+                {
+                    ge_p1p1_to_p3(u, t);
+                    ge_add(t, u, Bi[bslide[i]/2]);
+                }
+                else if (bslide[i] < 0)
+                {
+                    ge_p1p1_to_p3(u, t);
+                    ge_sub(t, u, Bi[(-bslide[i])/2]);
+                }
+
+                if (i == 0)
+                {
+                    ge_p1p1_to_p3(r3, t);
+                }
+                else
+                {
+                    ge_p1p1_to_p2(r, t);
+                }
+            }
+        }
+
+        static void ge_double_scalarmult_precomp_vartime(ge_p2 r, byte[] a, ge_p3 A, byte[] b, ge_cached[] Bi)
+        {
+            ge_cached[] Ai = new ge_cached[8];
+
+            ge_dsm_precomp(Ai, A);
+            ge_double_scalarmult_precomp_vartime2(r, a, Ai, b, Bi);
+        }
+
+        static void ge_mul8(ge_p1p1 r, ge_p2 t)
+        {
+            ge_p2 u = new ge_p2();
+
+            ge_p2_dbl(r, t);
+            ge_p1p1_to_p2(u, r);
+            ge_p2_dbl(r, u);
+            ge_p1p1_to_p2(u, r);
+            ge_p2_dbl(r, u);
+        }
+
+        static void ge_fromfe_frombytes_vartime(ge_p2 r, byte[] s)
+        {
+            int[] u = new int[10];
+            int[] v = new int[10];
+            int[] w = new int[10];
+            int[] x = new int[10];
+            int[] y = new int[10];
+            int[] z = new int[10];
+
+            byte sign;
+
+            long h0 = (long)(load_4(s));
+            long h1 = (long)(load_3(s, 4) << 6);
+            long h2 = (long)(load_3(s, 7) << 5);
+            long h3 = (long)(load_3(s, 10) << 3);
+            long h4 = (long)(load_3(s, 13) << 2);
+            long h5 = (long)(load_4(s, 16));
+            long h6 = (long)(load_3(s, 20) << 7);
+            long h7 = (long)(load_3(s, 23) << 5);
+            long h8 = (long)(load_3(s, 26) << 4);
+            long h9 = (long)(load_3(s, 29) << 2);
+            long carry0;
+            long carry1;
+            long carry2;
+            long carry3;
+            long carry4;
+            long carry5;
+            long carry6;
+            long carry7;
+            long carry8;
+            long carry9;
+
+            carry9 = (h9 + (long) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+            carry1 = (h1 + (long) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
+            carry3 = (h3 + (long) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
+            carry5 = (h5 + (long) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+            carry7 = (h7 + (long) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+
+            carry0 = (h0 + (long) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+            carry2 = (h2 + (long) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
+            carry4 = (h4 + (long) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+            carry6 = (h6 + (long) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+            carry8 = (h8 + (long) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+
+            u[0] = (int)h0;
+            u[1] = (int)h1;
+            u[2] = (int)h2;
+            u[3] = (int)h3;
+            u[4] = (int)h4;
+            u[5] = (int)h5;
+            u[6] = (int)h6;
+            u[7] = (int)h7;
+            u[8] = (int)h8;
+            u[9] = (int)h9;
+
+            /* End fe_frombytes.c */
+
+            fe_sq2(v, u); /* 2 * u^2 */
+            fe_1(w);
+            fe_add(w, v, w); /* w = 2 * u^2 + 1 */
+            fe_sq(x, w); /* w^2 */
+            fe_mul(y, Constants.fe_ma2, v); /* -2 * A^2 * u^2 */
+            fe_add(x, x, y); /* x = w^2 - 2 * A^2 * u^2 */
+            fe_divpowm1(r.X, w, x); /* (w / x)^(m + 1) */
+            fe_sq(y, r.X);
+            fe_mul(x, y, x);
+            fe_sub(y, w, x);
+            fe_copy(z, Constants.fe_ma);
+
+            if (fe_isnonzero(y))
+            {
+                fe_add(y, w, x);
+
+                if (fe_isnonzero(y))
+                {
+                    goto negative;
+                }
+                else
+                {
+                    fe_mul(r.X, r.X, Constants.fe_fffb1);
+                }
+            }
+            else
+            {
+                fe_mul(r.X, r.X, Constants.fe_fffb2);
+            }
+
+            fe_mul(r.X, r.X, u); /* u * sqrt(2 * A * (A + 2) * w / x) */
+            fe_mul(z, z, v); /* -2 * A * u^2 */
+            sign = 0;
+            goto setsign;
+
+        negative:
+            fe_mul(x, x, Constants.fe_sqrtm1);
+            fe_sub(y, w, x);
+
+            if (fe_isnonzero(y))
+            {
+                fe_mul(r.X, r.X, Constants.fe_fffb3);
+            }
+            else
+            {
+                fe_mul(r.X, r.X, Constants.fe_fffb4);
+            }
+
+            /* r.X = sqrt(A * (A + 2) * w / x) */
+            /* z = -A */
+            sign = 1;
+
+         setsign:
+            if (fe_isnegative(r.X) != sign)
+            {
+                fe_neg(r.X, r.X);
+            }
+
+            fe_add(r.Z, z, w);
+            fe_sub(r.Y, z, w);
+            fe_mul(r.X, r.X, r.Z);
+        }
+
+        static void sc_0(byte[] s)
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                s[i] = 0;
+            }
+        }
+
+        static void sc_reduce32(byte[] s)
+        {
+            long s0 = (long)(2097151 & load_3(s));
+            long s1 = (long)(2097151 & (load_4(s, 2) >> 5));
+            long s2 = (long)(2097151 & (load_3(s, 5) >> 2));
+            long s3 = (long)(2097151 & (load_4(s, 7) >> 7));
+            long s4 = (long)(2097151 & (load_4(s, 10) >> 4));
+            long s5 = (long)(2097151 & (load_3(s, 13) >> 1));
+            long s6 = (long)(2097151 & (load_4(s, 15) >> 6));
+            long s7 = (long)(2097151 & (load_3(s, 18) >> 3));
+            long s8 = (long)(2097151 & load_3(s, 21));
+            long s9 = (long)(2097151 & (load_4(s, 23) >> 5));
+            long s10 = (long)(2097151 & (load_3(s, 26) >> 2));
+            long s11 = (long)((load_4(s, 28) >> 7));
+            long s12 = 0;
+            long carry0;
+            long carry1;
+            long carry2;
+            long carry3;
+            long carry4;
+            long carry5;
+            long carry6;
+            long carry7;
+            long carry8;
+            long carry9;
+            long carry10;
+            long carry11;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            s[0] = (byte)(s0 >> 0);
+            s[1] = (byte)(s0 >> 8);
+            s[2] = (byte)((s0 >> 16) | (s1 << 5));
+            s[3] = (byte)(s1 >> 3);
+            s[4] = (byte)(s1 >> 11);
+            s[5] = (byte)((s1 >> 19) | (s2 << 2));
+            s[6] = (byte)(s2 >> 6);
+            s[7] = (byte)((s2 >> 14) | (s3 << 7));
+            s[8] = (byte)(s3 >> 1);
+            s[9] = (byte)(s3 >> 9);
+            s[10] = (byte)((s3 >> 17) | (s4 << 4));
+            s[11] = (byte)(s4 >> 4);
+            s[12] = (byte)(s4 >> 12);
+            s[13] = (byte)((s4 >> 20) | (s5 << 1));
+            s[14] = (byte)(s5 >> 7);
+            s[15] = (byte)((s5 >> 15) | (s6 << 6));
+            s[16] = (byte)(s6 >> 2);
+            s[17] = (byte)(s6 >> 10);
+            s[18] = (byte)((s6 >> 18) | (s7 << 3));
+            s[19] = (byte)(s7 >> 5);
+            s[20] = (byte)(s7 >> 13);
+            s[21] = (byte)(s8 >> 0);
+            s[22] = (byte)(s8 >> 8);
+            s[23] = (byte)((s8 >> 16) | (s9 << 5));
+            s[24] = (byte)(s9 >> 3);
+            s[25] = (byte)(s9 >> 11);
+            s[26] = (byte)((s9 >> 19) | (s10 << 2));
+            s[27] = (byte)(s10 >> 6);
+            s[28] = (byte)((s10 >> 14) | (s11 << 7));
+            s[29] = (byte)(s11 >> 1);
+            s[30] = (byte)(s11 >> 9);
+            s[31] = (byte)(s11 >> 17);
+        }
+
+        static void sc_add(byte[] s, byte[] a, byte[] b)
+        {
+            long a0 = (long)(2097151 & load_3(a));
+            long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
+            long a2 = (long)(2097151 & (load_3(a, 5) >> 2));
+            long a3 = (long)(2097151 & (load_4(a, 7) >> 7));
+            long a4 = (long)(2097151 & (load_4(a, 10) >> 4));
+            long a5 = (long)(2097151 & (load_3(a, 13) >> 1));
+            long a6 = (long)(2097151 & (load_4(a, 15) >> 6));
+            long a7 = (long)(2097151 & (load_3(a, 18) >> 3));
+            long a8 = (long)(2097151 & load_3(a, 21));
+            long a9 = (long)(2097151 & (load_4(a, 23) >> 5));
+            long a10 = (long)(2097151 & (load_3(a, 26) >> 2));
+            long a11 = (long)((load_4(a, 28) >> 7));
+            long b0 = (long)(2097151 & load_3(b));
+            long b1 = (long)(2097151 & (load_4(b, 2) >> 5));
+            long b2 = (long)(2097151 & (load_3(b, 5) >> 2));
+            long b3 = (long)(2097151 & (load_4(b, 7) >> 7));
+            long b4 = (long)(2097151 & (load_4(b, 10) >> 4));
+            long b5 = (long)(2097151 & (load_3(b, 13) >> 1));
+            long b6 = (long)(2097151 & (load_4(b, 15) >> 6));
+            long b7 = (long)(2097151 & (load_3(b, 18) >> 3));
+            long b8 = (long)(2097151 & load_3(b, 21));
+            long b9 = (long)(2097151 & (load_4(b, 23) >> 5));
+            long b10 = (long)(2097151 & (load_3(b, 26) >> 2));
+            long b11 = (long)((load_4(b, 28) >> 7));
+            long s0 = a0 + b0;
+            long s1 = a1 + b1;
+            long s2 = a2 + b2;
+            long s3 = a3 + b3;
+            long s4 = a4 + b4;
+            long s5 = a5 + b5;
+            long s6 = a6 + b6;
+            long s7 = a7 + b7;
+            long s8 = a8 + b8;
+            long s9 = a9 + b9;
+            long s10 = a10 + b10;
+            long s11 = a11 + b11;
+            long s12 = 0;
+            long carry0;
+            long carry1;
+            long carry2;
+            long carry3;
+            long carry4;
+            long carry5;
+            long carry6;
+            long carry7;
+            long carry8;
+            long carry9;
+            long carry10;
+            long carry11;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            s[0] = (byte)(s0 >> 0);
+            s[1] = (byte)(s0 >> 8);
+            s[2] = (byte)((s0 >> 16) | (s1 << 5));
+            s[3] = (byte)(s1 >> 3);
+            s[4] = (byte)(s1 >> 11);
+            s[5] = (byte)((s1 >> 19) | (s2 << 2));
+            s[6] = (byte)(s2 >> 6);
+            s[7] = (byte)((s2 >> 14) | (s3 << 7));
+            s[8] = (byte)(s3 >> 1);
+            s[9] = (byte)(s3 >> 9);
+            s[10] = (byte)((s3 >> 17) | (s4 << 4));
+            s[11] = (byte)(s4 >> 4);
+            s[12] = (byte)(s4 >> 12);
+            s[13] = (byte)((s4 >> 20) | (s5 << 1));
+            s[14] = (byte)(s5 >> 7);
+            s[15] = (byte)((s5 >> 15) | (s6 << 6));
+            s[16] = (byte)(s6 >> 2);
+            s[17] = (byte)(s6 >> 10);
+            s[18] = (byte)((s6 >> 18) | (s7 << 3));
+            s[19] = (byte)(s7 >> 5);
+            s[20] = (byte)(s7 >> 13);
+            s[21] = (byte)(s8 >> 0);
+            s[22] = (byte)(s8 >> 8);
+            s[23] = (byte)((s8 >> 16) | (s9 << 5));
+            s[24] = (byte)(s9 >> 3);
+            s[25] = (byte)(s9 >> 11);
+            s[26] = (byte)((s9 >> 19) | (s10 << 2));
+            s[27] = (byte)(s10 >> 6);
+            s[28] = (byte)((s10 >> 14) | (s11 << 7));
+            s[29] = (byte)(s11 >> 1);
+            s[30] = (byte)(s11 >> 9);
+            s[31] = (byte)(s11 >> 17);
+        }
+
+        static void sc_sub(byte[] s, byte[] a, byte [] b)
+        {
+            long a0 = (long)(2097151 & load_3(a));
+            long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
+            long a2 = (long)(2097151 & (load_3(a, 5) >> 2));
+            long a3 = (long)(2097151 & (load_4(a, 7) >> 7));
+            long a4 = (long)(2097151 & (load_4(a, 10) >> 4));
+            long a5 = (long)(2097151 & (load_3(a, 13) >> 1));
+            long a6 = (long)(2097151 & (load_4(a, 15) >> 6));
+            long a7 = (long)(2097151 & (load_3(a, 18) >> 3));
+            long a8 = (long)(2097151 & load_3(a, 21));
+            long a9 = (long)(2097151 & (load_4(a, 23) >> 5));
+            long a10 = (long)(2097151 & (load_3(a, 26) >> 2));
+            long a11 = (long)((load_4(a, 28) >> 7));
+            long b0 = (long)(2097151 & load_3(b));
+            long b1 = (long)(2097151 & (load_4(b, 2) >> 5));
+            long b2 = (long)(2097151 & (load_3(b, 5) >> 2));
+            long b3 = (long)(2097151 & (load_4(b, 7) >> 7));
+            long b4 = (long)(2097151 & (load_4(b, 10) >> 4));
+            long b5 = (long)(2097151 & (load_3(b, 13) >> 1));
+            long b6 = (long)(2097151 & (load_4(b, 15) >> 6));
+            long b7 = (long)(2097151 & (load_3(b, 18) >> 3));
+            long b8 = (long)(2097151 & load_3(b, 21));
+            long b9 = (long)(2097151 & (load_4(b, 23) >> 5));
+            long b10 = (long)(2097151 & (load_3(b, 26) >> 2));
+            long b11 = (long)((load_4(b, 28) >> 7));
+            long s0 = a0 - b0;
+            long s1 = a1 - b1;
+            long s2 = a2 - b2;
+            long s3 = a3 - b3;
+            long s4 = a4 - b4;
+            long s5 = a5 - b5;
+            long s6 = a6 - b6;
+            long s7 = a7 - b7;
+            long s8 = a8 - b8;
+            long s9 = a9 - b9;
+            long s10 = a10 - b10;
+            long s11 = a11 - b11;
+            long s12 = 0;
+            long carry0;
+            long carry1;
+            long carry2;
+            long carry3;
+            long carry4;
+            long carry5;
+            long carry6;
+            long carry7;
+            long carry8;
+            long carry9;
+            long carry10;
+            long carry11;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            s[0] = (byte)(s0 >> 0);
+            s[1] = (byte)(s0 >> 8);
+            s[2] = (byte)((s0 >> 16) | (s1 << 5));
+            s[3] = (byte)(s1 >> 3);
+            s[4] = (byte)(s1 >> 11);
+            s[5] = (byte)((s1 >> 19) | (s2 << 2));
+            s[6] = (byte)(s2 >> 6);
+            s[7] = (byte)((s2 >> 14) | (s3 << 7));
+            s[8] = (byte)(s3 >> 1);
+            s[9] = (byte)(s3 >> 9);
+            s[10] = (byte)((s3 >> 17) | (s4 << 4));
+            s[11] = (byte)(s4 >> 4);
+            s[12] = (byte)(s4 >> 12);
+            s[13] = (byte)((s4 >> 20) | (s5 << 1));
+            s[14] = (byte)(s5 >> 7);
+            s[15] = (byte)((s5 >> 15) | (s6 << 6));
+            s[16] = (byte)(s6 >> 2);
+            s[17] = (byte)(s6 >> 10);
+            s[18] = (byte)((s6 >> 18) | (s7 << 3));
+            s[19] = (byte)(s7 >> 5);
+            s[20] = (byte)(s7 >> 13);
+            s[21] = (byte)(s8 >> 0);
+            s[22] = (byte)(s8 >> 8);
+            s[23] = (byte)((s8 >> 16) | (s9 << 5));
+            s[24] = (byte)(s9 >> 3);
+            s[25] = (byte)(s9 >> 11);
+            s[26] = (byte)((s9 >> 19) | (s10 << 2));
+            s[27] = (byte)(s10 >> 6);
+            s[28] = (byte)((s10 >> 14) | (s11 << 7));
+            s[29] = (byte)(s11 >> 1);
+            s[30] = (byte)(s11 >> 9);
+            s[31] = (byte)(s11 >> 17);
+        }
+
+        /*
+        Input:
+          a[0]+256*a[1]+...+256^31*a[31] = a
+          b[0]+256*b[1]+...+256^31*b[31] = b
+          c[0]+256*c[1]+...+256^31*c[31] = c
+        Output:
+          s[0]+256*s[1]+...+256^31*s[31] = (c-ab) mod l
+          where l = 2^252 + 27742317777372353535851937790883648493.
+        */
+        static void sc_mulsub(byte[] s, byte[] a, byte[] b, byte[] c)
+        {
+            long a0 = (long)(2097151 & load_3(a));
+            long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
+            long a2 = (long)(2097151 & (load_3(a, 5) >> 2));
+            long a3 = (long)(2097151 & (load_4(a, 7) >> 7));
+            long a4 = (long)(2097151 & (load_4(a, 10) >> 4));
+            long a5 = (long)(2097151 & (load_3(a, 13) >> 1));
+            long a6 = (long)(2097151 & (load_4(a, 15) >> 6));
+            long a7 = (long)(2097151 & (load_3(a, 18) >> 3));
+            long a8 = (long)(2097151 & load_3(a, 21));
+            long a9 = (long)(2097151 & (load_4(a, 23) >> 5));
+            long a10 = (long)(2097151 & (load_3(a, 26) >> 2));
+            long a11 = (long)((load_4(a, 28) >> 7));
+            long b0 = (long)(2097151 & load_3(b));
+            long b1 = (long)(2097151 & (load_4(b, 2) >> 5));
+            long b2 = (long)(2097151 & (load_3(b, 5) >> 2));
+            long b3 = (long)(2097151 & (load_4(b, 7) >> 7));
+            long b4 = (long)(2097151 & (load_4(b, 10) >> 4));
+            long b5 = (long)(2097151 & (load_3(b, 13) >> 1));
+            long b6 = (long)(2097151 & (load_4(b, 15) >> 6));
+            long b7 = (long)(2097151 & (load_3(b, 18) >> 3));
+            long b8 = (long)(2097151 & load_3(b, 21));
+            long b9 = (long)(2097151 & (load_4(b, 23) >> 5));
+            long b10 = (long)(2097151 & (load_3(b, 26) >> 2));
+            long b11 = (long)((load_4(b, 28) >> 7));
+            long c0 = (long)(2097151 & load_3(c));
+            long c1 = (long)(2097151 & (load_4(c, 2) >> 5));
+            long c2 = (long)(2097151 & (load_3(c, 5) >> 2));
+            long c3 = (long)(2097151 & (load_4(c, 7) >> 7));
+            long c4 = (long)(2097151 & (load_4(c, 10) >> 4));
+            long c5 = (long)(2097151 & (load_3(c, 13) >> 1));
+            long c6 = (long)(2097151 & (load_4(c, 15) >> 6));
+            long c7 = (long)(2097151 & (load_3(c, 18) >> 3));
+            long c8 = (long)(2097151 & load_3(c, 21));
+            long c9 = (long)(2097151 & (load_4(c, 23) >> 5));
+            long c10 = (long)(2097151 & (load_3(c, 26) >> 2));
+            long c11 = (long)((load_4(c, 28) >> 7));
+            long s0;
+            long s1;
+            long s2;
+            long s3;
+            long s4;
+            long s5;
+            long s6;
+            long s7;
+            long s8;
+            long s9;
+            long s10;
+            long s11;
+            long s12;
+            long s13;
+            long s14;
+            long s15;
+            long s16;
+            long s17;
+            long s18;
+            long s19;
+            long s20;
+            long s21;
+            long s22;
+            long s23;
+            long carry0;
+            long carry1;
+            long carry2;
+            long carry3;
+            long carry4;
+            long carry5;
+            long carry6;
+            long carry7;
+            long carry8;
+            long carry9;
+            long carry10;
+            long carry11;
+            long carry12;
+            long carry13;
+            long carry14;
+            long carry15;
+            long carry16;
+            long carry17;
+            long carry18;
+            long carry19;
+            long carry20;
+            long carry21;
+            long carry22;
+
+            s0 = c0 - a0*b0;
+            s1 = c1 - (a0*b1 + a1*b0);
+            s2 = c2 - (a0*b2 + a1*b1 + a2*b0);
+            s3 = c3 - (a0*b3 + a1*b2 + a2*b1 + a3*b0);
+            s4 = c4 - (a0*b4 + a1*b3 + a2*b2 + a3*b1 + a4*b0);
+            s5 = c5 - (a0*b5 + a1*b4 + a2*b3 + a3*b2 + a4*b1 + a5*b0);
+            s6 = c6 - (a0*b6 + a1*b5 + a2*b4 + a3*b3 + a4*b2 + a5*b1 + a6*b0);
+            s7 = c7 - (a0*b7 + a1*b6 + a2*b5 + a3*b4 + a4*b3 + a5*b2 + a6*b1 + a7*b0);
+            s8 = c8 - (a0*b8 + a1*b7 + a2*b6 + a3*b5 + a4*b4 + a5*b3 + a6*b2 + a7*b1 + a8*b0);
+            s9 = c9 - (a0*b9 + a1*b8 + a2*b7 + a3*b6 + a4*b5 + a5*b4 + a6*b3 + a7*b2 + a8*b1 + a9*b0);
+            s10 = c10 - (a0*b10 + a1*b9 + a2*b8 + a3*b7 + a4*b6 + a5*b5 + a6*b4 + a7*b3 + a8*b2 + a9*b1 + a10*b0);
+            s11 = c11 - (a0*b11 + a1*b10 + a2*b9 + a3*b8 + a4*b7 + a5*b6 + a6*b5 + a7*b4 + a8*b3 + a9*b2 + a10*b1 + a11*b0);
+            s12 = -(a1*b11 + a2*b10 + a3*b9 + a4*b8 + a5*b7 + a6*b6 + a7*b5 + a8*b4 + a9*b3 + a10*b2 + a11*b1);
+            s13 = -(a2*b11 + a3*b10 + a4*b9 + a5*b8 + a6*b7 + a7*b6 + a8*b5 + a9*b4 + a10*b3 + a11*b2);
+            s14 = -(a3*b11 + a4*b10 + a5*b9 + a6*b8 + a7*b7 + a8*b6 + a9*b5 + a10*b4 + a11*b3);
+            s15 = -(a4*b11 + a5*b10 + a6*b9 + a7*b8 + a8*b7 + a9*b6 + a10*b5 + a11*b4);
+            s16 = -(a5*b11 + a6*b10 + a7*b9 + a8*b8 + a9*b7 + a10*b6 + a11*b5);
+            s17 = -(a6*b11 + a7*b10 + a8*b9 + a9*b8 + a10*b7 + a11*b6);
+            s18 = -(a7*b11 + a8*b10 + a9*b9 + a10*b8 + a11*b7);
+            s19 = -(a8*b11 + a9*b10 + a10*b9 + a11*b8);
+            s20 = -(a9*b11 + a10*b10 + a11*b9);
+            s21 = -(a10*b11 + a11*b10);
+            s22 = -a11*b11;
+            s23 = 0;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
+            carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
+            carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+            carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 << 21;
+            carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 << 21;
+            carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+            carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
+            carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+            carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 << 21;
+            carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 << 21;
+            carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 << 21;
+
+            s11 += s23 * 666643;
+            s12 += s23 * 470296;
+            s13 += s23 * 654183;
+            s14 -= s23 * 997805;
+            s15 += s23 * 136657;
+            s16 -= s23 * 683901;
+
+            s10 += s22 * 666643;
+            s11 += s22 * 470296;
+            s12 += s22 * 654183;
+            s13 -= s22 * 997805;
+            s14 += s22 * 136657;
+            s15 -= s22 * 683901;
+
+            s9 += s21 * 666643;
+            s10 += s21 * 470296;
+            s11 += s21 * 654183;
+            s12 -= s21 * 997805;
+            s13 += s21 * 136657;
+            s14 -= s21 * 683901;
+
+            s8 += s20 * 666643;
+            s9 += s20 * 470296;
+            s10 += s20 * 654183;
+            s11 -= s20 * 997805;
+            s12 += s20 * 136657;
+            s13 -= s20 * 683901;
+
+            s7 += s19 * 666643;
+            s8 += s19 * 470296;
+            s9 += s19 * 654183;
+            s10 -= s19 * 997805;
+            s11 += s19 * 136657;
+            s12 -= s19 * 683901;
+
+            s6 += s18 * 666643;
+            s7 += s18 * 470296;
+            s8 += s18 * 654183;
+            s9 -= s18 * 997805;
+            s10 += s18 * 136657;
+            s11 -= s18 * 683901;
+
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
+            carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
+            carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+            carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
+            carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+
+            s5 += s17 * 666643;
+            s6 += s17 * 470296;
+            s7 += s17 * 654183;
+            s8 -= s17 * 997805;
+            s9 += s17 * 136657;
+            s10 -= s17 * 683901;
+
+            s4 += s16 * 666643;
+            s5 += s16 * 470296;
+            s6 += s16 * 654183;
+            s7 -= s16 * 997805;
+            s8 += s16 * 136657;
+            s9 -= s16 * 683901;
+
+            s3 += s15 * 666643;
+            s4 += s15 * 470296;
+            s5 += s15 * 654183;
+            s6 -= s15 * 997805;
+            s7 += s15 * 136657;
+            s8 -= s15 * 683901;
+
+            s2 += s14 * 666643;
+            s3 += s14 * 470296;
+            s4 += s14 * 654183;
+            s5 -= s14 * 997805;
+            s6 += s14 * 136657;
+            s7 -= s14 * 683901;
+
+            s1 += s13 * 666643;
+            s2 += s13 * 470296;
+            s3 += s13 * 654183;
+            s4 -= s13 * 997805;
+            s5 += s13 * 136657;
+            s6 -= s13 * 683901;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            s[0] = (byte)(s0 >> 0);
+            s[1] = (byte)(s0 >> 8);
+            s[2] = (byte)((s0 >> 16) | (s1 << 5));
+            s[3] = (byte)(s1 >> 3);
+            s[4] = (byte)(s1 >> 11);
+            s[5] = (byte)((s1 >> 19) | (s2 << 2));
+            s[6] = (byte)(s2 >> 6);
+            s[7] = (byte)((s2 >> 14) | (s3 << 7));
+            s[8] = (byte)(s3 >> 1);
+            s[9] = (byte)(s3 >> 9);
+            s[10] = (byte)((s3 >> 17) | (s4 << 4));
+            s[11] = (byte)(s4 >> 4);
+            s[12] = (byte)(s4 >> 12);
+            s[13] = (byte)((s4 >> 20) | (s5 << 1));
+            s[14] = (byte)(s5 >> 7);
+            s[15] = (byte)((s5 >> 15) | (s6 << 6));
+            s[16] = (byte)(s6 >> 2);
+            s[17] = (byte)(s6 >> 10);
+            s[18] = (byte)((s6 >> 18) | (s7 << 3));
+            s[19] = (byte)(s7 >> 5);
+            s[20] = (byte)(s7 >> 13);
+            s[21] = (byte)(s8 >> 0);
+            s[22] = (byte)(s8 >> 8);
+            s[23] = (byte)((s8 >> 16) | (s9 << 5));
+            s[24] = (byte)(s9 >> 3);
+            s[25] = (byte)(s9 >> 11);
+            s[26] = (byte)((s9 >> 19) | (s10 << 2));
+            s[27] = (byte)(s10 >> 6);
+            s[28] = (byte)((s10 >> 14) | (s11 << 7));
+            s[29] = (byte)(s11 >> 1);
+            s[30] = (byte)(s11 >> 9);
+            s[31] = (byte)(s11 >> 17);
+        }
+
+        /*
+        Input:
+          a[0]+256*a[1]+...+256^31*a[31] = a
+          b[0]+256*b[1]+...+256^31*b[31] = b
+        Output:
+          s[0]+256*s[1]+...+256^31*s[31] = (ab) mod l
+          where l = 2^252 + 27742317777372353535851937790883648493.
+        */
+        static void sc_mul(byte[] s, byte[] a, byte[] b)
+        {
+            long a0 = (long)(2097151 & load_3(a));
+            long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
+            long a2 = (long)(2097151 & (load_3(a, 5) >> 2));
+            long a3 = (long)(2097151 & (load_4(a, 7) >> 7));
+            long a4 = (long)(2097151 & (load_4(a, 10) >> 4));
+            long a5 = (long)(2097151 & (load_3(a, 13) >> 1));
+            long a6 = (long)(2097151 & (load_4(a, 15) >> 6));
+            long a7 = (long)(2097151 & (load_3(a, 18) >> 3));
+            long a8 = (long)(2097151 & load_3(a, 21));
+            long a9 = (long)(2097151 & (load_4(a, 23) >> 5));
+            long a10 = (long)(2097151 & (load_3(a, 26) >> 2));
+            long a11 = (long)((load_4(a, 28) >> 7));
+            long b0 = (long)(2097151 & load_3(b));
+            long b1 = (long)(2097151 & (load_4(b, 2) >> 5));
+            long b2 = (long)(2097151 & (load_3(b, 5) >> 2));
+            long b3 = (long)(2097151 & (load_4(b, 7) >> 7));
+            long b4 = (long)(2097151 & (load_4(b, 10) >> 4));
+            long b5 = (long)(2097151 & (load_3(b, 13) >> 1));
+            long b6 = (long)(2097151 & (load_4(b, 15) >> 6));
+            long b7 = (long)(2097151 & (load_3(b, 18) >> 3));
+            long b8 = (long)(2097151 & load_3(b, 21));
+            long b9 = (long)(2097151 & (load_4(b, 23) >> 5));
+            long b10 = (long)(2097151 & (load_3(b, 26) >> 2));
+            long b11 = (long)((load_4(b, 28) >> 7));
+            long s0;
+            long s1;
+            long s2;
+            long s3;
+            long s4;
+            long s5;
+            long s6;
+            long s7;
+            long s8;
+            long s9;
+            long s10;
+            long s11;
+            long s12;
+            long s13;
+            long s14;
+            long s15;
+            long s16;
+            long s17;
+            long s18;
+            long s19;
+            long s20;
+            long s21;
+            long s22;
+            long s23;
+            long carry0;
+            long carry1;
+            long carry2;
+            long carry3;
+            long carry4;
+            long carry5;
+            long carry6;
+            long carry7;
+            long carry8;
+            long carry9;
+            long carry10;
+            long carry11;
+            long carry12;
+            long carry13;
+            long carry14;
+            long carry15;
+            long carry16;
+            long carry17;
+            long carry18;
+            long carry19;
+            long carry20;
+            long carry21;
+            long carry22;
+
+            s0 = a0*b0;
+            s1 = (a0*b1 + a1*b0);
+            s2 = (a0*b2 + a1*b1 + a2*b0);
+            s3 = (a0*b3 + a1*b2 + a2*b1 + a3*b0);
+            s4 = (a0*b4 + a1*b3 + a2*b2 + a3*b1 + a4*b0);
+            s5 = (a0*b5 + a1*b4 + a2*b3 + a3*b2 + a4*b1 + a5*b0);
+            s6 = (a0*b6 + a1*b5 + a2*b4 + a3*b3 + a4*b2 + a5*b1 + a6*b0);
+            s7 = (a0*b7 + a1*b6 + a2*b5 + a3*b4 + a4*b3 + a5*b2 + a6*b1 + a7*b0);
+            s8 = (a0*b8 + a1*b7 + a2*b6 + a3*b5 + a4*b4 + a5*b3 + a6*b2 + a7*b1 + a8*b0);
+            s9 = (a0*b9 + a1*b8 + a2*b7 + a3*b6 + a4*b5 + a5*b4 + a6*b3 + a7*b2 + a8*b1 + a9*b0);
+            s10 = (a0*b10 + a1*b9 + a2*b8 + a3*b7 + a4*b6 + a5*b5 + a6*b4 + a7*b3 + a8*b2 + a9*b1 + a10*b0);
+            s11 = (a0*b11 + a1*b10 + a2*b9 + a3*b8 + a4*b7 + a5*b6 + a6*b5 + a7*b4 + a8*b3 + a9*b2 + a10*b1 + a11*b0);
+            s12 = (a1*b11 + a2*b10 + a3*b9 + a4*b8 + a5*b7 + a6*b6 + a7*b5 + a8*b4 + a9*b3 + a10*b2 + a11*b1);
+            s13 = (a2*b11 + a3*b10 + a4*b9 + a5*b8 + a6*b7 + a7*b6 + a8*b5 + a9*b4 + a10*b3 + a11*b2);
+            s14 = (a3*b11 + a4*b10 + a5*b9 + a6*b8 + a7*b7 + a8*b6 + a9*b5 + a10*b4 + a11*b3);
+            s15 = (a4*b11 + a5*b10 + a6*b9 + a7*b8 + a8*b7 + a9*b6 + a10*b5 + a11*b4);
+            s16 = (a5*b11 + a6*b10 + a7*b9 + a8*b8 + a9*b7 + a10*b6 + a11*b5);
+            s17 = (a6*b11 + a7*b10 + a8*b9 + a9*b8 + a10*b7 + a11*b6);
+            s18 = (a7*b11 + a8*b10 + a9*b9 + a10*b8 + a11*b7);
+            s19 = (a8*b11 + a9*b10 + a10*b9 + a11*b8);
+            s20 = (a9*b11 + a10*b10 + a11*b9);
+            s21 = (a10*b11 + a11*b10);
+            s22 = a11*b11;
+            s23 = 0;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
+            carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
+            carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+            carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 << 21;
+            carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 << 21;
+            carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+            carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
+            carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+            carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 << 21;
+            carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 << 21;
+            carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 << 21;
+
+            s11 += s23 * 666643;
+            s12 += s23 * 470296;
+            s13 += s23 * 654183;
+            s14 -= s23 * 997805;
+            s15 += s23 * 136657;
+            s16 -= s23 * 683901;
+
+            s10 += s22 * 666643;
+            s11 += s22 * 470296;
+            s12 += s22 * 654183;
+            s13 -= s22 * 997805;
+            s14 += s22 * 136657;
+            s15 -= s22 * 683901;
+
+            s9 += s21 * 666643;
+            s10 += s21 * 470296;
+            s11 += s21 * 654183;
+            s12 -= s21 * 997805;
+            s13 += s21 * 136657;
+            s14 -= s21 * 683901;
+
+            s8 += s20 * 666643;
+            s9 += s20 * 470296;
+            s10 += s20 * 654183;
+            s11 -= s20 * 997805;
+            s12 += s20 * 136657;
+            s13 -= s20 * 683901;
+
+            s7 += s19 * 666643;
+            s8 += s19 * 470296;
+            s9 += s19 * 654183;
+            s10 -= s19 * 997805;
+            s11 += s19 * 136657;
+            s12 -= s19 * 683901;
+
+            s6 += s18 * 666643;
+            s7 += s18 * 470296;
+            s8 += s18 * 654183;
+            s9 -= s18 * 997805;
+            s10 += s18 * 136657;
+            s11 -= s18 * 683901;
+
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
+            carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
+            carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+            carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
+            carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+
+            s5 += s17 * 666643;
+            s6 += s17 * 470296;
+            s7 += s17 * 654183;
+            s8 -= s17 * 997805;
+            s9 += s17 * 136657;
+            s10 -= s17 * 683901;
+
+            s4 += s16 * 666643;
+            s5 += s16 * 470296;
+            s6 += s16 * 654183;
+            s7 -= s16 * 997805;
+            s8 += s16 * 136657;
+            s9 -= s16 * 683901;
+
+            s3 += s15 * 666643;
+            s4 += s15 * 470296;
+            s5 += s15 * 654183;
+            s6 -= s15 * 997805;
+            s7 += s15 * 136657;
+            s8 -= s15 * 683901;
+
+            s2 += s14 * 666643;
+            s3 += s14 * 470296;
+            s4 += s14 * 654183;
+            s5 -= s14 * 997805;
+            s6 += s14 * 136657;
+            s7 -= s14 * 683901;
+
+            s1 += s13 * 666643;
+            s2 += s13 * 470296;
+            s3 += s13 * 654183;
+            s4 -= s13 * 997805;
+            s5 += s13 * 136657;
+            s6 -= s13 * 683901;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            s[0] = (byte)(s0 >> 0);
+            s[1] = (byte)(s0 >> 8);
+            s[2] = (byte)((s0 >> 16) | (s1 << 5));
+            s[3] = (byte)(s1 >> 3);
+            s[4] = (byte)(s1 >> 11);
+            s[5] = (byte)((s1 >> 19) | (s2 << 2));
+            s[6] = (byte)(s2 >> 6);
+            s[7] = (byte)((s2 >> 14) | (s3 << 7));
+            s[8] = (byte)(s3 >> 1);
+            s[9] = (byte)(s3 >> 9);
+            s[10] = (byte)((s3 >> 17) | (s4 << 4));
+            s[11] = (byte)(s4 >> 4);
+            s[12] = (byte)(s4 >> 12);
+            s[13] = (byte)((s4 >> 20) | (s5 << 1));
+            s[14] = (byte)(s5 >> 7);
+            s[15] = (byte)((s5 >> 15) | (s6 << 6));
+            s[16] = (byte)(s6 >> 2);
+            s[17] = (byte)(s6 >> 10);
+            s[18] = (byte)((s6 >> 18) | (s7 << 3));
+            s[19] = (byte)(s7 >> 5);
+            s[20] = (byte)(s7 >> 13);
+            s[21] = (byte)(s8 >> 0);
+            s[22] = (byte)(s8 >> 8);
+            s[23] = (byte)((s8 >> 16) | (s9 << 5));
+            s[24] = (byte)(s9 >> 3);
+            s[25] = (byte)(s9 >> 11);
+            s[26] = (byte)((s9 >> 19) | (s10 << 2));
+            s[27] = (byte)(s10 >> 6);
+            s[28] = (byte)((s10 >> 14) | (s11 << 7));
+            s[29] = (byte)(s11 >> 1);
+            s[30] = (byte)(s11 >> 9);
+            s[31] = (byte)(s11 >> 17);
+        }
+
+        static void sc_muladd(byte[] s, byte[] a, byte[] b, byte[] c)
+        {
+            long a0 = (long)(2097151 & load_3(a));
+            long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
+            long a2 = (long)(2097151 & (load_3(a, 5) >> 2));
+            long a3 = (long)(2097151 & (load_4(a, 7) >> 7));
+            long a4 = (long)(2097151 & (load_4(a, 10) >> 4));
+            long a5 = (long)(2097151 & (load_3(a, 13) >> 1));
+            long a6 = (long)(2097151 & (load_4(a, 15) >> 6));
+            long a7 = (long)(2097151 & (load_3(a, 18) >> 3));
+            long a8 = (long)(2097151 & load_3(a, 21));
+            long a9 = (long)(2097151 & (load_4(a, 23) >> 5));
+            long a10 = (long)(2097151 & (load_3(a, 26) >> 2));
+            long a11 = (long)((load_4(a, 28) >> 7));
+            long b0 = (long)(2097151 & load_3(b));
+            long b1 = (long)(2097151 & (load_4(b, 2) >> 5));
+            long b2 = (long)(2097151 & (load_3(b, 5) >> 2));
+            long b3 = (long)(2097151 & (load_4(b, 7) >> 7));
+            long b4 = (long)(2097151 & (load_4(b, 10) >> 4));
+            long b5 = (long)(2097151 & (load_3(b, 13) >> 1));
+            long b6 = (long)(2097151 & (load_4(b, 15) >> 6));
+            long b7 = (long)(2097151 & (load_3(b, 18) >> 3));
+            long b8 = (long)(2097151 & load_3(b, 21));
+            long b9 = (long)(2097151 & (load_4(b, 23) >> 5));
+            long b10 = (long)(2097151 & (load_3(b, 26) >> 2));
+            long b11 = (long)((load_4(b, 28) >> 7));
+            long c0 = (long)(2097151 & load_3(c));
+            long c1 = (long)(2097151 & (load_4(c, 2) >> 5));
+            long c2 = (long)(2097151 & (load_3(c, 5) >> 2));
+            long c3 = (long)(2097151 & (load_4(c, 7) >> 7));
+            long c4 = (long)(2097151 & (load_4(c, 10) >> 4));
+            long c5 = (long)(2097151 & (load_3(c, 13) >> 1));
+            long c6 = (long)(2097151 & (load_4(c, 15) >> 6));
+            long c7 = (long)(2097151 & (load_3(c, 18) >> 3));
+            long c8 = (long)(2097151 & load_3(c, 21));
+            long c9 = (long)(2097151 & (load_4(c, 23) >> 5));
+            long c10 = (long)(2097151 & (load_3(c, 26) >> 2));
+            long c11 = (long)((load_4(c, 28) >> 7));
+            long s0;
+            long s1;
+            long s2;
+            long s3;
+            long s4;
+            long s5;
+            long s6;
+            long s7;
+            long s8;
+            long s9;
+            long s10;
+            long s11;
+            long s12;
+            long s13;
+            long s14;
+            long s15;
+            long s16;
+            long s17;
+            long s18;
+            long s19;
+            long s20;
+            long s21;
+            long s22;
+            long s23;
+            long carry0;
+            long carry1;
+            long carry2;
+            long carry3;
+            long carry4;
+            long carry5;
+            long carry6;
+            long carry7;
+            long carry8;
+            long carry9;
+            long carry10;
+            long carry11;
+            long carry12;
+            long carry13;
+            long carry14;
+            long carry15;
+            long carry16;
+            long carry17;
+            long carry18;
+            long carry19;
+            long carry20;
+            long carry21;
+            long carry22;
+
+            s0 = c0 + a0*b0;
+            s1 = c1 + (a0*b1 + a1*b0);
+            s2 = c2 + (a0*b2 + a1*b1 + a2*b0);
+            s3 = c3 + (a0*b3 + a1*b2 + a2*b1 + a3*b0);
+            s4 = c4 + (a0*b4 + a1*b3 + a2*b2 + a3*b1 + a4*b0);
+            s5 = c5 + (a0*b5 + a1*b4 + a2*b3 + a3*b2 + a4*b1 + a5*b0);
+            s6 = c6 + (a0*b6 + a1*b5 + a2*b4 + a3*b3 + a4*b2 + a5*b1 + a6*b0);
+            s7 = c7 + (a0*b7 + a1*b6 + a2*b5 + a3*b4 + a4*b3 + a5*b2 + a6*b1 + a7*b0);
+            s8 = c8 + (a0*b8 + a1*b7 + a2*b6 + a3*b5 + a4*b4 + a5*b3 + a6*b2 + a7*b1 + a8*b0);
+            s9 = c9 + (a0*b9 + a1*b8 + a2*b7 + a3*b6 + a4*b5 + a5*b4 + a6*b3 + a7*b2 + a8*b1 + a9*b0);
+            s10 = c10 + (a0*b10 + a1*b9 + a2*b8 + a3*b7 + a4*b6 + a5*b5 + a6*b4 + a7*b3 + a8*b2 + a9*b1 + a10*b0);
+            s11 = c11 + (a0*b11 + a1*b10 + a2*b9 + a3*b8 + a4*b7 + a5*b6 + a6*b5 + a7*b4 + a8*b3 + a9*b2 + a10*b1 + a11*b0);
+            s12 = (a1*b11 + a2*b10 + a3*b9 + a4*b8 + a5*b7 + a6*b6 + a7*b5 + a8*b4 + a9*b3 + a10*b2 + a11*b1);
+            s13 = (a2*b11 + a3*b10 + a4*b9 + a5*b8 + a6*b7 + a7*b6 + a8*b5 + a9*b4 + a10*b3 + a11*b2);
+            s14 = (a3*b11 + a4*b10 + a5*b9 + a6*b8 + a7*b7 + a8*b6 + a9*b5 + a10*b4 + a11*b3);
+            s15 = (a4*b11 + a5*b10 + a6*b9 + a7*b8 + a8*b7 + a9*b6 + a10*b5 + a11*b4);
+            s16 = (a5*b11 + a6*b10 + a7*b9 + a8*b8 + a9*b7 + a10*b6 + a11*b5);
+            s17 = (a6*b11 + a7*b10 + a8*b9 + a9*b8 + a10*b7 + a11*b6);
+            s18 = (a7*b11 + a8*b10 + a9*b9 + a10*b8 + a11*b7);
+            s19 = (a8*b11 + a9*b10 + a10*b9 + a11*b8);
+            s20 = (a9*b11 + a10*b10 + a11*b9);
+            s21 = (a10*b11 + a11*b10);
+            s22 = a11*b11;
+            s23 = 0;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
+            carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
+            carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+            carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 << 21;
+            carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 << 21;
+            carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+            carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
+            carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+            carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 << 21;
+            carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 << 21;
+            carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 << 21;
+
+            s11 += s23 * 666643;
+            s12 += s23 * 470296;
+            s13 += s23 * 654183;
+            s14 -= s23 * 997805;
+            s15 += s23 * 136657;
+            s16 -= s23 * 683901;
+
+            s10 += s22 * 666643;
+            s11 += s22 * 470296;
+            s12 += s22 * 654183;
+            s13 -= s22 * 997805;
+            s14 += s22 * 136657;
+            s15 -= s22 * 683901;
+
+            s9 += s21 * 666643;
+            s10 += s21 * 470296;
+            s11 += s21 * 654183;
+            s12 -= s21 * 997805;
+            s13 += s21 * 136657;
+            s14 -= s21 * 683901;
+
+            s8 += s20 * 666643;
+            s9 += s20 * 470296;
+            s10 += s20 * 654183;
+            s11 -= s20 * 997805;
+            s12 += s20 * 136657;
+            s13 -= s20 * 683901;
+
+            s7 += s19 * 666643;
+            s8 += s19 * 470296;
+            s9 += s19 * 654183;
+            s10 -= s19 * 997805;
+            s11 += s19 * 136657;
+            s12 -= s19 * 683901;
+
+            s6 += s18 * 666643;
+            s7 += s18 * 470296;
+            s8 += s18 * 654183;
+            s9 -= s18 * 997805;
+            s10 += s18 * 136657;
+            s11 -= s18 * 683901;
+
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
+            carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
+            carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+            carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
+            carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+
+            s5 += s17 * 666643;
+            s6 += s17 * 470296;
+            s7 += s17 * 654183;
+            s8 -= s17 * 997805;
+            s9 += s17 * 136657;
+            s10 -= s17 * 683901;
+
+            s4 += s16 * 666643;
+            s5 += s16 * 470296;
+            s6 += s16 * 654183;
+            s7 -= s16 * 997805;
+            s8 += s16 * 136657;
+            s9 -= s16 * 683901;
+
+            s3 += s15 * 666643;
+            s4 += s15 * 470296;
+            s5 += s15 * 654183;
+            s6 -= s15 * 997805;
+            s7 += s15 * 136657;
+            s8 -= s15 * 683901;
+
+            s2 += s14 * 666643;
+            s3 += s14 * 470296;
+            s4 += s14 * 654183;
+            s5 -= s14 * 997805;
+            s6 += s14 * 136657;
+            s7 -= s14 * 683901;
+
+            s1 += s13 * 666643;
+            s2 += s13 * 470296;
+            s3 += s13 * 654183;
+            s4 -= s13 * 997805;
+            s5 += s13 * 136657;
+            s6 -= s13 * 683901;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+            s12 = 0;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+            carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+
+            s0 += s12 * 666643;
+            s1 += s12 * 470296;
+            s2 += s12 * 654183;
+            s3 -= s12 * 997805;
+            s4 += s12 * 136657;
+            s5 -= s12 * 683901;
+
+            carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
+            carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
+            carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
+            carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
+            carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
+            carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
+            carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
+            carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
+            carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
+            carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
+            carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+
+            s[0] = (byte)(s0 >> 0);
+            s[1] = (byte)(s0 >> 8);
+            s[2] = (byte)((s0 >> 16) | (s1 << 5));
+            s[3] = (byte)(s1 >> 3);
+            s[4] = (byte)(s1 >> 11);
+            s[5] = (byte)((s1 >> 19) | (s2 << 2));
+            s[6] = (byte)(s2 >> 6);
+            s[7] = (byte)((s2 >> 14) | (s3 << 7));
+            s[8] = (byte)(s3 >> 1);
+            s[9] = (byte)(s3 >> 9);
+            s[10] = (byte)((s3 >> 17) | (s4 << 4));
+            s[11] = (byte)(s4 >> 4);
+            s[12] = (byte)(s4 >> 12);
+            s[13] = (byte)((s4 >> 20) | (s5 << 1));
+            s[14] = (byte)(s5 >> 7);
+            s[15] = (byte)((s5 >> 15) | (s6 << 6));
+            s[16] = (byte)(s6 >> 2);
+            s[17] = (byte)(s6 >> 10);
+            s[18] = (byte)((s6 >> 18) | (s7 << 3));
+            s[19] = (byte)(s7 >> 5);
+            s[20] = (byte)(s7 >> 13);
+            s[21] = (byte)(s8 >> 0);
+            s[22] = (byte)(s8 >> 8);
+            s[23] = (byte)((s8 >> 16) | (s9 << 5));
+            s[24] = (byte)(s9 >> 3);
+            s[25] = (byte)(s9 >> 11);
+            s[26] = (byte)((s9 >> 19) | (s10 << 2));
+            s[27] = (byte)(s10 >> 6);
+            s[28] = (byte)((s10 >> 14) | (s11 << 7));
+            s[29] = (byte)(s11 >> 1);
+            s[30] = (byte)(s11 >> 9);
+            s[31] = (byte)(s11 >> 17);
+        }
+
+        static long signum(long a)
+        {
+            return (a >> 63) - ((-a) >> 63);
+        }
+
+        static int sc_check(byte[] s)
+        {
+            long s0 = (long)(load_4(s));
+            long s1 = (long)(load_4(s, 4));
+            long s2 = (long)(load_4(s, 8));
+            long s3 = (long)(load_4(s, 12));
+            long s4 = (long)(load_4(s, 16));
+            long s5 = (long)(load_4(s, 20));
+            long s6 = (long)(load_4(s, 24));
+            long s7 = (long)(load_4(s, 28));
+
+            return (int)((signum(1559614444 - s0)
+                 + (signum(1477600026 - s1) << 1)
+                 + (signum(2734136534 - s2) << 2)
+                 + (signum(350157278 - s3) << 3)
+                 + (signum(-s4) << 4)
+                 + (signum(-s5) << 5)
+                 + (signum(-s6) << 6)
+                 + (signum(268435456 - s7) << 7)) >> 8);
+        }
+
+        static int sc_isnonzero(byte[] s)
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                if (s[i] != 0)
+                {
+                    return 1;
+                }
+            }
+
+            return 0;
         }
     }
 }

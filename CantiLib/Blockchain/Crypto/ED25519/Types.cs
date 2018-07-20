@@ -4,6 +4,20 @@ namespace Canti.Blockchain.Crypto.ED25519
        a struct */
     internal class ge_p2
     {
+        public ge_p2(int[] X, int[] Y, int[] Z)
+        {
+            this.X = X;
+            this.Y = Y;
+            this.Z = Z;
+        }
+
+        public ge_p2()
+        {
+            X = new int[10];
+            Y = new int[10];
+            Z = new int[10];
+        }
+
         public int[] X;
         public int[] Y;
         public int[] Z;
@@ -11,6 +25,22 @@ namespace Canti.Blockchain.Crypto.ED25519
 
     internal class ge_p3
     {
+        public ge_p3(int[] X, int[] Y, int[] Z, int[] T)
+        {
+            this.X = X;
+            this.Y = Y;
+            this.Z = Z;
+            this.T = T;
+        }
+
+        public ge_p3()
+        {
+            X = new int[10];
+            Y = new int[10];
+            Z = new int[10];
+            T = new int[10];
+        }
+
         public int[] X;
         public int[] Y;
         public int[] Z;
@@ -21,6 +51,22 @@ namespace Canti.Blockchain.Crypto.ED25519
        I believe */
     internal class ge_p1p1
     {
+        public ge_p1p1(int[] X, int[] Y, int[] Z, int[] T)
+        {
+            this.X = X;
+            this.Y = Y;
+            this.Z = Z;
+            this.T = T;
+        }
+
+        public ge_p1p1()
+        {
+            X = new int[10];
+            Y = new int[10];
+            Z = new int[10];
+            T = new int[10];
+        }
+
         public int[] X;
         public int[] Y;
         public int[] Z;
@@ -36,6 +82,13 @@ namespace Canti.Blockchain.Crypto.ED25519
             this.xy2d = xy2d;
         }
 
+        public ge_precomp()
+        {
+            yplusx = new int[10];
+            yminusx = new int[10];
+            xy2d = new int[10];
+        }
+
         public int[] yplusx;
         public int[] yminusx;
         public int[] xy2d;
@@ -43,6 +96,22 @@ namespace Canti.Blockchain.Crypto.ED25519
 
     internal class ge_cached
     {
+        public ge_cached(int[] YplusX, int[] YminusX, int[] Z, int[] T2d)
+        {
+            this.YplusX = YplusX;
+            this.YminusX = YminusX;
+            this.Z = Z;
+            this.T2d = T2d;
+        }
+
+        public ge_cached()
+        {
+            YplusX = new int[10];
+            YminusX = new int[10];
+            Z = new int[10];
+            T2d = new int[10];
+        }
+
         public int[] YplusX;
         public int[] YminusX;
         public int[] Z;
