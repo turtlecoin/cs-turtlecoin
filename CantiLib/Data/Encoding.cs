@@ -154,24 +154,6 @@ namespace Canti.Data
                 Output |= ((ulong)Bytes[i] << i * 8);
             return (T)Convert.ChangeType(Output, typeof(T));
         }
-
-        public static ulong ByteArrayAsUlong(byte[] input, int offset = 0)
-        {
-            /* This will store the subsection of the array we want to convert
-               to a long */
-            byte[] tmp = new byte[8];
-
-            /* Arrays are passed by reference - don't want to modify it */
-            Array.Copy(input, offset, tmp, 0, tmp.Length);
-
-            /* Need to make sure we're reading in the correct direction */
-            if (!BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(tmp);
-            }
-
-            return BitConverter.ToUInt64(tmp);
-        }
         #endregion
 
         #region Conversion
