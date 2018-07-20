@@ -15,7 +15,7 @@ namespace Canti.Blockchain.Crypto.ED25519
     {
         /* This calculates (input[0]) + (input[1] * 2^8) + (input[2] * 2^16)
            Takes an optional offset to simulate passing an offseted pointer */
-        static ulong load_3(byte[] input, int offset = 0)
+        public static ulong load_3(byte[] input, int offset = 0)
         {
             ulong result;
             result = (ulong)input[0 + offset];
@@ -27,7 +27,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         /* This calculates (input[0]) + (input[1] * 2^8) + (input[2] * 2^16)
            + (input[3] * 2^24)
            Takes an optional offset to simulate passing an offseted pointer */
-        static ulong load_4(byte[] input, int offset = 0)
+        public static ulong load_4(byte[] input, int offset = 0)
         {
             ulong result;
             result = (ulong)input[0 + offset];
@@ -38,7 +38,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* Zeroes an fe (int[10]) */
-        static void fe_0(int[] x)
+        public static void fe_0(int[] x)
         {
             for (int i = 0; i < 10; i++)
             {
@@ -48,7 +48,7 @@ namespace Canti.Blockchain.Crypto.ED25519
 
         /* Sets the first value of an fe (int[10]) to 1, and zeroes the next
            nine */
-        static void fe_1(int[] x)
+        public static void fe_1(int[] x)
         {
             x[0] = 1;
 
@@ -59,7 +59,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* Adds two fe's (int[10]) together and stores the result in h */
-        static void fe_add(int[] h, int[] f, int[] g)
+        public static void fe_add(int[] h, int[] f, int[] g)
         {
             for (int i = 0; i < 10; i++)
             {
@@ -68,7 +68,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* If b == 0, do nothing. If b == 1, replace f with g */
-        static void fe_cmov(int[] f, int[] g, uint b)
+        public static void fe_cmov(int[] f, int[] g, uint b)
         {
             if (b == 0)
             {
@@ -88,7 +88,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* Sets h to f */
-        static void fe_copy(int[] h, int[] f)
+        public static void fe_copy(int[] h, int[] f)
         {
             for (int i = 0; i < 10; i++)
             {
@@ -96,7 +96,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void fe_invert(int[] ret, int[] z)
+        public static void fe_invert(int[] ret, int[] z)
         {
             int[] t0 = new int[10];
             int[] t1 = new int[10];
@@ -187,7 +187,7 @@ namespace Canti.Blockchain.Crypto.ED25519
 
         /* Return 1 if f is in {1,3,5,....,q-2}
            Return 0 if f is in {0,2,4,...,q-1} */
-        static int fe_isnegative(int[] f)
+        public static int fe_isnegative(int[] f)
         {
             byte[] s = new byte[32];
             fe_tobytes(s, f);
@@ -197,7 +197,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* Is every element of fe_tobytes(f) zero? */
-        static bool fe_isnonzero(int[] f)
+        public static bool fe_isnonzero(int[] f)
         {
             byte[] s = new byte[32];
             fe_tobytes(s, f);
@@ -216,7 +216,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         /* h = f * g 
            I have tried to simplify where possible, but am not sure how to
            easily simplify this one whilst being mindful of overflow */
-        static void fe_mul(int[] h, int[] f, int[] g)
+        public static void fe_mul(int[] h, int[] f, int[] g)
         {
             int f0 = f[0];
             int f1 = f[1];
@@ -436,7 +436,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* h = -f */
-        static void fe_neg(int[] h, int[] f)
+        public static void fe_neg(int[] h, int[] f)
         {
             for (int i = 0; i < 10; i++)
             {
@@ -446,7 +446,7 @@ namespace Canti.Blockchain.Crypto.ED25519
 
         /* h = f * f
            Same disclaimer as fe_mul applies. */
-        static void fe_sq(int[] h, int[] f)
+        public static void fe_sq(int[] h, int[] f)
         {
             int f0 = f[0];
             int f1 = f[1];
@@ -579,7 +579,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* h = 2 * f * f */
-        static void fe_sq2(int[] h, int[] f)
+        public static void fe_sq2(int[] h, int[] f)
         {
             int f0 = f[0];
             int f1 = f[1];
@@ -723,7 +723,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* h = f - g */
-        static void fe_sub(int[] h, int[] f, int[] g)
+        public static void fe_sub(int[] h, int[] f, int[] g)
         {
             for (int i = 0; i < 10; i++)
             {
@@ -731,7 +731,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void fe_tobytes(byte[] s, int[] h)
+        public static void fe_tobytes(byte[] s, int[] h)
         {
             int h0 = h[0];
             int h1 = h[1];
@@ -824,7 +824,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             s[31] = (byte)(h9 >> 18);
         }
 
-        static void ge_add(ge_p1p1 r, ge_p3 p, ge_cached q)
+        public static void ge_add(ge_p1p1 r, ge_p3 p, ge_cached q)
         {
             int[] t0 = new int[10];
 
@@ -841,7 +841,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_sub(r.T, t0, r.T);
         }
 
-        static void slide(sbyte[] r, byte[] a)
+        public static void slide(sbyte[] r, byte[] a)
         {
             int i;
             int b;
@@ -888,7 +888,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void ge_dsm_precomp(ge_cached[] r, ge_p3 s)
+        public static void ge_dsm_precomp(ge_cached[] r, ge_p3 s)
         {
             ge_p1p1 t = null;
             ge_p3 s2 = null;
@@ -906,7 +906,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void ge_double_scalarmult_base_vartime(ge_p2 r, byte[] a, ge_p3 A, byte[] b)
+        public static void ge_double_scalarmult_base_vartime(ge_p2 r, byte[] a, ge_p3 A, byte[] b)
         {
             sbyte[] aslide = new sbyte[256];
             sbyte[] bslide = new sbyte[256];
@@ -962,7 +962,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void ge_double_scalarmult_base_vartime_p3(ge_p3 r3, byte[] a, ge_p3 A, byte[] b)
+        public static void ge_double_scalarmult_base_vartime_p3(ge_p3 r3, byte[] a, ge_p3 A, byte[] b)
         {
             sbyte[] aslide = new sbyte[256];
             sbyte[] bslide = new sbyte[256];
@@ -1026,7 +1026,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static int ge_frombytes_vartime(ge_p3 h, byte[] s)
+        public static int ge_frombytes_vartime(ge_p3 h, byte[] s)
         {
             int[] u = new int[10];
             int[] v = new int[10];
@@ -1129,7 +1129,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* r = p + q */
-        static void ge_madd(ge_p1p1 r, ge_p3 p, ge_precomp q)
+        public static void ge_madd(ge_p1p1 r, ge_p3 p, ge_precomp q)
         {
             int[] t0 = new int[10];
 
@@ -1146,7 +1146,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* r = p - q */
-        static void ge_msub(ge_p1p1 r, ge_p3 p, ge_precomp q)
+        public static void ge_msub(ge_p1p1 r, ge_p3 p, ge_precomp q)
         {
             int[] t0 = new int[10];
 
@@ -1163,7 +1163,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* r = p */
-        static void ge_p1p1_to_p2(ge_p2 r, ge_p1p1 p)
+        public static void ge_p1p1_to_p2(ge_p2 r, ge_p1p1 p)
         {
             fe_mul(r.X, p.X, p.T);
             fe_mul(r.Y, p.Y, p.Z);
@@ -1171,7 +1171,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* r = p */
-        static void ge_p1p1_to_p3(ge_p3 r, ge_p1p1 p)
+        public static void ge_p1p1_to_p3(ge_p3 r, ge_p1p1 p)
         {
             fe_mul(r.X, p.X, p.T);
             fe_mul(r.Y, p.Y, p.Z);
@@ -1179,7 +1179,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_mul(r.T, p.X, p.Y);
         }
 
-        static void ge_p2_0(ge_p2 h)
+        public static void ge_p2_0(ge_p2 h)
         {
             fe_0(h.X);
             fe_1(h.Y);
@@ -1187,7 +1187,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* r = 2 * p */
-        static void ge_p2_dbl(ge_p1p1 r, ge_p2 p)
+        public static void ge_p2_dbl(ge_p1p1 r, ge_p2 p)
         {
             int[] t0 = new int[10];
 
@@ -1202,7 +1202,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_sub(r.T, r.T, r.Z);
         }
 
-        static void ge_p3_0(ge_p3 h)
+        public static void ge_p3_0(ge_p3 h)
         {
             fe_0(h.X);
             fe_1(h.Y);
@@ -1211,15 +1211,15 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* r = 2 * p */
-        static void ge_p3_dbl(ge_p1p1 r, ge_p3 p)
+        public static void ge_p3_dbl(ge_p1p1 r, ge_p3 p)
         {
-            ge_p2 q = null;
+            ge_p2 q = new ge_p2();
             ge_p3_to_p2(q, p);
             ge_p2_dbl(r, q);
         }
 
         /* r = p */
-        static void ge_p3_to_cached(ge_cached r, ge_p3 p)
+        public static void ge_p3_to_cached(ge_cached r, ge_p3 p)
         {
             fe_add(r.YplusX, p.Y, p.X);
             fe_sub(r.YminusX, p.Y, p.X);
@@ -1228,14 +1228,14 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* r = p */
-        static void ge_p3_to_p2(ge_p2 r, ge_p3 p)
+        public static void ge_p3_to_p2(ge_p2 r, ge_p3 p)
         {
             fe_copy(r.X, p.X);
             fe_copy(r.Y, p.Y);
             fe_copy(r.Z, p.Z);
         }
 
-        static void ge_p3_tobytes(byte[] s, ge_p3 h)
+        public static void ge_p3_tobytes(byte[] s, ge_p3 h)
         {
             int[] recip = new int[10];
             int[] x = new int[10];
@@ -1248,33 +1248,31 @@ namespace Canti.Blockchain.Crypto.ED25519
             s[31] ^= (byte)(fe_isnegative(x) << 7);
         }
 
-        static void ge_precomp_0(ge_precomp h)
+        public static void ge_precomp_0(ge_precomp h)
         {
             fe_1(h.yplusx);
             fe_1(h.yminusx);
             fe_0(h.xy2d);
         }
 
-        static byte equal(sbyte b, sbyte c)
+        public static byte equal(sbyte b, sbyte c)
         {
             return (byte)(b == c ? 1 : 0);
         }
 
-        static byte negative(sbyte b)
+        public static byte negative(sbyte b)
         {
-            long x = (long)b;
-            x >>= 63;
-            return (byte)x;
+            return (byte)(b < 0 ? 1 : 0);
         }
 
-        static void ge_precomp_cmov(ge_precomp t, ge_precomp u, byte b)
+        public static void ge_precomp_cmov(ge_precomp t, ge_precomp u, byte b)
         {
             fe_cmov(t.yplusx, u.yplusx, b);
             fe_cmov(t.yminusx, u.yminusx, b);
             fe_cmov(t.xy2d, u.xy2d, b);
         }
 
-        static void select(ge_precomp t, int pos, sbyte b)
+        public static void select(ge_precomp t, int pos, sbyte b)
         {
             ge_precomp minust = new ge_precomp();
 
@@ -1299,7 +1297,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         /* h = a * B
            where a = a[0]+256*a[1]+...+256^31 a[31]
            B is the Ed25519 base point (x,4/5) with x positive. */
-        static void ge_scalarmult_base(ge_p3 h, byte[] a)
+        public static void ge_scalarmult_base(ge_p3 h, byte[] a)
         {
             sbyte[] e = new sbyte[64];
             sbyte carry;
@@ -1359,7 +1357,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         }
 
         /* r = p - q */
-        static void ge_sub(ge_p1p1 r, ge_p3 p, ge_cached q)
+        public static void ge_sub(ge_p1p1 r, ge_p3 p, ge_cached q)
         {
             int[] t0 = new int[10];
             
@@ -1376,7 +1374,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_add(r.T, t0, r.T);
         }
 
-        static void ge_tobytes(byte[] s, ge_p2 h)
+        public static void ge_tobytes(byte[] s, ge_p2 h)
         {
             int[] recip = new int[10];
             int[] x = new int[10];
@@ -1389,7 +1387,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             s[31] ^= (byte)(fe_isnegative(x) << 7);
         }
 
-        static void sc_reduce(byte[] s)
+        public static void sc_reduce(byte[] s)
         {
             long s0 = 2097151 & (long)(load_3(s));
             long s1 = 2097151 & (long)((load_4(s, 2) >> 5));
@@ -1619,7 +1617,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             s[31] = (byte)(s11 >> 17);
         }
 
-        static void fe_divpowm1(int[] r, int[] u, int[] v)
+        public static void fe_divpowm1(int[] r, int[] u, int[] v)
         {
             int[] v3 = new int[10];
             int[] uv7 = new int[10];
@@ -1706,7 +1704,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_mul(r, t0, u); /* u^(m+1)v^(-(m+1)) */
         }
 
-        static void ge_cached_0(ge_cached r)
+        public static void ge_cached_0(ge_cached r)
         {
             fe_1(r.YplusX);
             fe_1(r.YminusX);
@@ -1714,7 +1712,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_0(r.T2d);
         }
 
-        static void ge_cached_cmov(ge_cached t, ge_cached u, byte b)
+        public static void ge_cached_cmov(ge_cached t, ge_cached u, byte b)
         {
             fe_cmov(t.YplusX, u.YplusX, b);
             fe_cmov(t.YminusX, u.YminusX, b);
@@ -1722,7 +1720,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_cmov(t.T2d, u.T2d, b);
         }
 
-        static void ge_scalarmult(ge_p2 r, byte[] a, ge_p3 A)
+        public static void ge_scalarmult(ge_p2 r, byte[] a, ge_p3 A)
         {
             sbyte[] e = new sbyte[64];
 
@@ -1790,7 +1788,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void ge_scalarmult_p3(ge_p3 r3, byte[] a, ge_p3 A)
+        public static void ge_scalarmult_p3(ge_p3 r3, byte[] a, ge_p3 A)
         {
             sbyte[] e = new sbyte[64];
             int carry = 0;
@@ -1868,7 +1866,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void ge_double_scalarmult_precomp_vartime2(ge_p2 r, byte[] a, ge_cached[] Ai, byte[] b, ge_cached[] Bi)
+        public static void ge_double_scalarmult_precomp_vartime2(ge_p2 r, byte[] a, ge_cached[] Ai, byte[] b, ge_cached[] Bi)
         {
             sbyte[] aslide = new sbyte[256];
             sbyte[] bslide = new sbyte[256];
@@ -1921,7 +1919,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             ge_p1p1_to_p2(r, t);
         }
 
-        static void ge_double_scalarmult_precomp_vartime2_p3(ge_p3 r3, byte[] a, ge_cached[] Ai, byte[] b, ge_cached[] Bi)
+        public static void ge_double_scalarmult_precomp_vartime2_p3(ge_p3 r3, byte[] a, ge_cached[] Ai, byte[] b, ge_cached[] Bi)
         {
             sbyte[] aslide = new sbyte[256];
             sbyte[] bslide = new sbyte[256];
@@ -1982,7 +1980,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void ge_double_scalarmult_precomp_vartime(ge_p2 r, byte[] a, ge_p3 A, byte[] b, ge_cached[] Bi)
+        public static void ge_double_scalarmult_precomp_vartime(ge_p2 r, byte[] a, ge_p3 A, byte[] b, ge_cached[] Bi)
         {
             ge_cached[] Ai = new ge_cached[8];
 
@@ -1990,7 +1988,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             ge_double_scalarmult_precomp_vartime2(r, a, Ai, b, Bi);
         }
 
-        static void ge_mul8(ge_p1p1 r, ge_p2 t)
+        public static void ge_mul8(ge_p1p1 r, ge_p2 t)
         {
             ge_p2 u = new ge_p2();
 
@@ -2001,7 +1999,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             ge_p2_dbl(r, u);
         }
 
-        static void ge_fromfe_frombytes_vartime(ge_p2 r, byte[] s)
+        public static void ge_fromfe_frombytes_vartime(ge_p2 r, byte[] s)
         {
             int[] u = new int[10];
             int[] v = new int[10];
@@ -2121,7 +2119,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             fe_mul(r.X, r.X, r.Z);
         }
 
-        static void sc_0(byte[] s)
+        public static void sc_0(byte[] s)
         {
             for (int i = 0; i < 32; i++)
             {
@@ -2129,7 +2127,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             }
         }
 
-        static void sc_reduce32(byte[] s)
+        public static void sc_reduce32(byte[] s)
         {
             long s0 = (long)(2097151 & load_3(s));
             long s1 = (long)(2097151 & (load_4(s, 2) >> 5));
@@ -2245,7 +2243,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             s[31] = (byte)(s11 >> 17);
         }
 
-        static void sc_add(byte[] s, byte[] a, byte[] b)
+        public static void sc_add(byte[] s, byte[] a, byte[] b)
         {
             long a0 = (long)(2097151 & load_3(a));
             long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
@@ -2385,7 +2383,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             s[31] = (byte)(s11 >> 17);
         }
 
-        static void sc_sub(byte[] s, byte[] a, byte [] b)
+        public static void sc_sub(byte[] s, byte[] a, byte [] b)
         {
             long a0 = (long)(2097151 & load_3(a));
             long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
@@ -2534,7 +2532,7 @@ namespace Canti.Blockchain.Crypto.ED25519
           s[0]+256*s[1]+...+256^31*s[31] = (c-ab) mod l
           where l = 2^252 + 27742317777372353535851937790883648493.
         */
-        static void sc_mulsub(byte[] s, byte[] a, byte[] b, byte[] c)
+        public static void sc_mulsub(byte[] s, byte[] a, byte[] b, byte[] c)
         {
             long a0 = (long)(2097151 & load_3(a));
             long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
@@ -2864,7 +2862,7 @@ namespace Canti.Blockchain.Crypto.ED25519
           s[0]+256*s[1]+...+256^31*s[31] = (ab) mod l
           where l = 2^252 + 27742317777372353535851937790883648493.
         */
-        static void sc_mul(byte[] s, byte[] a, byte[] b)
+        public static void sc_mul(byte[] s, byte[] a, byte[] b)
         {
             long a0 = (long)(2097151 & load_3(a));
             long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
@@ -3174,7 +3172,7 @@ namespace Canti.Blockchain.Crypto.ED25519
             s[31] = (byte)(s11 >> 17);
         }
 
-        static void sc_muladd(byte[] s, byte[] a, byte[] b, byte[] c)
+        public static void sc_muladd(byte[] s, byte[] a, byte[] b, byte[] c)
         {
             long a0 = (long)(2097151 & load_3(a));
             long a1 = (long)(2097151 & (load_4(a, 2) >> 5));
@@ -3496,12 +3494,12 @@ namespace Canti.Blockchain.Crypto.ED25519
             s[31] = (byte)(s11 >> 17);
         }
 
-        static long signum(long a)
+        public static long signum(long a)
         {
             return (a >> 63) - ((-a) >> 63);
         }
 
-        static int sc_check(byte[] s)
+        public static int sc_check(byte[] s)
         {
             long s0 = (long)(load_4(s));
             long s1 = (long)(load_4(s, 4));
@@ -3522,7 +3520,7 @@ namespace Canti.Blockchain.Crypto.ED25519
                  + (signum(268435456 - s7) << 7)) >> 8);
         }
 
-        static int sc_isnonzero(byte[] s)
+        public static int sc_isnonzero(byte[] s)
         {
             for (int i = 0; i < 32; i++)
             {

@@ -1,3 +1,11 @@
+//
+// Original code modified by The CryptoNote Developers from SUPERCOP ref10
+// Copyright 2012-2013 The CryptoNote Developers
+// Copyright 2014-2018 The Monero Developers
+// Copyright 2018 The TurtleCoin Developers
+//
+// Please see the included LICENSE file for more information.
+
 namespace Canti.Blockchain.Crypto.ED25519
 {
     /* We want to pass by reference, so lets use a class here instead of
