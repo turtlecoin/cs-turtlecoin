@@ -81,8 +81,6 @@ namespace Canti.Blockchain.Crypto.Keccak
                 rsiz = 200 - 2 * outputSize;
             }
 
-            int rsizw = rsiz / 8;
-
             int inputLength = input.Length;
 
             int offset = 0;
@@ -93,6 +91,7 @@ namespace Canti.Blockchain.Crypto.Keccak
             {
                 for (int i = 0; i < rsiz; i += 8)
                 {
+                    /* Read 8 bytes as a ulong */
                     state[i / 8] ^= Encoding.ByteArrayToInteger<ulong>(input, offset + i, 8);
                 }
 
@@ -115,8 +114,10 @@ namespace Canti.Blockchain.Crypto.Keccak
 
             temp[rsiz - 1] |= 0x80;
 
+            /* We proceed in chunks of 8 bytes as once */
             for (int i = 0; i < rsiz; i += 8)
             {
+                /* Read 8 bytes as a ulong */
                 state[i / 8] ^= Encoding.ByteArrayToInteger<ulong>(temp, i, 8);
             }
 
@@ -124,6 +125,7 @@ namespace Canti.Blockchain.Crypto.Keccak
 
             byte[] output = new byte[outputSize];
 
+            /* Copy the ulong state into the output array as bytes */
             Buffer.BlockCopy(state, 0, output, 0, output.Length);
 
             return output;
