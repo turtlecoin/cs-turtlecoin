@@ -12,6 +12,7 @@ using Canti.Blockchain.Crypto.ED25519;
 /* This lets us do ge_scalarmult_base instead of
    ED25519.ED25519.ge_scalarmult_base */
 using static Canti.Blockchain.Crypto.ED25519.ED25519;
+using static Canti.Blockchain.Crypto.Keccak.Keccak;
 
 namespace Canti.Blockchain.Crypto
 {
@@ -22,6 +23,15 @@ namespace Canti.Blockchain.Crypto
             byte[] tmp = SecureRandom.Bytes(64);
             sc_reduce(tmp);
             return new EllipticCurveScalar(tmp);
+        }
+
+        public static WalletKeys GenerateWalletKeys()
+        {
+            /* Generate a random public and private key for our spend keys */
+            KeyPair spendKeys = GenerateKeys();
+            /* Use the spend private key to derive our view keys */
+            KeyPair viewKeys = GenerateDeterministicKeys(spendKeys.privateKey);
+            return new WalletKeys(spendKeys, viewKeys);
         }
 
         /* Generate a public and private key pair */
@@ -51,11 +61,19 @@ namespace Canti.Blockchain.Crypto
            as a seed. E.g. - derive view key from spend key */
         public static KeyPair GenerateDeterministicKeys(PrivateKey seed)
         {
-            /* Take seed as integer and outputs the integer modulo the prime q */
-            sc_reduce32(seed.data);
+            byte[] seedTmp = new byte[seed.data.Length];
+            
+            /* Make a copy so we don't modify the input param */
+            seed.data.CopyTo(seedTmp, 0);
+
+            /* Hash the private key with keccak-1600 */
+            byte[] hashed = keccak(seedTmp);
+
+            /* Take hash as integer and outputs the integer modulo the prime q */
+            sc_reduce32(hashed);
 
             /* Convert into private key */
-            PrivateKey privateKey = new PrivateKey(seed.data);
+            PrivateKey privateKey = new PrivateKey(hashed);
 
             /* Computes aG where a is privateKey.data, and G is the ed25519
                base point, and pops the result in point */
@@ -69,6 +87,16 @@ namespace Canti.Blockchain.Crypto
             PublicKey publicKey = new PublicKey(tmp);
 
             return new KeyPair(publicKey, privateKey);
+        }
+
+        public static bool AreKeysDeterministic(PrivateKey privateSpendKey,
+                                                PrivateKey privateViewKey)
+        {
+            /* Derive the private view key */
+            PrivateKey derivedPrivateViewKey
+                = GenerateDeterministicKeys(privateSpendKey).privateKey;
+
+            return privateViewKey == derivedPrivateViewKey;
         }
     }
 }

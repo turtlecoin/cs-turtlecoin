@@ -1,5 +1,33 @@
+//
+// Copyright 2012-2013 The CryptoNote Developers
+// Copyright 2014-2018 The Monero Developers
+// Copyright 2018 The TurtleCoin Developers
+//
+// Please see the included LICENSE file for more information.
+
+using Canti.Data;
+
 namespace Canti.Blockchain.Crypto
 {
+    internal class WalletKeys
+    {
+        public WalletKeys(KeyPair spendKeys, KeyPair viewKeys)
+        {
+            this.spendKeys = spendKeys;
+            this.viewKeys = viewKeys;
+        }
+
+        public WalletKeys(PublicKey publicSpendKey, PrivateKey privateSpendKey,
+                          PublicKey publicViewKey, PrivateKey privateViewKey)
+        {
+            this.spendKeys = new KeyPair(publicSpendKey, privateSpendKey);
+            this.viewKeys = new KeyPair(publicViewKey, privateViewKey);
+        }
+
+        public KeyPair spendKeys;
+        public KeyPair viewKeys;
+    }
+
     internal class KeyPair
     {
         public KeyPair(PublicKey publicKey, PrivateKey privateKey)
@@ -24,6 +52,11 @@ namespace Canti.Blockchain.Crypto
             {
                 this.data[i] = data[i];
             }
+        }
+
+        public override string ToString()
+        {
+            return Encoding.ByteArrayToHexString(data);
         }
 
         public byte[] data = new byte[32];
