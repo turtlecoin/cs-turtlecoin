@@ -25,6 +25,8 @@ namespace Canti.Blockchain.Crypto
             return new EllipticCurveScalar(tmp);
         }
 
+        /* Generate a private + public spend, and private + public view key,
+           where the spend key is derived from the view key */
         public static WalletKeys GenerateWalletKeys()
         {
             /* Generate a random public and private key for our spend keys */
@@ -43,16 +45,8 @@ namespace Canti.Blockchain.Crypto
             /* Take the data and shove it into a private key */
             PrivateKey privateKey = new PrivateKey(s.data);
 
-            /* Computes aG where a is privateKey.data, and G is the ed25519
-               base point, and pops the result in point */
-            ED25519.ge_p3 point = new ge_p3();
-            ge_scalarmult_base(point, privateKey.data);
-
-            byte[] tmp = new byte[32];
-
-            /* Convert the point into a public key format */
-            ge_p3_tobytes(tmp, point);
-            PublicKey publicKey = new PublicKey(tmp);
+            /* Derive the public key */
+            PublicKey publicKey = PrivateKeyToPublicKey(privateKey);
 
             return new KeyPair(publicKey, privateKey);
         }
@@ -66,7 +60,7 @@ namespace Canti.Blockchain.Crypto
             /* Make a copy so we don't modify the input param */
             seed.data.CopyTo(seedTmp, 0);
 
-            /* Hash the private key with keccak-1600 */
+            /* Hash the private key with keccak */
             byte[] hashed = keccak(seedTmp);
 
             /* Take hash as integer and outputs the integer modulo the prime q */
@@ -75,16 +69,8 @@ namespace Canti.Blockchain.Crypto
             /* Convert into private key */
             PrivateKey privateKey = new PrivateKey(hashed);
 
-            /* Computes aG where a is privateKey.data, and G is the ed25519
-               base point, and pops the result in point */
-            ED25519.ge_p3 point = new ge_p3();
-            ge_scalarmult_base(point, privateKey.data);
-
-            byte[] tmp = new byte[32];
-
-            /* Convert the point into a public key format */
-            ge_p3_tobytes(tmp, point);
-            PublicKey publicKey = new PublicKey(tmp);
+            /* Derive the public key */
+            PublicKey publicKey = PrivateKeyToPublicKey(privateKey);
 
             return new KeyPair(publicKey, privateKey);
         }
@@ -97,6 +83,22 @@ namespace Canti.Blockchain.Crypto
                 = GenerateDeterministicKeys(privateSpendKey).privateKey;
 
             return privateViewKey == derivedPrivateViewKey;
+        }
+
+        public static PublicKey PrivateKeyToPublicKey(PrivateKey privateKey)
+        {
+            /* Computes aG where a is privateKey.data, and G is the ed25519
+               base point, and pops the result in point */
+            ED25519.ge_p3 point = new ge_p3();
+            ge_scalarmult_base(point, privateKey.data);
+
+            /* Stores the result of the derivation */
+            byte[] tmp = new byte[32];
+
+            /* Convert the point into a public key format */
+            ge_p3_tobytes(tmp, point);
+
+            return new PublicKey(tmp);
         }
     }
 }

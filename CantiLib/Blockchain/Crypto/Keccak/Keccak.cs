@@ -69,7 +69,7 @@ namespace Canti.Blockchain.Crypto.Keccak
         /* This can throw if the input size or outputSize is not of a valid
            value. Suggestes output size values are 32 and 200, and suggested
            input values are 1 - 136 */
-        public static byte[] keccak(byte[] input, int outputSize = 32)
+        private static byte[] _keccak(byte[] input, int outputSize)
         {
             ulong[] state = new ulong[25];
 
@@ -138,6 +138,22 @@ namespace Canti.Blockchain.Crypto.Keccak
         private static ulong ROTL64(ulong x, ulong y)
         {
             return x << (int)y | x >> (int)((64 - y));
+        }
+
+        /* Output length must be 32 bytes or less */
+        public static byte[] keccak(byte[] input, int outputLength = 32)
+        {
+            byte[] result = _keccak(input, 32);
+
+            byte[] output = new byte[outputLength];
+
+            /* Don't overflow input array */
+            for (int i = 0; i < Math.Min(outputLength, 32); i++)
+            {
+                output[i] = result[i];
+            }
+
+            return output;
         }
     }
 }
