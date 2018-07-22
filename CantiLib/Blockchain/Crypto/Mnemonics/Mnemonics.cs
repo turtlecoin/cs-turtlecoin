@@ -157,7 +157,7 @@ namespace Canti.Blockchain.Crypto.Mnemonics
             {
                 MnemonicToPrivateKey(words);
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
                 err = "Mnenonic seed is invalid!";
 

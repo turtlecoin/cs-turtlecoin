@@ -66,13 +66,17 @@ namespace Canti.Blockchain.Crypto.Keccak
             }
         }
 
+        /* This can throw if the input size or outputSize is not of a valid
+           value. Suggestes output size values are 32 and 200, and suggested
+           input values are 1 - 136 */
         public static byte[] keccak(byte[] input, int outputSize = 32)
         {
             ulong[] state = new ulong[25];
 
             int rsiz;
 
-            if (state.Length == outputSize)
+            /* sizeof (state) == outputSize */
+            if ((state.Length * 8) == outputSize)
             {
                 rsiz = Constants.HASH_DATA_AREA;
             }
