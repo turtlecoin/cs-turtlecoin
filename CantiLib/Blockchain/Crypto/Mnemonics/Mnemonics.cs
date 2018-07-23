@@ -12,7 +12,7 @@ using Canti.Data;
 
 namespace Canti.Blockchain.Crypto.Mnemonics
 {
-    internal static class Mnemonics
+    public static class Mnemonics
     {
         public static PrivateKey MnemonicToPrivateKey(string words)
         {

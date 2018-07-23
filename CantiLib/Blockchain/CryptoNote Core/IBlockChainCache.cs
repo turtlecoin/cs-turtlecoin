@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Canti.Blockchain
 {
-    class IBlockchainCache
+    public class IBlockchainCache
     {
         IBlockchainCache parent;
 
@@ -18,12 +18,12 @@ namespace Canti.Blockchain
         ulong Amount = 0;
         string[] chainLeaves;
 
-        internal bool hasBlock(string blockHash)
+        public bool hasBlock(string blockHash)
         {
             return findSegmentContainingBlock(blockHash) != null;
         }
 
-        internal IBlockchainCache findIndexInChain(IBlockchainCache blockSegment, string blockHash)
+        public IBlockchainCache findIndexInChain(IBlockchainCache blockSegment, string blockHash)
         {
             if (blockSegment == null) throw new Exception();
 
@@ -35,7 +35,7 @@ namespace Canti.Blockchain
             return null;
         }
 
-        internal IBlockchainCache findSegmentContainingBlock(string blockHash)
+        public IBlockchainCache findSegmentContainingBlock(string blockHash)
         {
             if (Globals.DAEMON_CHAIN_LEAVES.Length < 1) throw new Exception("Chain leaves must be greater than 0");
 

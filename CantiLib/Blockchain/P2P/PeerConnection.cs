@@ -9,18 +9,18 @@ using System.Threading;
 
 namespace Canti.Blockchain.P2P
 {
-    internal class PeerConnection
+    public class PeerConnection
     {
         // Private variables
         private Thread RunningThread;
         private TcpClient Client;
         private Server Server;
 
-        // Internal variables
-        internal EventHandler OnDataReceived;
+        // Public variables
+        public EventHandler OnDataReceived;
 
         // Entry point
-        internal PeerConnection(Server Server, TcpClient Client)
+        public PeerConnection(Server Server, TcpClient Client)
         {
             // Set variables
             this.Server = Server;
@@ -39,7 +39,7 @@ namespace Canti.Blockchain.P2P
         }
 
         // Sends a message to the associated client
-        internal bool SendMessage(byte[] Data)
+        public bool SendMessage(byte[] Data)
         {
             // Send data to client stream
             try { Client.GetStream().Write(Data, 0, Data.Length); }
@@ -81,7 +81,7 @@ namespace Canti.Blockchain.P2P
         }
 
         // Checks if the peer is still connected
-        internal bool Connected
+        public bool Connected
         {
             get
             {
@@ -90,7 +90,7 @@ namespace Canti.Blockchain.P2P
         }
 
         // Returns connection information as a string
-        internal string Address
+        public string Address
         {
             get
             {

@@ -8,7 +8,7 @@ using System;
 
 namespace Canti.Blockchain.Crypto.Keccak
 {
-    internal static class Constants
+    public static class Constants
     {
         public static readonly ulong[] keccakf_rndc =
         {

@@ -12,7 +12,7 @@ namespace Canti.Blockchain.Crypto
     class Hashing
     {
         // Serializes a string array into a hash array string
-        internal static string SerializeHashArray(string[] Value)
+        public static string SerializeHashArray(string[] Value)
         {
             string Output = "";
             foreach (string Hash in Value)Output += Hash;
@@ -20,7 +20,7 @@ namespace Canti.Blockchain.Crypto
         }
 
         // Deserializes a hash array into a string array
-        internal static string[] DeserializeHashArray(string Value)
+        public static string[] DeserializeHashArray(string Value)
         {
             byte[] Data = new byte[0];
             try { Data = Encoding.HexStringToByteArray(Value); }

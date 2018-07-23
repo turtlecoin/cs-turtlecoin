@@ -6,12 +6,12 @@
 namespace Canti.Blockchain
 {
     // Levin command structure
-    internal struct Command
+    public struct Command
     {
         // Command variables (names should be self explanatory)
-        internal uint CommandCode { get; set; }
-        internal bool IsNotification { get; set; }
-        internal bool IsResponse { get; set; }
-        internal byte[] Data { get; set; }
+        public uint CommandCode { get; set; }
+        public bool IsNotification { get; set; }
+        public bool IsResponse { get; set; }
+        public byte[] Data { get; set; }
     }
 }

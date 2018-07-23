@@ -28,13 +28,13 @@ namespace Canti.Blockchain.P2P
         private Thread PeerConnectionThread;
 
         // Define data handling context
-        internal LevinProtocol Context;
+        public LevinProtocol Context;
 
-        // Internal variables
-        internal Logger Logger;
-        internal bool Running = false;
-        internal int Port = 0;
-        internal ulong PeerId = 0;
+        // public variables
+        public Logger Logger;
+        public bool Running = false;
+        public int Port = 0;
+        public ulong PeerId = 0;
 
         // Event handlers
         public EventHandler OnStart;
@@ -51,7 +51,7 @@ namespace Canti.Blockchain.P2P
             // Create a new TCP listener and start listening
             try
             {
-                // Set internals
+                // Set publics
                 this.Port = Port;
                 PeerId = SecureRandom.Integer<ulong>();
 
@@ -185,14 +185,14 @@ namespace Canti.Blockchain.P2P
         }
 
         // Broadcast data to all peers
-        internal void Broadcast(byte[] Data)
+        public void Broadcast(byte[] Data)
         {
             // Send data to all peers
             foreach (PeerConnection Peer in Peers) Peer.SendMessage(Data);
         }
 
         // Send data to a specified peer
-        internal bool SendMessage(PeerConnection Peer, byte[] Data)
+        public bool SendMessage(PeerConnection Peer, byte[] Data)
         {
             // Check if connection is alive
             if (!Peer.Connected)
@@ -210,7 +210,7 @@ namespace Canti.Blockchain.P2P
         }
 
         // Prunes disconnected peers from the peer list
-        internal void Prune()
+        public void Prune()
         {
             // Create a new peer list
             List<PeerConnection> PeerList = new List<PeerConnection>();
@@ -223,7 +223,7 @@ namespace Canti.Blockchain.P2P
         }
 
         // Returns a list of connected peers
-        internal List<PeerConnection> GetPeerList()
+        public List<PeerConnection> GetPeerList()
         {
             // Create a new peer list
             List<PeerConnection> PeerList = new List<PeerConnection>();
@@ -238,7 +238,7 @@ namespace Canti.Blockchain.P2P
         // Closes all connections
         public void Close()
         {
-            // Reset internals
+            // Reset publics
             PeerId = 0;
             Port = 0;
             Running = false;

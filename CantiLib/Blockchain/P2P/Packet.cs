@@ -5,11 +5,12 @@
 
 namespace Canti.Blockchain.P2P
 {
-    internal struct Packet
+    public struct Packet
     {
-        internal PeerConnection Peer;
-        internal byte[] Data;
-        internal Packet(PeerConnection Peer, byte[] Data)
+        public PeerConnection Peer;
+        public byte[] Data;
+
+        public Packet(PeerConnection Peer, byte[] Data)
         {
             this.Peer = Peer;
             this.Data = Data;

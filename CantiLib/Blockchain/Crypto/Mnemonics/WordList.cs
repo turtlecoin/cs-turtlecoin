@@ -8,7 +8,7 @@ using System;
 
 namespace Canti.Blockchain.Crypto.Mnemonics
 {
-    internal static class WordList
+    public static class WordList
     {
         public static readonly string[] English =
         {

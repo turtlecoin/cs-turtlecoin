@@ -8,7 +8,7 @@ using System;
 namespace Canti.Blockchain
 {
     [Serializable]
-    internal struct NodeData
+    public struct NodeData
     {
         public string NetworkId { get; set; }
         public byte Version { get; set; }

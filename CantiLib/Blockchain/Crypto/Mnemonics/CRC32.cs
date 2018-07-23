@@ -27,7 +27,7 @@ using System;
 
 namespace Canti.Blockchain.Crypto.Mnemonics
 {
-    internal static class CRC32
+    public static class CRC32
     {
         public static uint crc32(string input)
         {

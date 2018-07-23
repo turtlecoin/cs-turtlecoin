@@ -11,136 +11,136 @@ using System.Text;
 namespace Canti.Blockchain.RPC
 {
     [Serializable]
-    internal class HttpRequestResult
+    public class HttpRequestResult
     {
-        internal HttpRequestResult() { }
+        public HttpRequestResult() { }
         [OptionalField]
-        internal MethodError error = null;
+        public MethodError error = null;
         [OptionalField]
-        internal UInt32 height = 0;
+        public UInt32 height = 0;
         [OptionalField]
-        internal UInt32 network_height = 0;
+        public UInt32 network_height = 0;
         [OptionalField]
-        internal string status = null;
+        public string status = null;
     }
 
     [Serializable]
-    internal class RequestResult
+    public class RequestResult
     {
-        internal RequestResult() { }
+        public RequestResult() { }
         [OptionalField]
-        internal string jsonrpc = null;
+        public string jsonrpc = null;
         [OptionalField]
-        internal string id = null;
+        public string id = null;
         [OptionalField]
-        internal MethodResult result = null;
+        public MethodResult result = null;
         [OptionalField]
-        internal MethodError error = null;
+        public MethodError error = null;
     }
 
     [Serializable]
-    internal class MethodResult
+    public class MethodResult
     {
-        internal MethodResult() { }
+        public MethodResult() { }
         [OptionalField]
-        internal string viewSecretKey = null;
+        public string viewSecretKey = null;
         [OptionalField]
-        internal string spendSecretKey = null;
+        public string spendSecretKey = null;
         [OptionalField]
-        internal string spendPublicKey = null;
+        public string spendPublicKey = null;
         [OptionalField]
-        internal UInt32 blockCount = 0;
+        public UInt32 blockCount = 0;
         [OptionalField]
-        internal UInt32 knownBlockCount = 0;
+        public UInt32 knownBlockCount = 0;
         [OptionalField]
-        internal string lastBlockHash = null;
+        public string lastBlockHash = null;
         [OptionalField]
-        internal UInt32 peerCount = 0;
+        public UInt32 peerCount = 0;
         [OptionalField]
-        internal string[] addresses = null;
+        public string[] addresses = null;
         [OptionalField]
-        internal string address = null;
+        public string address = null;
         [OptionalField]
-        internal UInt64 availableBalance = 0;
+        public UInt64 availableBalance = 0;
         [OptionalField]
-        internal UInt64 lockedAmount = 0;
+        public UInt64 lockedAmount = 0;
         [OptionalField]
-        internal string[] blockHashes = null;
+        public string[] blockHashes = null;
         [OptionalField]
-        internal List<MethodResultItems> items = null;
+        public List<MethodResultItems> items = null;
         [OptionalField]
-        internal string[] transactionHashes = null;
+        public string[] transactionHashes = null;
         [OptionalField]
-        internal MethodResultTransaction transaction = null;
+        public MethodResultTransaction transaction = null;
         [OptionalField]
-        internal string transactionHash = null;
+        public string transactionHash = null;
         [OptionalField]
-        internal UInt64 totalOutputCount = 0;
+        public UInt64 totalOutputCount = 0;
         [OptionalField]
-        internal UInt64 fusionReadyCount = 0;
+        public UInt64 fusionReadyCount = 0;
         [OptionalField]
-        internal UInt32 count = 0;
+        public UInt32 count = 0;
         [OptionalField]
-        internal string status = null;
+        public string status = null;
     }
 
     [Serializable]
-    internal class MethodError
+    public class MethodError
     {
-        internal MethodError() { }
+        public MethodError() { }
         [OptionalField]
-        internal string message = null;
+        public string message = null;
         [OptionalField]
-        internal string code = null;
+        public string code = null;
         [OptionalField]
-        internal object data = null;
+        public object data = null;
     }
 
     [Serializable]
-    internal class MethodResultItems
+    public class MethodResultItems
     {
-        internal MethodResultItems() { }
+        public MethodResultItems() { }
         [OptionalField]
-        internal string[] transactionHashes = null;
+        public string[] transactionHashes = null;
         [OptionalField]
-        internal string blockHash = null;
+        public string blockHash = null;
         [OptionalField]
-        internal List<MethodResultTransaction> transactions = null;
+        public List<MethodResultTransaction> transactions = null;
     }
 
     [Serializable]
-    internal class MethodResultTransaction
+    public class MethodResultTransaction
     {
-        internal MethodResultTransaction() { }
+        public MethodResultTransaction() { }
         [OptionalField]
-        internal string transactionHash = null;
+        public string transactionHash = null;
         [OptionalField]
-        internal UInt32 blockIndex = 0;
+        public UInt32 blockIndex = 0;
         [OptionalField]
-        internal UInt64 timestamp = 0;
+        public UInt64 timestamp = 0;
         [OptionalField]
-        internal bool isBase = false;
+        public bool isBase = false;
         [OptionalField]
-        internal UInt64 unlockTime = 0;
+        public UInt64 unlockTime = 0;
         [OptionalField]
-        internal Int64 amount = 0;
+        public Int64 amount = 0;
         [OptionalField]
-        internal UInt64 fee = 0;
+        public UInt64 fee = 0;
         [OptionalField]
-        internal string extra = null;
+        public string extra = null;
         [OptionalField]
-        internal string paymentId = null;
+        public string paymentId = null;
         [OptionalField]
-        internal List<MethodResultTransfer> transfers = null;
+        public List<MethodResultTransfer> transfers = null;
     }
 
     [Serializable]
-    internal class MethodResultTransfer
+    public class MethodResultTransfer
     {
-        internal MethodResultTransfer() { }
+        public MethodResultTransfer() { }
         [OptionalField]
-        internal string address = null;
+        public string address = null;
         [OptionalField]
-        internal Int64 amount = 0;
+        public Int64 amount = 0;
     }
 }

@@ -10,11 +10,11 @@ using System.Text;
 namespace Canti.Blockchain
 {
     [Serializable]
-    internal struct PeerlistEntry
+    public struct PeerlistEntry
     {
-        internal NetworkAddress Address { get; set; }
-        internal ulong Id { get; set; }
-        internal ulong LastSeen { get; set; }
+        public NetworkAddress Address { get; set; }
+        public ulong Id { get; set; }
+        public ulong LastSeen { get; set; }
         public byte[] Serialize()
         {
             PortableStorage Storage = new PortableStorage();

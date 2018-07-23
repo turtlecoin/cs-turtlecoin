@@ -11,7 +11,7 @@ using System;
 /* Here be dragons */
 namespace Canti.Blockchain.Crypto.ED25519
 {
-    internal static class ED25519
+    public static class ED25519
     {
         /* This calculates (input[0]) + (input[1] * 2^8) + (input[2] * 2^16)
            Takes an optional offset to simulate passing an offseted pointer */

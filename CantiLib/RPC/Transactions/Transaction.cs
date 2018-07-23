@@ -9,15 +9,15 @@ using System.Text;
 
 namespace Canti.RPC
 {
-    internal class TransactionContainer
+    public class TransactionContainer
     {
-        internal List<string> Addresses { get; set; }
-        internal UInt64 Anonymity { get; set; }
-        internal string ChangeAddress { get; set; }
-        internal Extra Extra { get; set; }
-        internal UInt64 Fee { get; set; }
-        internal string PaymentId { get; set; }
-        internal List<(string Address, Int64 Amount)> Transfers { get; set; }
-        internal UInt64 UnlockTime { get; set; }
+        public List<string> Addresses { get; set; }
+        public UInt64 Anonymity { get; set; }
+        public string ChangeAddress { get; set; }
+        public Extra Extra { get; set; }
+        public UInt64 Fee { get; set; }
+        public string PaymentId { get; set; }
+        public List<(string Address, Int64 Amount)> Transfers { get; set; }
+        public UInt64 UnlockTime { get; set; }
     }
 }

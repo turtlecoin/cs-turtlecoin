@@ -8,7 +8,7 @@ using System;
 namespace Canti.Blockchain
 {
     [Serializable]
-    internal struct CoreSyncData
+    public struct CoreSyncData
     {
         public uint CurrentHeight { get; set; }
         public string TopId { get; set; }

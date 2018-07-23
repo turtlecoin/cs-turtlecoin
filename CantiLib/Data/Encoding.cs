@@ -33,7 +33,7 @@ namespace Canti.Data
 
         #region Objects
         // Encodes an object to a hex string
-        internal static string ObjectToHexString(object Input)
+        public static string ObjectToHexString(object Input)
         {
             byte[] Bytes = ObjectToByteArray(Input);
             string Hex = ByteArrayToHexString(Bytes);

@@ -10,7 +10,7 @@ namespace Canti.Blockchain.Crypto.ED25519
 {
     /* We want to pass by reference, so lets use a class here instead of
        a struct */
-    internal class ge_p2
+    public class ge_p2
     {
         public ge_p2(int[] X, int[] Y, int[] Z)
         {
@@ -31,7 +31,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         public int[] Z;
     }
 
-    internal class ge_p3
+    public class ge_p3
     {
         public ge_p3(int[] X, int[] Y, int[] Z, int[] T)
         {
@@ -57,7 +57,7 @@ namespace Canti.Blockchain.Crypto.ED25519
 
     /* This has the same members as ge_p3, but a different representation
        I believe */
-    internal class ge_p1p1
+    public class ge_p1p1
     {
         public ge_p1p1(int[] X, int[] Y, int[] Z, int[] T)
         {
@@ -81,7 +81,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         public int[] T;
     }
 
-    internal class ge_precomp
+    public class ge_precomp
     {
         public ge_precomp(int[] yplusx, int[] yminusx, int[] xy2d)
         {
@@ -102,7 +102,7 @@ namespace Canti.Blockchain.Crypto.ED25519
         public int[] xy2d;
     }
 
-    internal class ge_cached
+    public class ge_cached
     {
         public ge_cached(int[] YplusX, int[] YminusX, int[] Z, int[] T2d)
         {

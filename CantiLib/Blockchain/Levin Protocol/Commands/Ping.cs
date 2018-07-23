@@ -5,13 +5,13 @@
 
 namespace Canti.Blockchain.Commands
 {
-    internal class Ping
+    public class Ping
     {
         // Command ID
-        internal const int Id = GlobalsConfig.LEVIN_COMMANDS_BASE + 3;
+        public const int Id = GlobalsConfig.LEVIN_COMMANDS_BASE + 3;
 
         // Outgoing request structure
-        internal struct Request : ICommandRequestBase
+        public struct Request : ICommandRequestBase
         {
             // Serializes request data into a byte array
             public byte[] Serialize()
@@ -22,11 +22,11 @@ namespace Canti.Blockchain.Commands
         }
 
         // Incoming response structure
-        internal struct Response : ICommandResponseBase<Response>
+        public struct Response : ICommandResponseBase<Response>
         {
             // Variables
-            internal string Status { get; set; }
-            internal ulong PeerId { get; set; }
+            public string Status { get; set; }
+            public ulong PeerId { get; set; }
 
             // Deseriaizes response data
             public static Response Deserialize(byte[] Data)
@@ -45,7 +45,7 @@ namespace Canti.Blockchain.Commands
         }
 
         // Process incoming command instance
-        internal static void Invoke(LevinProtocol Context, LevinPeer Peer, Command Command)
+        public static void Invoke(LevinProtocol Context, LevinPeer Peer, Command Command)
         {
             // Command is a request
             if (!Command.IsResponse)

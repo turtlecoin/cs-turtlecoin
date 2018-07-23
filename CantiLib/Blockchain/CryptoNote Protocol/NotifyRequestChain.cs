@@ -11,13 +11,13 @@ namespace Canti.Blockchain.Commands
     class NotifyRequestChain
     {
         // Command ID
-        internal const int Id = GlobalsConfig.CRYPTONOTE_COMMANDS_BASE + 6;
+        public const int Id = GlobalsConfig.CRYPTONOTE_COMMANDS_BASE + 6;
 
         // Outgoing request structure
-        internal struct Request : ICommandRequestBase
+        public struct Request : ICommandRequestBase
         {
             // Variables
-            internal string[] BlockIds;
+            public string[] BlockIds;
 
             // Serializes request data into a byte array
             public byte[] Serialize()
@@ -48,7 +48,7 @@ namespace Canti.Blockchain.Commands
         }
 
         // Process incoming command instance
-        internal static void Invoke(LevinProtocol Context, LevinPeer Peer, Command Command)
+        public static void Invoke(LevinProtocol Context, LevinPeer Peer, Command Command)
         {
             // Command is a request
             if (!Command.IsResponse)

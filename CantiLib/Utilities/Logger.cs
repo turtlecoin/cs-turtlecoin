@@ -17,9 +17,9 @@ namespace Canti.Utilities
 
     public struct Entry
     {
-        public DateTime Timestamp { get; internal set; }
-        public Level Level { get; internal set; }
-        public string Content { get; internal set; }
+        public DateTime Timestamp { get; set; }
+        public Level Level { get; set; }
+        public string Content { get; set; }
         public Entry(DateTime Timestamp, Level Level, string Content)
         {
             this.Timestamp = Timestamp;

@@ -10,10 +10,10 @@ using System.Text;
 namespace Canti.Blockchain
 {
     [Serializable]
-    internal struct NetworkAddress
+    public struct NetworkAddress
     {
-        internal uint IpAddress { get; set; }
-        internal uint Port { get; set; }
+        public uint IpAddress { get; set; }
+        public uint Port { get; set; }
         public byte[] Serialize()
         {
             PortableStorage Storage = new PortableStorage();

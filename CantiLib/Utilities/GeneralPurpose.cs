@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace Canti.Utilities
 {
-    internal static class GeneralUtilities
+    public static class GeneralUtilities
     {
         // Returns the current unix timestamp
         public static ulong GetTimestamp()
@@ -21,10 +21,10 @@ namespace Canti.Utilities
         public static List<List<T>> ChunkBy<T>(this List<T> source, int chunkSize) 
         {
             return source
-                .Select((x, i) => new { Index = i, Value = x })
-                .GroupBy(x => x.Index / chunkSize)
-                .Select(x => x.Select(v => v.Value).ToList())
-                .ToList();
+                  .Select((x, i) => new { Index = i, Value = x })
+                  .GroupBy(x => x.Index / chunkSize)
+                  .Select(x => x.Select(v => v.Value).ToList())
+                  .ToList();
         }
     }
 }

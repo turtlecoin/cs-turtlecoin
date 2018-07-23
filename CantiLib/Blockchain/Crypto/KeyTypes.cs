@@ -9,7 +9,7 @@ using Canti.Data;
 
 namespace Canti.Blockchain.Crypto
 {
-    internal class WalletKeys
+    public class WalletKeys
     {
         public WalletKeys(KeyPair spendKeys, KeyPair viewKeys)
         {
@@ -28,7 +28,7 @@ namespace Canti.Blockchain.Crypto
         public KeyPair viewKeys;
     }
 
-    internal class KeyPair
+    public class KeyPair
     {
         public KeyPair(PublicKey publicKey, PrivateKey privateKey)
         {
@@ -40,7 +40,7 @@ namespace Canti.Blockchain.Crypto
         public PublicKey publicKey;
     }
 
-    internal class ThirtyTwoByteKey
+    public class ThirtyTwoByteKey
     {
         public ThirtyTwoByteKey(byte[] data)
         {
@@ -62,22 +62,22 @@ namespace Canti.Blockchain.Crypto
         public byte[] data = new byte[32];
     }
 
-    internal class EllipticCurvePoint : ThirtyTwoByteKey
+    public class EllipticCurvePoint : ThirtyTwoByteKey
     {
         public EllipticCurvePoint(byte[] data) : base(data) {}
     }
 
-    internal class EllipticCurveScalar : ThirtyTwoByteKey
+    public class EllipticCurveScalar : ThirtyTwoByteKey
     {
         public EllipticCurveScalar(byte[] data) : base(data) {}
     }
 
-    internal class PrivateKey : ThirtyTwoByteKey
+    public class PrivateKey : ThirtyTwoByteKey
     {
         public PrivateKey(byte[] data) : base(data) {}
     }
 
-    internal class PublicKey : ThirtyTwoByteKey
+    public class PublicKey : ThirtyTwoByteKey
     {
         public PublicKey(byte[] data) : base(data) {}
     }

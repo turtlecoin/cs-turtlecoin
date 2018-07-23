@@ -11,19 +11,19 @@ using System.Collections.Generic;
 
 namespace Canti.Blockchain
 {
-    internal partial class LevinProtocol
+    public partial class LevinProtocol
     {
         // Server connection
-        internal Server Server;
+        public Server Server;
 
         // Logger
-        internal Logger Logger;
+        public Logger Logger;
 
         // Peer read status (0 = head, 1 = body)
         private Dictionary<PeerConnection, LevinPeer> Peers = new Dictionary<PeerConnection, LevinPeer>();
 
         // Entry point
-        internal LevinProtocol(Server Connection)
+        public LevinProtocol(Server Connection)
         {
             // Set connection
             Server = Connection;
@@ -161,7 +161,7 @@ namespace Canti.Blockchain
         }
 
         // Notifies a peer with a command, no response expected
-        internal void Notify(PeerConnection Peer, int CommandCode, byte[] Data)
+        public void Notify(PeerConnection Peer, int CommandCode, byte[] Data)
         {
             // Form message header
             BucketHead2 Header = new BucketHead2
@@ -183,7 +183,7 @@ namespace Canti.Blockchain
         }
 
         // Notifies all peers with a command, no response expected
-        internal void NotifyAll(int CommandCode, byte[] Data)
+        public void NotifyAll(int CommandCode, byte[] Data)
         {
             // Form message header
             BucketHead2 Header = new BucketHead2
@@ -204,7 +204,7 @@ namespace Canti.Blockchain
         }
 
         // Notifies a peer with a command, no response expected
-        internal void Reply(LevinPeer Peer, int CommandCode, byte[] Data, bool RequestSuccessul = false, bool ResponseRequired = false)
+        public void Reply(LevinPeer Peer, int CommandCode, byte[] Data, bool RequestSuccessul = false, bool ResponseRequired = false)
         {
             // Form message header
             BucketHead2 Header = new BucketHead2
@@ -237,7 +237,7 @@ namespace Canti.Blockchain
         }
 
         // Encodes a command and returns the raw bytes
-        internal byte[] Encode(ICommandRequestBase Data)
+        public byte[] Encode(ICommandRequestBase Data)
         {
             // Return the serialized byte array
             return Data.Serialize();

@@ -14,13 +14,13 @@ namespace Canti.Blockchain.Commands
     class RequestTxPool
     {
         // Command ID
-        internal const int Id = GlobalsConfig.CRYPTONOTE_COMMANDS_BASE + 8;
+        public const int Id = GlobalsConfig.CRYPTONOTE_COMMANDS_BASE + 8;
 
         // Outgoing request structure
-        internal struct Request : ICommandRequestBase
+        public struct Request : ICommandRequestBase
         {
             // Variables
-            internal string[] Txs;
+            public string[] Txs;
 
             // Serializes request data into a byte array
             public byte[] Serialize()
@@ -51,7 +51,7 @@ namespace Canti.Blockchain.Commands
         }
 
         // Process incoming command instance
-        internal static void Invoke(LevinProtocol Context, LevinPeer Peer, Command Command)
+        public static void Invoke(LevinProtocol Context, LevinPeer Peer, Command Command)
         {
             // Command is a request
             if (!Command.IsResponse)

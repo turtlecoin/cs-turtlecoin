@@ -16,7 +16,7 @@ using static Canti.Blockchain.Crypto.Keccak.Keccak;
 
 namespace Canti.Blockchain.Crypto
 {
-    internal static class KeyOps
+    public static class KeyOps
     {
         private static EllipticCurveScalar RandomScalar()
         {

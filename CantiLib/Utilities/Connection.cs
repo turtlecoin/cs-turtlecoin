@@ -7,10 +7,10 @@ namespace Canti.Utilities
 {
     public class Connection
     {
-        internal string Host { get; private set; }
-        internal string Endpoint{ get; private set; }
-        internal string Password { get; private set; }
-        internal int Port { get; private set; }
+        public string Host { get; private set; }
+        public string Endpoint{ get; private set; }
+        public string Password { get; private set; }
+        public int Port { get; private set; }
         public Connection(string Host, int Port, string Endpoint = "", string Password = "")
         {
             this.Host = Host;
@@ -18,7 +18,7 @@ namespace Canti.Utilities
             this.Endpoint = Endpoint;
             this.Password = Password;
         }
-        internal string ToString(bool IgnoreEndpoint = false)
+        public string ToString(bool IgnoreEndpoint = false)
         {
             string Output = "http://" + Host + ":" + Port + "/";
             if (!IgnoreEndpoint) Output += Endpoint;

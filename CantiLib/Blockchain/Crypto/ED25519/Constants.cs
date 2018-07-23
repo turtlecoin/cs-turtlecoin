@@ -10,7 +10,7 @@ using System;
 
 namespace Canti.Blockchain.Crypto.ED25519
 {
-    internal static class Constants
+    public static class Constants
     {
         /* -121665 / 121666 */
         public static readonly int[] fe_d =

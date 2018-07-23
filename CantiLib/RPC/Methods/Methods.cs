@@ -11,23 +11,23 @@ using Canti.Data;
 
 namespace Canti.Blockchain.RPC
 {
-    internal class MethodBuilder
+    public class MethodBuilder
     {
         private string Method { get; set; }
         private string Password { get; set; }
         private Dictionary<string, object> Params { get; set; }
         private Dictionary<string, object> ExternalParams { get; set; }
-        internal MethodBuilder(string Method, string Password = "")
+        public MethodBuilder(string Method, string Password = "")
         {
             this.Method = Method;
             this.Password = Password;
             Params = new Dictionary<string, object>();
         }
-        internal void AddParam(string Name, object Value)
+        public void AddParam(string Name, object Value)
         {
             Params.Add(Name, Value);
         }
-        internal void AddExternalParam(string Name, object Value)
+        public void AddExternalParam(string Name, object Value)
         {
             ExternalParams.Add(Name, Value);
         }

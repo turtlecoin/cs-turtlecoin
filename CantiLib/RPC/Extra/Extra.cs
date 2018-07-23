@@ -11,11 +11,11 @@ namespace Canti.RPC
 {
     public class Extra
     {
-        // Internal encoded hex string
-        internal string Hex { get; set; }
+        // public encoded hex string
+        public string Hex { get; set; }
 
         // Holds a key-value collection of objects
-        public List<object> Children { get; internal set; }
+        public List<object> Children { get; set; }
 
         // Overrides the to string function to return the encoded hex string
         public override string ToString()

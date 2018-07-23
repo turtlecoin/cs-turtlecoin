@@ -10,19 +10,19 @@ namespace Canti.Blockchain
 {
     // Header for levin protocol requests
     [Serializable]
-    internal struct BucketHead2
+    public struct BucketHead2
     {
         // Header variables (names should be self explanatory)
-        internal ulong Signature { get; set; }
-        internal ulong PayloadSize { get; set; }
-        internal bool ResponseRequired { get; set; }
-        internal uint CommandCode { get; set; }
-        internal int ReturnCode { get; set; }
-        internal uint Flags { get; set; }
-        internal uint ProtocolVersion { get; set; }
+        public ulong Signature { get; set; }
+        public ulong PayloadSize { get; set; }
+        public bool ResponseRequired { get; set; }
+        public uint CommandCode { get; set; }
+        public int ReturnCode { get; set; }
+        public uint Flags { get; set; }
+        public uint ProtocolVersion { get; set; }
 
         // Serializes the header information into a byte array
-        internal byte[] Serialize()
+        public byte[] Serialize()
         {
             // Create output array
             byte[] Output = new byte[33];
@@ -68,7 +68,7 @@ namespace Canti.Blockchain
         }
 
         // Deserializes the header information from a byte array
-        internal static BucketHead2 Deserialize(byte[] Data)
+        public static BucketHead2 Deserialize(byte[] Data)
         {
             try
             {

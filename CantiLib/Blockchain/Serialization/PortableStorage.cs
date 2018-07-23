@@ -16,7 +16,7 @@ namespace Canti.Blockchain
 {
     // A key-value storage solutions for encoding and decoding objects as raw bytes
     [Serializable]
-    internal partial class PortableStorage
+    public partial class PortableStorage
     {
         // Logger
         private Logger Logger;
@@ -25,14 +25,14 @@ namespace Canti.Blockchain
         private Dictionary<string, object> Entries = new Dictionary<string, object>();
 
         // Entry point
-        internal PortableStorage(Logger Logger = null)
+        public PortableStorage(Logger Logger = null)
         {
             // Set logger
             if (Logger != null) this.Logger = Logger;
         }
 
         // Add an entry
-        internal bool AddEntry(string Name, object Value)
+        public bool AddEntry(string Name, object Value)
         {
             // Verify entry is valid
             if (Value == null) return false;
@@ -43,7 +43,7 @@ namespace Canti.Blockchain
         }
 
         // Adds a new entry as a raw hexstring representation of the object's raw bytes
-        internal bool AddEntryAsBinary(string Name, object Value)
+        public bool AddEntryAsBinary(string Name, object Value)
         {
             // Verify entry is valid
             if (Value == null) return false;
@@ -69,7 +69,7 @@ namespace Canti.Blockchain
         }
 
         // Serializes entry table to a byte array
-        internal byte[] Serialize(bool IncludeHeader = true)
+        public byte[] Serialize(bool IncludeHeader = true)
         {
             // Create an output array
             byte[] Output = new byte[0];
@@ -103,7 +103,7 @@ namespace Canti.Blockchain
         }
 
         // Deserializes a byte array to a storage object
-        internal byte[] Deserialize(byte[] Data, bool IncludeHeader = true)
+        public byte[] Deserialize(byte[] Data, bool IncludeHeader = true)
         {
             // Verify header
             int Offset = 0;
@@ -626,7 +626,7 @@ namespace Canti.Blockchain
         }
 
         // Deserializes an array packed into a byte array
-        internal T[] DeserializeArrayFromBinary<T>(byte[] Data)
+        public T[] DeserializeArrayFromBinary<T>(byte[] Data)
         {
             // Create a list of objects
             List<T> Output = new List<T>();
@@ -659,7 +659,7 @@ namespace Canti.Blockchain
             // Return output
             return Output.ToArray();
         }
-        internal T[] DeserializeArrayFromBinary<T>(string Name)
+        public T[] DeserializeArrayFromBinary<T>(string Name)
         {
             // Get string
             string Value = (string)Entries[Name];
@@ -674,14 +674,14 @@ namespace Canti.Blockchain
         }
 
         // Gets an entry from the entry dictionary
-        internal object GetEntry(string Name)
+        public object GetEntry(string Name)
         {
             if (Entries.ContainsKey(Name)) return Entries[Name];
             else return null;
         }
 
         // Gets all entries from the entry dictionary as an object array
-        internal object[] GetEntries()
+        public object[] GetEntries()
         {
             List<object> Output = new List<object>();
             foreach (KeyValuePair<string, object> Entry in Entries)

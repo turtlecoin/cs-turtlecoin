@@ -10,7 +10,7 @@ using Canti.Data;
 
 namespace Canti.Blockchain.Crypto.Keccak
 {
-    internal static class Keccak
+    public static class Keccak
     {
         private static void Keccakf(ulong[] state, int rounds)
         {

@@ -13,12 +13,12 @@ namespace Canti.Utilities
     /// <summary>
     /// Utility class for QueuedWorker instances
     /// </summary>
-    internal struct Work
+    public struct Work
     {
-        internal Delegate Delegate { get; set; }
-        internal object Object { get; set; }
-        internal object[] Params { get; set; }
-        internal Work(Delegate Delegate, object Object, params object[] Params)
+        public Delegate Delegate { get; set; }
+        public object Object { get; set; }
+        public object[] Params { get; set; }
+        public Work(Delegate Delegate, object Object, params object[] Params)
         {
             this.Delegate = Delegate;
             this.Object = Object;

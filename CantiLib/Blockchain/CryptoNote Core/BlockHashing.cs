@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Canti.Blockchain
 {
-    internal partial class CryptoNoteCore
+    public partial class CryptoNoteCore
     {
 
     }

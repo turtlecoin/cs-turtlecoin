@@ -12,13 +12,13 @@ namespace Canti.Blockchain.Commands
     class TimedSync
     {
         // Command ID
-        internal const int Id = GlobalsConfig.LEVIN_COMMANDS_BASE + 2;
+        public const int Id = GlobalsConfig.LEVIN_COMMANDS_BASE + 2;
 
         // Outgoing request structure
-        internal struct Request : ICommandRequestBase
+        public struct Request : ICommandRequestBase
         {
             // Variables
-            internal CoreSyncData PayloadData { get; set; }
+            public CoreSyncData PayloadData { get; set; }
 
             // Serializes request data into a byte array
             public byte[] Serialize()
@@ -49,12 +49,12 @@ namespace Canti.Blockchain.Commands
         }
 
         // Incoming response structure
-        internal struct Response : ICommandResponseBase<Response>
+        public struct Response : ICommandResponseBase<Response>
         {
             // Variables
-            internal ulong LocalTime { get; set; }
-            internal CoreSyncData PayloadData { get; set; }
-            internal PeerlistEntry[] LocalPeerlist { get; set; }
+            public ulong LocalTime { get; set; }
+            public CoreSyncData PayloadData { get; set; }
+            public PeerlistEntry[] LocalPeerlist { get; set; }
 
             // Serializes response data
             public byte[] Serialize()
@@ -89,7 +89,7 @@ namespace Canti.Blockchain.Commands
         }
 
         // Process incoming command instance
-        internal static void Invoke(LevinProtocol Context, LevinPeer Peer, Command Command)
+        public static void Invoke(LevinProtocol Context, LevinPeer Peer, Command Command)
         {
             // Command is a request
             if (!Command.IsResponse)

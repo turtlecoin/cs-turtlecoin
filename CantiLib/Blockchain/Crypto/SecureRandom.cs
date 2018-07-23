@@ -10,13 +10,13 @@ using System.Security.Cryptography;
 namespace Canti.Blockchain.Crypto
 {
     // Cryptographically secure random number generation
-    internal class SecureRandom
+    public class SecureRandom
     {
         // Cryptography service provider
         private static RNGCryptoServiceProvider Provider = new RNGCryptoServiceProvider();
 
         // Generate a random number of a given type
-        internal static T Integer<T>() where T : IConvertible
+        public static T Integer<T>() where T : IConvertible
         {
             // Get size of output type
             int Size = Encoding.GetSizeOfObject(default(T));
@@ -35,7 +35,7 @@ namespace Canti.Blockchain.Crypto
         }
 
         // Generate a random byte array of a given length
-        internal static byte[] Bytes(int Length = 0)
+        public static byte[] Bytes(int Length = 0)
         {
             // Create an output array
             byte[] Output = new byte[Length];
@@ -48,7 +48,7 @@ namespace Canti.Blockchain.Crypto
         }
 
         // Generate a random string of letters and numbers
-        internal static string String(int Length = 64)
+        public static string String(int Length = 64)
         {
             // Create a buffer
             byte[] Buffer = new byte[0];

@@ -11,8 +11,9 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Canti.Blockchain;
 using Canti.Blockchain.Crypto;
+using Canti.Blockchain.Commands;
 
-namespace Canti.Tests
+namespace Daemon
 {
     class Program
     {
@@ -110,7 +111,7 @@ namespace Canti.Tests
                 else if (MenuSelection == 2)
                 {
                     // Create a response
-                    Blockchain.Commands.Handshake.Request Request = new Blockchain.Commands.Handshake.Request
+                    Handshake.Request Request = new Handshake.Request
                     {
                         NodeData = new NodeData()
                         {
@@ -136,7 +137,7 @@ namespace Canti.Tests
                         Signature = GlobalsConfig.LEVIN_SIGNATURE,
                         ResponseRequired = false,
                         PayloadSize = (ulong)BodyBytes.Length,
-                        CommandCode = (uint)Blockchain.Commands.Handshake.Id,
+                        CommandCode = (uint)Handshake.Id,
                         ProtocolVersion = GlobalsConfig.LEVIN_VERSION,
                         Flags = LevinProtocol.LEVIN_PACKET_RESPONSE,
                         ReturnCode = LevinProtocol.LEVIN_RETCODE_SUCCESS

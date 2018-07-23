@@ -14,7 +14,7 @@ using static Canti.Blockchain.Crypto.Keccak.Keccak;
 
 namespace Canti.Blockchain.Crypto
 {
-    internal static class Addresses
+    public static class Addresses
     {
         public static string AddressFromKeys(PrivateKey privateSpendKey,
                                              PrivateKey privateViewKey)
