@@ -9,7 +9,8 @@ namespace TestZone
         static void Main(string[] args)
         {
             Console.WriteLine("Add some code here to mess around with the codebase!");
-            Console.WriteLine("To get you started, here's a set of private keys an their corresponding address!");
+            Console.WriteLine();
+            Console.WriteLine("To get you started, here's a set of private keys and their corresponding address!");
 
             WalletKeys keys = KeyOps.GenerateWalletKeys();
 
@@ -20,6 +21,9 @@ namespace TestZone
 
             Console.WriteLine($"Private spend key: {keys.spendKeys.privateKey.ToString()}");
             Console.WriteLine($"Private view key: {keys.viewKeys.privateKey.ToString()}");
+
+            Console.WriteLine();
+
             Console.WriteLine($"Public address: {address}");
         }
     }
