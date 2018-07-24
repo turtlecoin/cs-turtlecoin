@@ -44,6 +44,8 @@ namespace Canti.Blockchain.Crypto
     {
         public ThirtyTwoByteKey(byte[] data)
         {
+            this.data = new byte[32];
+
             /* We just copy the first 32 bytes. This allows us to take in a
                byte[] of any length, without having to resize first. A loop
                copy is apparently faster than Array.Copy() or
@@ -54,12 +56,42 @@ namespace Canti.Blockchain.Crypto
             }
         }
 
+        public ThirtyTwoByteKey()
+        {
+            data = new byte[32];
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as ThirtyTwoByteKey;
+
+            if (other == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < 32; i++)
+            {
+                if (data[i] != other.data[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            return data.GetHashCode();
+        }
+
         public override string ToString()
         {
             return Encoding.ByteArrayToHexString(data);
         }
 
-        public byte[] data = new byte[32];
+        public byte[] data { get; set; }
     }
 
     public class EllipticCurvePoint : ThirtyTwoByteKey
