@@ -82,7 +82,9 @@ namespace Canti.Blockchain.Crypto
             PrivateKey derivedPrivateViewKey
                 = GenerateDeterministicKeys(privateSpendKey).privateKey;
 
-            return privateViewKey == derivedPrivateViewKey;
+            /* Remember `==` is used for comparing if both objects point to
+               the same memory location, not equality */
+            return privateViewKey.Equals(derivedPrivateViewKey);
         }
 
         public static PublicKey PrivateKeyToPublicKey(PrivateKey privateKey)
