@@ -39,7 +39,7 @@ to
 
 (Hopefully this will be fixed later - the latest dotnet sdk is newer than the latest corefx, so you will see a result like `Failed to initialize CoreCLR, HRESULT: 0x80131523` when attempting to do anything without this fix.
 
-* Proceed with installing the package (`makepkg -si`
+* Proceed with installing the package (`makepkg -si`)
 
 ### Compiling
 
