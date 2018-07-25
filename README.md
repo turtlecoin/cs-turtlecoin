@@ -37,6 +37,18 @@ to
 "${pkgname}-${pkgver}.tar.gz::https://dotnetcli.blob.core.windows.net/dotnet/Sdk/2.1.301/dotnet-sdk-2.1.301-linux-x64.tar.gz"
 ```
 
+And the line
+
+```
+'90bc8e1cc9c89fc94ec6a0264200e297e00371136f3b574eccfc077d40d3746d'
+```
+
+to
+
+```
+'SKIP'
+```
+
 (Hopefully this will be fixed later - the latest dotnet sdk is newer than the latest corefx, so you will see a result like `Failed to initialize CoreCLR, HRESULT: 0x80131523` when attempting to do anything without this fix.
 
 * Proceed with installing the package (`makepkg -si`)
