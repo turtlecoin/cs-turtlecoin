@@ -74,7 +74,7 @@ namespace Tests
                 "b7636ec1e84039dbb6d93ddbcf0f8e39e418ce13516fa1d8c40717f81e8d370e"
             ));
 
-            /* A2 is derived from A2 */
+            /* a2 is derived from a1 */
             Assert.IsTrue(KeyOps.AreKeysDeterministic(a1, a2));
 
             /* Derivation is only one way */
