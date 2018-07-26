@@ -5,6 +5,7 @@
 //
 // Please see the included LICENSE file for more information.
 
+using System;
 using Canti.Data;
 
 namespace Canti.Blockchain.Crypto
@@ -44,12 +45,35 @@ namespace Canti.Blockchain.Crypto
     {
         public ThirtyTwoByteKey(byte[] data)
         {
+            if (data.Length < 32)
+            {
+                throw new ArgumentException("Input array must be at least 32 bytes long!");
+            }
+
             this.data = new byte[32];
 
             /* We just copy the first 32 bytes. This allows us to take in a
                byte[] of any length, without having to resize first. A loop
                copy is apparently faster than Array.Copy() or
                Buffer.BlockCopy() when the length is of this size */
+            for (int i = 0; i < 32; i++)
+            {
+                this.data[i] = data[i];
+            }
+        }
+
+        public ThirtyTwoByteKey(string input)
+        {
+            /* 64 chars in hex == 32 bytes */
+            if (input.Length < 64)
+            {
+                throw new ArgumentException("Input string must be at least 64 chars long!");
+            }
+
+            byte[] data = Encoding.HexStringToByteArray(input);
+
+            this.data = new byte[32];
+
             for (int i = 0; i < 32; i++)
             {
                 this.data[i] = data[i];
@@ -97,20 +121,24 @@ namespace Canti.Blockchain.Crypto
     public class EllipticCurvePoint : ThirtyTwoByteKey
     {
         public EllipticCurvePoint(byte[] data) : base(data) {}
+        public EllipticCurvePoint(string data) : base(data) {}
     }
 
     public class EllipticCurveScalar : ThirtyTwoByteKey
     {
         public EllipticCurveScalar(byte[] data) : base(data) {}
+        public EllipticCurveScalar(string data) : base(data) {}
     }
 
     public class PrivateKey : ThirtyTwoByteKey
     {
         public PrivateKey(byte[] data) : base(data) {}
+        public PrivateKey(string data) : base(data) {}
     }
 
     public class PublicKey : ThirtyTwoByteKey
     {
         public PublicKey(byte[] data) : base(data) {}
+        public PublicKey(string data) : base(data) {}
     }
 }
