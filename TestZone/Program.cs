@@ -4,27 +4,54 @@ using Canti.Blockchain.Crypto;
 
 namespace TestZone
 {
-    class Program
+    partial class Program
     {
         static void Main(string[] args)
         {
+            // Begin testing!
             Console.WriteLine("Add some code here to mess around with the codebase!");
-            Console.WriteLine();
-            Console.WriteLine("To get you started, here's a set of private keys and their corresponding address!");
 
-            WalletKeys keys = KeyOps.GenerateWalletKeys();
+            // Get menu choice
+            while (true)
+            {
+                /* 
+                 * Add your test code here!
+                 * There are a few tests added as an example,
+                 * but feel free to add your own to play with
+                 * what the codebase offers!
+                 * :)
+                 */
 
-            string address = Addresses.AddressFromKeys(keys.spendKeys.publicKey,
-                                                       keys.viewKeys.publicKey);
+                // Write command menu
+                Console.WriteLine("Menu:");
+                Console.WriteLine(" 1. Test wallet key generation");
+                Console.WriteLine(" 2. Test encryption");
+                Console.WriteLine(" 3. Exit");
+                Console.Write("Enter your selection: ");
 
-            Console.WriteLine();
+                // Get selection
+                var Selection = Console.ReadKey();
+                Console.WriteLine();
 
-            Console.WriteLine($"Private spend key: {keys.spendKeys.privateKey.ToString()}");
-            Console.WriteLine($"Private view key: {keys.viewKeys.privateKey.ToString()}");
+                // Read selection
+                switch (Selection.KeyChar)
+                {
+                    // Test key generation
+                    case '1':
+                        TestKeyGeneration();
+                        continue;
 
-            Console.WriteLine();
+                    // Test cryptography
+                    case '2':
+                        TestCryptography();
+                        continue;
 
-            Console.WriteLine($"Public address: {address}");
+                    // Exit
+                    case '3':
+                        Environment.Exit(0);
+                        break;
+                }
+            }
         }
     }
 }

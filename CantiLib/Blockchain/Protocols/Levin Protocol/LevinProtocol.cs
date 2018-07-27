@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace Canti.Blockchain
 {
-    public partial class LevinProtocol
+    public partial class LevinProtocol : IProtocol
     {
         // Server connection
         public Server Server;
@@ -38,7 +38,7 @@ namespace Canti.Blockchain
         }
 
         // Data received
-        private void OnDataReceived(object sender, EventArgs e)
+        public void OnDataReceived(object sender, EventArgs e)
         {
             // Get packet data
             Packet Packet = (Packet)sender;
@@ -141,7 +141,7 @@ namespace Canti.Blockchain
         }
 
         // Peer connected
-        private void OnPeerConnected(object sender, EventArgs e)
+        public void OnPeerConnected(object sender, EventArgs e)
         {
             // Get peer connection
             PeerConnection Peer = (PeerConnection)sender;
@@ -151,7 +151,7 @@ namespace Canti.Blockchain
         }
 
         // Peer disconnected
-        private void OnPeerDisconnected(object sender, EventArgs e)
+        public void OnPeerDisconnected(object sender, EventArgs e)
         {
             // Get peer connections
             PeerConnection Peer = (PeerConnection)sender;

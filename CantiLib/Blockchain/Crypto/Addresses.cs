@@ -70,11 +70,9 @@ namespace Canti.Blockchain.Crypto
             /* The length to pad the last block to */
             int lastBlockSize = combined.Count % 8;
 
-            Base58 b = new Base58();
-
             for (int i = 0; i < chunks.Count; i++)
             {
-                string tmp = b.Encode(chunks[i].ToArray());
+                string tmp = Base58.Encode(chunks[i].ToArray());
 
                 if (i < chunks.Count - 1)
                 {

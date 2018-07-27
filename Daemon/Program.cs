@@ -8,9 +8,7 @@ using Canti.Data;
 using Canti.Blockchain.P2P;
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Canti.Blockchain;
-using Canti.Blockchain.Crypto;
 using Canti.Blockchain.Commands;
 
 namespace Daemon
@@ -183,6 +181,9 @@ namespace Daemon
 
             // Close all connections
             Server.Close();
+
+            // Close logger
+            Logger.Stop();
         }
     }
 }

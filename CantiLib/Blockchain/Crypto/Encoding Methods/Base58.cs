@@ -11,7 +11,7 @@ using System.Security.Cryptography;
 
 namespace Canti.Blockchain.Crypto
 {
-    class Base58 : ICryptoEncoder
+    public static class Base58
     {
         // Private variables
         private const string Characters = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -19,7 +19,7 @@ namespace Canti.Blockchain.Crypto
         private const int CheckSumSizeInBytes = 4;
 
         // Encodes a value or set of values
-        public string Encode(byte[] Data)
+        public static string Encode(byte[] Data)
         {
             // Decode input to a big integer value
             BigInteger Integer = 0;
@@ -43,14 +43,14 @@ namespace Canti.Blockchain.Crypto
             // Return output
             return Output;
         }
-        public string EncodeWithCheckSum(byte[] Data)
+        public static string EncodeWithCheckSum(byte[] Data)
         {
             // Encode with checksum input
             return Encode(AddCheckSum(Data));
         }
 
         // Decodes a value
-        public byte[] Decode(string Data)
+        public static byte[] Decode(string Data)
         {
             // Decode base58 string to a big integer value
             BigInteger Integer = 0;
@@ -78,7 +78,7 @@ namespace Canti.Blockchain.Crypto
             // Return output
             return LeadingZeros.Concat(BytesWithoutLeadingZeros).ToArray();
         }
-        public byte[] DecodeWithCheckSum(string Data)
+        public static byte[] DecodeWithCheckSum(string Data)
         {
             // Decode base58 string to get the data with checksum
             byte[] OutputWithCheckSum = Decode(Data);
@@ -92,7 +92,7 @@ namespace Canti.Blockchain.Crypto
         }
 
         // Gets checksum
-        public byte[] GetCheckSum(byte[] Data)
+        public static byte[] GetCheckSum(byte[] Data)
         {
             // Create a managed SHA256 provider
             SHA256 Sha256 = new SHA256Managed();
@@ -114,7 +114,7 @@ namespace Canti.Blockchain.Crypto
         }
 
         // Adds checksum value
-        public byte[] AddCheckSum(byte[] Data)
+        public static byte[] AddCheckSum(byte[] Data)
         {
             // Get checksum of data
             byte[] CheckSum = GetCheckSum(Data);
@@ -124,7 +124,7 @@ namespace Canti.Blockchain.Crypto
         }
 
         // Verify checksum value
-        public byte[] VerifyCheckSum(byte[] Data)
+        public static byte[] VerifyCheckSum(byte[] Data)
         {
             // Remove checksum from input
             byte[] Output = Encoding.SplitByteArray(Data, 0, Data.Length - CheckSumSizeInBytes);

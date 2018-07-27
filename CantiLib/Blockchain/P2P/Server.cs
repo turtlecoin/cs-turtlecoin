@@ -28,7 +28,7 @@ namespace Canti.Blockchain.P2P
         private Thread PeerConnectionThread;
 
         // Define data handling context
-        public LevinProtocol Context;
+        private IProtocol Context;
 
         // public variables
         public Logger Logger;
@@ -120,7 +120,10 @@ namespace Canti.Blockchain.P2P
             while (Running)
             {
                 // Wait for requests
-                while (IncomingRequests.Count > 0) OnDataReceived?.Invoke(IncomingRequests.Dequeue(), EventArgs.Empty);
+                while (IncomingRequests.Count > 0)
+                {
+                    OnDataReceived?.Invoke(IncomingRequests.Dequeue(), EventArgs.Empty);
+                }
 
                 // Let the thread sleep
                 Thread.Sleep(200);
@@ -244,7 +247,7 @@ namespace Canti.Blockchain.P2P
             Running = false;
 
             // Stop the listener
-            Listener.Stop();
+            Listener?.Stop();
 
             // Clear all collections
             IncomingRequests.Clear();
