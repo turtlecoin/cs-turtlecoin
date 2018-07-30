@@ -65,7 +65,10 @@ project, we have provided the `TestZone` project for you to do this in.
 
 The main code base is available in the `CantiLib` folder.
 
-### License
+## License
 
-The code base is licensed under the GNU GPL V3. See the LICENSE file for more
-information.
+```
+Copyright (c) 2018, The TurtleCoin Developers
+
+Please see the included LICENSE file for more information.
+```
