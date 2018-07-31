@@ -27,9 +27,6 @@ namespace Canti.Blockchain.P2P
         private Thread OutgoingRequestThread;
         private Thread PeerConnectionThread;
 
-        // Define data handling context
-        private IProtocol Context;
-
         // public variables
         public Logger Logger;
         public bool Running = false;
@@ -69,9 +66,6 @@ namespace Canti.Blockchain.P2P
                 Logger.Log(Level.FATAL, "Failed to start P2P server on port {0}, port may be in use", Port);
                 OnError?.Invoke("Failed to start P2P server", EventArgs.Empty);
             }
-
-            // Create a levin protocol context
-            Context = new LevinProtocol(this);
 
             // Start request handling thread
             IncomingRequestThread = new Thread(ProcessIncomingRequests);

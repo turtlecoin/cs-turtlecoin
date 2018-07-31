@@ -1,4 +1,9 @@
-﻿using Canti.Blockchain.Crypto;
+﻿//
+// Copyright (c) 2018 The TurtleCoin Developers
+// 
+// Please see the included LICENSE file for more information.
+
+using Canti.Blockchain.Crypto;
 using Canti.Blockchain.Crypto.Keccak;
 using Canti.Data;
 using System;

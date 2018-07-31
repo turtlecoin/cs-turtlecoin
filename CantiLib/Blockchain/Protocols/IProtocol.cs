@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿//
+// Copyright (c) 2018 The TurtleCoin Developers
+// 
+// Please see the included LICENSE file for more information.
+
+using System;
 
 namespace Canti.Blockchain
 {
-    interface IProtocol
+    public interface IProtocol
     {
         void OnDataReceived(object sender, EventArgs e);
         void OnPeerConnected(object sender, EventArgs e);
