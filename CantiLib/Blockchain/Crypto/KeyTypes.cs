@@ -41,6 +41,30 @@ namespace Canti.Blockchain.Crypto
         public PublicKey publicKey;
     }
 
+    public class PublicKeys
+    {
+        public PublicKeys(PublicKey spendKey, PublicKey viewKey)
+        {
+            this.spendKey = spendKey;
+            this.viewKey = viewKey;
+        }
+
+        public PublicKey spendKey;
+        public PublicKey viewKey;
+    }
+
+    public class PrivateKeys
+    {
+        public PrivateKeys(PrivateKey spendKey, PrivateKey viewKey)
+        {
+            this.spendKey = spendKey;
+            this.viewKey = viewKey;
+        }
+
+        public PrivateKey spendKey;
+        public PrivateKey viewKey;
+    }
+
     public class ThirtyTwoByteKey
     {
         public ThirtyTwoByteKey(byte[] data)

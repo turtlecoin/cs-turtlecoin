@@ -6,6 +6,7 @@
 // Please see the included LICENSE file for more information.
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Canti.Utilities;
@@ -33,6 +34,16 @@ namespace Canti.Blockchain.Crypto
                                    Globals.addressPrefix);
         }
 
+        public static string AddressFromKeys(PrivateKey privateSpendKey,
+                                             PrivateKey privateViewKey,
+                                             ulong addressPrefix)
+        {
+            PublicKey publicSpendKey = KeyOps.PrivateKeyToPublicKey(privateSpendKey);
+            PublicKey publicViewKey = KeyOps.PrivateKeyToPublicKey(privateViewKey);
+
+            return AddressFromKeys(publicSpendKey, publicViewKey, addressPrefix);
+        }
+
         public static string AddressFromKeys(PublicKey publicSpendKey,
                                              PublicKey publicViewKey,
                                              ulong addressPrefix)
@@ -44,11 +55,10 @@ namespace Canti.Blockchain.Crypto
             combined.AddRange(publicSpendKey.data);
             combined.AddRange(publicViewKey.data);
 
-            /* Hash the combined data with keccak and take the first 4 bytes */
-            byte[] checksum = keccak(combined.ToArray(), 4);
+            /* Get the checksum of the previous data */
+            byte[] checksum = GetAddressChecksum(combined);
 
-            /* Take the first 4 bytes of this hash and add it to the end of
-               the hash as a checksum */
+            /* Append it to the address bytes */ 
             combined.AddRange(checksum);
 
             /* Now we have to encode our address in base58 - but we do it in
@@ -76,19 +86,139 @@ namespace Canti.Blockchain.Crypto
 
                 if (i < chunks.Count - 1)
                 {
-                    /* Pad to 11 chars with ones, i.e. 0 in base58 */
-                    tmp = tmp.PadRight(11, '1');
+                    /* Pad to 11 chars with ones, i.e. 0 in base58 - we pad
+                       at the beginning */
+                    tmp = tmp.PadLeft(11, '1');
                 }
                 /* Last iteration, we do different padding */
                 else
                 {
-                    tmp = tmp.PadRight(lastBlockSize, '1');
+                    tmp = tmp.PadLeft(lastBlockSize, '1');
                 }
 
                 address += tmp;
             }
 
             return address;
+        }
+
+        public static IEither<string, PublicKeys> KeysFromAddress(string address)
+        {
+            return KeysFromAddress(address, Globals.addressPrefix);
+        }
+
+        public static IEither<string, PublicKeys> KeysFromAddress(string address,
+                                                                  ulong prefix)
+        {
+            /* Split into chunks of 11 */
+            List<List<char>> chunks = address.ToList().ChunkBy(11);
+
+            Base58 b = new Base58();
+
+            List<byte> decoded = new List<byte>();
+
+            foreach (List<char> chunk in chunks)
+            {
+                List<byte> decodedChunk;
+
+                try
+                {
+                    /* Convert char list to string, and decode from base58 */
+                    decodedChunk = new List<byte>(b.Decode(string.Concat(chunk)));
+                }
+                catch (FormatException)
+                {
+                    return Either.Left<string, PublicKeys>(
+                        "Address is not a valid base58 string!"
+                    );
+                }
+
+                /* Only take last 8 bytes, any more in a chunk are padding
+                   from the base58 convert. Remember we pad the beginning
+                   of a chunk, so we need to take the last 8 bytes, not the
+                   first 8 bytes. */
+                decoded.AddRange(decodedChunk.TakeLast(8));
+            }
+
+            byte[] expectedPrefix = PackPrefixAsByteList(prefix).ToArray();
+
+            /* Prefix length + spend key length + view key length 
+                             + checksum length */
+            int expectedLength = expectedPrefix.Length + 32 + 32 + 4;
+
+            if (decoded.Count != expectedLength)
+            {
+                return Either.Left<string, PublicKeys>(
+                    "Address is not expected length!"
+                );
+            }
+
+            byte[] actualPrefix = new byte[expectedPrefix.Length];
+            byte[] spendKey = new byte[32];
+            byte[] viewKey = new byte[32];
+            byte[] actualChecksum = new byte[4];
+
+            int i = 0;
+
+            for (int j = 0; j < expectedPrefix.Length; j++)
+            {
+                actualPrefix[j] = decoded[i++];
+            }
+
+            for (int j = 0; j < spendKey.Length; j++)
+            {
+                spendKey[j] = decoded[i++];
+            }
+
+            for (int j = 0; j < viewKey.Length; j++)
+            {
+                viewKey[j] = decoded[i++];
+            }
+
+            for (int j = 0; j < actualChecksum.Length; j++)
+            {
+                actualChecksum[j] = decoded[i++];
+            }
+
+            /* Sanity checking */
+            for (int j = 0; j < expectedPrefix.Length; j++)
+            {
+                /* We already know the lengths are the same so won't go out
+                   of bounds */
+                if (actualPrefix[j] != expectedPrefix[j])
+                {
+                    return Either.Left<string, PublicKeys>(
+                        "Address prefix is incorrect!"
+                    );
+                }
+            }
+
+            List<byte> addressNoChecksum = new List<byte>();
+
+            addressNoChecksum.AddRange(actualPrefix);
+            addressNoChecksum.AddRange(spendKey);
+            addressNoChecksum.AddRange(viewKey);
+
+            byte[] expectedChecksum = GetAddressChecksum(addressNoChecksum);
+
+            for (int j = 0; j < expectedChecksum.Length; j++)
+            {
+                if (actualChecksum[j] != expectedChecksum[j])
+                {
+                    return Either.Left<string, PublicKeys>(
+                        "Address checksum is incorrect!"
+                    );
+                }
+            }
+
+            return Either.Right<string, PublicKeys>(
+                new PublicKeys(new PublicKey(spendKey), new PublicKey(viewKey))
+            );
+        }
+
+        private static byte[] GetAddressChecksum(List<byte> addressInBytes)
+        {
+            return keccak(addressInBytes.ToArray(), 4);
         }
 
         /* Pack our prefix into as few bytes as possible */

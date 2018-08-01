@@ -9,20 +9,49 @@ using System.Linq;
 using System.Collections.Generic;
 
 using Canti.Data;
+using Canti.Utilities;
 
 namespace Canti.Blockchain.Crypto.Mnemonics
 {
     public static class Mnemonics
     {
-        public static PrivateKey MnemonicToPrivateKey(string words)
+        public static IEither<string, PrivateKey> MnemonicToPrivateKey(string words)
         {
             return MnemonicToPrivateKey(words.Split(' '));
         }
 
-        /* This function assumes you have called IsValidMnemonicFirst. If
-           you haven't, it is liable to blow up. */
-        public static PrivateKey MnemonicToPrivateKey(string[] words)
+        /* Return either left an error message, or right a private key */
+        public static IEither<string, PrivateKey> MnemonicToPrivateKey(string[] words)
         {
+            /* Mnemonics must be 25 words long */
+            if (words.Length != 25)
+            {
+                return Either.Left<string, PrivateKey>(
+                    "Mnemonic seed is wrong length - It should be 25 words " +
+                   $"long, but it is {words.Length} words long!"
+                );
+            }
+            
+            /* All words must be present in the word list */
+            foreach (string word in words)
+            {
+                if (!WordList.English.Contains(word))
+                {
+                    return Either.Left<string, PrivateKey>(
+                        $"Mnemonic seed has invalid word - {word} is not " +
+                         "in the English word list!"
+                    );
+                }
+            }
+
+            /* The checksum must be correct */
+            if (!HasValidChecksum(words))
+            {
+                return Either.Left<string, PrivateKey>(
+                    "Mnemonic seed has incorrect checksum!"
+                );
+            }
+
             /* The private key will go here */
             List<byte> data = new List<byte>();
 
@@ -48,7 +77,9 @@ namespace Canti.Blockchain.Crypto.Mnemonics
 
                 if (!(val % wlLen == w1))
                 {
-                    throw new ArgumentException("Invalid mnemonic");
+                    return Either.Left<string, PrivateKey>(
+                        "Invalid mnemonic!"
+                    );
                 }
 
                 /* Convert uint to byte array and append to output private
@@ -57,7 +88,9 @@ namespace Canti.Blockchain.Crypto.Mnemonics
             }
 
             /* And return our new private key */
-            return new PrivateKey(data.ToArray());
+            return Either.Right<string, PrivateKey>(
+                new PrivateKey(data.ToArray())
+            );
         }
 
         public static string PrivateKeyToMnemonic(PrivateKey privateKey)
@@ -113,58 +146,6 @@ namespace Canti.Blockchain.Crypto.Mnemonics
             var wordsNoChecksum = words.Take(words.Length - 1);
 
             return words.Last() == GetChecksumWord(wordsNoChecksum.ToArray());
-        }
-
-        public static (bool valid, string reason) IsValidMnemonic(string words)
-        {
-            return IsValidMnemonic(words.Split(' '));
-        }
-
-        public static (bool valid, string reason) IsValidMnemonic(string[] words)
-        {
-            string err = "";
-
-            /* Mnemonics must be 25 words long */
-            if (words.Length != 25)
-            {
-                err = "Mnemonic seed is wrong length - It should be 25 words " +
-                     $"long, but it is {words.Length} words long!";
-
-                return (false, err);
-            }
-            
-            /* All words must be present in the word list */
-            foreach (string word in words)
-            {
-                if (!WordList.English.Contains(word))
-                {
-                    err = $"Mnemonic seed has invalid word - {word} is not " +
-                           "in the English word list!";
-
-                    return (false, err);
-                }
-            }
-
-            /* The checksum must be correct */
-            if (!HasValidChecksum(words))
-            {
-                err = "Mnemonic seed has incorrect checksum!";
-
-                return (false, err);
-            }
-
-            try
-            {
-                MnemonicToPrivateKey(words);
-            }
-            catch (ArgumentException)
-            {
-                err = "Mnenonic seed is invalid!";
-
-                return (false, err);
-            }
-
-            return (true, err);
         }
     }
 }

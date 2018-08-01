@@ -19,17 +19,43 @@ namespace Tests
         {
             string m1 = "optical rumble bamboo worry auctions width essential request oxygen acoustic wounded gawk ginger ornament sixteen pawnshop pairing soapy rift alley enraged orbit axle binocular bamboo";
 
-            PrivateKey p1 = Mnemonics.MnemonicToPrivateKey(m1);
-
-            /* The corresponding private key to this mnemonic */
-            Assert.AreEqual<PrivateKey>(p1, new PrivateKey("f41d515ac6e84de566f3a9eb559f3e58db6d8b28906857288f9f9f3809846006"));
+            Mnemonics.MnemonicToPrivateKey(m1).Do(
+                err => Assert.Fail($"Failed to parse mnemonic seed: {err}"),
+                /* The corresponding private key to this mnemonic */
+                key => Assert.AreEqual<PrivateKey>(key, new PrivateKey("f41d515ac6e84de566f3a9eb559f3e58db6d8b28906857288f9f9f3809846006"))
+            );
 
             string m2 = "psychic frown wetsuit orders rover rays ruffled initiate adhesive acumen among lectures drunk itches tanks highway evolved amended asked thorn nanny juggled vaults velvet adhesive";
 
-            PrivateKey p2 = Mnemonics.MnemonicToPrivateKey(m2);
+            Mnemonics.MnemonicToPrivateKey(m2).Do(
+                err => Assert.Fail($"Failed to parse mnemonic seed: {err}"),
+                /* A completely unrelated private key */
+                key => Assert.AreNotEqual<PrivateKey>(key, new PrivateKey("17a27c50a43b99505d7934c1f05e748deee52bb813d7b1d0654ac980d1a93304"))
+            );
 
-            /* A completely unrelated private key */
-            Assert.AreNotEqual<PrivateKey>(p2, new PrivateKey("17a27c50a43b99505d7934c1f05e748deee52bb813d7b1d0654ac980d1a93304"));
+            /* Mnemonic with invalid checksum */
+            string m3 = "double hatchet solved bifocals dozen ulcers sickness sneeze unrest deftly molten oven deity spud upgrade shipped vogue razor gopher sailor drowning epoxy nephew oust spud";
+
+            Mnemonics.MnemonicToPrivateKey(m3).Do(
+                err => {/* Expected */},
+                key => Assert.Fail($"Mnemonic has invalid checksum but was still successfully parsed!")
+            );
+
+            /* Not 25 words */
+            string m4 = "lol, i'm not valid";
+
+            Mnemonics.MnemonicToPrivateKey(m4).Do(
+                err => {/* Expected */},
+                key => Assert.Fail($"Mnemonic is invalid length but was still successfully parsed!")
+            );
+
+            /* Final word is not in mnemonic dictionary */
+            string m5 = "daily utopia pistons null giddy pirate return espionage fossil rustled biweekly fictional sedan jubilee asked ugly mystery paper awning titans point luxury eccentric ecstatic word_not_in_dictionary";
+
+            Mnemonics.MnemonicToPrivateKey(m5).Do(
+                err => {/* Expected */},
+                key => Assert.Fail($"Mnemonic has invalid word but was still successfully parsed!")
+            );
         }
 
         [TestMethod]
@@ -61,35 +87,12 @@ namespace Tests
                 string m = Mnemonics.PrivateKeyToMnemonic(p);
 
                 /* Convert back to a private key */
-                PrivateKey p1 = Mnemonics.MnemonicToPrivateKey(m);
-
-                /* Should be the same as the original private key */
-                Assert.AreEqual<PrivateKey>(p, p1);
+                Mnemonics.MnemonicToPrivateKey(m).Do(
+                    err => Assert.Fail($"Failed to parse mnemonic seed: {err}"),
+                    /* Should be the same as the original private key */
+                    key => Assert.AreEqual<PrivateKey>(p, key)
+                );
             }
-        }
-
-        [TestMethod]
-        public void TestIsValidMnemonic()
-        {
-            /* Valid mnemonic */
-            string m1 = "hemlock lamb younger unsafe afield lagoon foes drowning exit piloted punch actress evicted issued zebra gyrate myriad espionage innocent dauntless organs unjustly both cousin issued";
-
-            Assert.IsTrue(Mnemonics.IsValidMnemonic(m1).valid);
-
-            /* Mnemonic with invalid checksum */
-            string m2 = "double hatchet solved bifocals dozen ulcers sickness sneeze unrest deftly molten oven deity spud upgrade shipped vogue razor gopher sailor drowning epoxy nephew oust spud";
-
-            Assert.IsFalse(Mnemonics.IsValidMnemonic(m2).valid);
-
-            /* Not 25 words */
-            string m3 = "lol, i'm not valid";
-
-            Assert.IsFalse(Mnemonics.IsValidMnemonic(m3).valid);
-
-            /* Final word is not in mnemonic dictionary */
-            string m4 = "daily utopia pistons null giddy pirate return espionage fossil rustled biweekly fictional sedan jubilee asked ugly mystery paper awning titans point luxury eccentric ecstatic word_not_in_dictionary";
-
-            Assert.IsFalse(Mnemonics.IsValidMnemonic(m4).valid);
         }
     }
 }
