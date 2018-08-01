@@ -26,5 +26,11 @@ namespace Canti.Utilities
                   .Select(x => x.Select(v => v.Value).ToList())
                   .ToList();
         }
+
+        /* Thanks to - https://stackoverflow.com/a/38596841/8737306 */
+        public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int numElements)
+        {
+            return source.Skip(Math.Max(0, source.Count() - numElements));
+        }
     }
 }
