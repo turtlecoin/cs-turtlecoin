@@ -113,8 +113,6 @@ namespace Canti.Blockchain.Crypto
             /* Split into chunks of 11 */
             List<List<char>> chunks = address.ToList().ChunkBy(11);
 
-            Base58 b = new Base58();
-
             List<byte> decoded = new List<byte>();
 
             foreach (List<char> chunk in chunks)
@@ -124,7 +122,7 @@ namespace Canti.Blockchain.Crypto
                 try
                 {
                     /* Convert char list to string, and decode from base58 */
-                    decodedChunk = new List<byte>(b.Decode(string.Concat(chunk)));
+                    decodedChunk = new List<byte>(Base58.Decode(string.Concat(chunk)));
                 }
                 catch (FormatException)
                 {
