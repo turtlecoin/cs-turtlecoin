@@ -140,9 +140,30 @@ namespace Canti.Blockchain.Crypto.Keccak
             return x << (int)y | x >> (int)((64 - y));
         }
 
-        /* Output length must be 32 bytes or less */
+        /* Hashes the given input with keccak, into an output hash of 200
+           bytes. */
+        public static byte[] keccak1600(byte[] input)
+        {
+            byte[] result = _keccak(input, 200);
+
+            byte[] output = new byte[200];
+
+            /* Copy result to output */
+            Buffer.BlockCopy(result, 0, output, 0, 200);
+
+            return output;
+        }
+
+        /* Hashes the given input with keccak, into an output hash of 32 bytes.
+           Copies outputLength bytes of the output and returns it. Output
+           length cannot be larger than 32. */
         public static byte[] keccak(byte[] input, int outputLength = 32)
         {
+            if (outputLength > 32)
+            {
+                throw new ArgumentException("Output length must be 32 bytes or less!");
+            }
+
             byte[] result = _keccak(input, 32);
 
             byte[] output = new byte[outputLength];
