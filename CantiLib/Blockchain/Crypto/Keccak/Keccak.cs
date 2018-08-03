@@ -12,7 +12,7 @@ namespace Canti.Blockchain.Crypto.Keccak
 {
     public static class Keccak
     {
-        private static void Keccakf(ulong[] state, int rounds)
+        public static void keccakf(ulong[] state, int rounds)
         {
             ulong t;
 
@@ -99,7 +99,7 @@ namespace Canti.Blockchain.Crypto.Keccak
                     state[i / 8] ^= Encoding.ByteArrayToInteger<ulong>(input, offset + i, 8);
                 }
 
-                Keccakf(state, Constants.KECCAK_ROUNDS);
+                keccakf(state, Constants.KECCAK_ROUNDS);
             }
 
             byte[] temp = new byte[144];
@@ -125,7 +125,7 @@ namespace Canti.Blockchain.Crypto.Keccak
                 state[i / 8] ^= Encoding.ByteArrayToInteger<ulong>(temp, i, 8);
             }
 
-            Keccakf(state, Constants.KECCAK_ROUNDS);
+            keccakf(state, Constants.KECCAK_ROUNDS);
 
             byte[] output = new byte[outputSize];
 
