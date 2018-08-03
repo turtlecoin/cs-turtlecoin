@@ -13,102 +13,11 @@ using Canti.Blockchain.Crypto.Keccak;
 
 namespace Canti.Blockchain.Crypto.CryptoNight
 {
-    /* This class encapsulates the different ways we index the 200 byte state
-       buffer. There are different bits we use each section for, of different
-       lengths and offsets. */
-    public class CNState
-    {
-        /* State is a 200 byte buffer */
-        public CNState(byte[] state)
-        {
-            this.state = state;
-        }
-
-        /* AESKey is the first 32 bytes of our 200 byte state buffer */
-        public byte[] GetAESKey()
-        {
-            byte[] AESKey = new byte[AES.Constants.KeySize];
-
-            /* Copy 32 bytes from the state array to the AESKey array */
-            Buffer.BlockCopy(state, 0, AESKey, 0, AESKey.Length);
-
-            return AESKey;
-        }
-
-        /* AESKey2 is a 32 byte array, offset by 32 in state, e.g.
-           state[32:64] */
-        public byte[] GetAESKey2()
-        {
-            byte[] AESKey2 = new byte[AES.Constants.KeySize];
-
-            /* Copy 32 bytes from the state array, at an offset of 32, to the
-               AESKey2 array */
-            Buffer.BlockCopy(state, 32, AESKey2, 0, AESKey2.Length);
-
-            return AESKey2;
-        }
-
-        /* K is the first 64 bytes of our 200 byte state buffer */
-        public byte[] GetK()
-        {
-            byte[] k = new byte[64];
-
-            /* Copy 64 bytes from the state array to the k array */
-            Buffer.BlockCopy(state, 0, k, 0, k.Length);
-
-            return k;
-        }
-
-        /* Text is a 128 byte buffer, offset by 64 bytes in state, e.g.
-           state[64:192] */
-        public byte[] GetText()
-        {
-            byte[] text = new byte[Constants.InitSizeByte];
-
-            /* Copy 128 bytes from the state array, at an offset of 64, to
-               the text array */
-            Buffer.BlockCopy(state, 64, text, 0, text.Length);
-
-            return text;
-        }
-
-        public void SetText(byte[] text)
-        {
-            /* Copy 128 bytes from the text array, to the state array at an
-               offset of 64 */
-            Buffer.BlockCopy(text, 0, state, 64, text.Length);
-        }
-
-        public ulong[] GetHashState()
-        {
-            ulong[] hashState = new ulong[state.Length / 8];
-
-            /* Coerce state into an array of ulongs rather than bytes */
-            Buffer.BlockCopy(state, 0, hashState, 0, state.Length);
-
-            return hashState;
-        }
-
-        public void SetHashState(ulong[] hashState)
-        {
-            /* Coerce hashState back into an array of bytes */
-            Buffer.BlockCopy(hashState, 0, state, 0, state.Length);
-        }
-
-        public byte[] GetState()
-        {
-            return state;
-        }
-
-        /* The underlying 200 byte array */
-        private byte[] state;
-    }
-
     public static class CryptoNight
     {
-        /* Takes a byte[] input, and return a byte[] output, of length 256 */
         /* TODO: Take memory, iterations, etc as input struct, or possibly
            use an interface */
+        /* Returns a 32 byte hash */
         public static byte[] CryptoNightVersionZero(byte[] data)
         {
             /* CryptoNight Step 1: Use Keccak1600 to initialize the 'state'
@@ -158,7 +67,6 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 a[i] = (byte)(k[i] ^ k[i+32]);
                 b[i] = (byte)(k[i+16] ^ k[i+48]);
             }
-
 
             /* CryptoNight Step 3: Bounce randomly 1,048,576 times (1<<20)
              * through the mixing scratchpad, using 524,288 iterations of the
@@ -378,6 +286,97 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             /* Bitwise AND with (memory / blocksize) - 1*/
             return (int)(j & (Constants.Memory / AES.Constants.BlockSize - 1));
+        }
+
+        /* This class encapsulates the different ways we index the 200 byte
+           state buffer. There are different bits we use each section for,
+           of different lengths and offsets. */
+        private sealed class CNState
+        {
+            /* State is a 200 byte buffer */
+            public CNState(byte[] state)
+            {
+                this.state = state;
+            }
+
+            /* AESKey is the first 32 bytes of our 200 byte state buffer */
+            public byte[] GetAESKey()
+            {
+                byte[] AESKey = new byte[AES.Constants.KeySize];
+
+                /* Copy 32 bytes from the state array to the AESKey array */
+                Buffer.BlockCopy(state, 0, AESKey, 0, AESKey.Length);
+
+                return AESKey;
+            }
+
+            /* AESKey2 is a 32 byte array, offset by 32 in state, e.g.
+               state[32:64] */
+            public byte[] GetAESKey2()
+            {
+                byte[] AESKey2 = new byte[AES.Constants.KeySize];
+
+                /* Copy 32 bytes from the state array, at an offset of 32, to the
+                   AESKey2 array */
+                Buffer.BlockCopy(state, 32, AESKey2, 0, AESKey2.Length);
+
+                return AESKey2;
+            }
+
+            /* K is the first 64 bytes of our 200 byte state buffer */
+            public byte[] GetK()
+            {
+                byte[] k = new byte[64];
+
+                /* Copy 64 bytes from the state array to the k array */
+                Buffer.BlockCopy(state, 0, k, 0, k.Length);
+
+                return k;
+            }
+
+            /* Text is a 128 byte buffer, offset by 64 bytes in state, e.g.
+               state[64:192] */
+            public byte[] GetText()
+            {
+                byte[] text = new byte[Constants.InitSizeByte];
+
+                /* Copy 128 bytes from the state array, at an offset of 64, to
+                   the text array */
+                Buffer.BlockCopy(state, 64, text, 0, text.Length);
+
+                return text;
+            }
+
+            public void SetText(byte[] text)
+            {
+                /* Copy 128 bytes from the text array, to the state array at an
+                   offset of 64 */
+                Buffer.BlockCopy(text, 0, state, 64, text.Length);
+            }
+
+            public ulong[] GetHashState()
+            {
+                ulong[] hashState = new ulong[state.Length / 8];
+
+                /* Coerce state into an array of ulongs rather than bytes */
+                Buffer.BlockCopy(state, 0, hashState, 0, state.Length);
+
+                return hashState;
+            }
+
+            public void SetHashState(ulong[] hashState)
+            {
+                /* Coerce hashState back into an array of bytes */
+                Buffer.BlockCopy(hashState, 0, state, 0, state.Length);
+            }
+
+            public byte[] GetState()
+            {
+                return state;
+            }
+
+            /* The underlying 200 byte array */
+            private byte[] state;
         }
     }
 }
