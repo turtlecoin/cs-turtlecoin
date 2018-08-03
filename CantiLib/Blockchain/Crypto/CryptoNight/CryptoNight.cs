@@ -13,6 +13,97 @@ using Canti.Blockchain.Crypto.Keccak;
 
 namespace Canti.Blockchain.Crypto.CryptoNight
 {
+    /* This class encapsulates the different ways we index the 200 byte state
+       buffer. There are different bits we use each section for, of different
+       lengths and offsets. */
+    public class CNState
+    {
+        /* State is a 200 byte buffer */
+        public CNState(byte[] state)
+        {
+            this.state = state;
+        }
+
+        /* AESKey is the first 32 bytes of our 200 byte state buffer */
+        public byte[] GetAESKey()
+        {
+            byte[] AESKey = new byte[AES.Constants.KeySize];
+
+            /* Copy 32 bytes from the state array to the AESKey array */
+            Buffer.BlockCopy(state, 0, AESKey, 0, AESKey.Length);
+
+            return AESKey;
+        }
+
+        /* AESKey2 is a 32 byte array, offset by 32 in state, e.g.
+           state[32:64] */
+        public byte[] GetAESKey2()
+        {
+            byte[] AESKey2 = new byte[AES.Constants.KeySize];
+
+            /* Copy 32 bytes from the state array, at an offset of 32, to the
+               AESKey2 array */
+            Buffer.BlockCopy(state, 32, AESKey2, 0, AESKey2.Length);
+
+            return AESKey2;
+        }
+
+        /* K is the first 64 bytes of our 200 byte state buffer */
+        public byte[] GetK()
+        {
+            byte[] k = new byte[64];
+
+            /* Copy 64 bytes from the state array to the k array */
+            Buffer.BlockCopy(state, 0, k, 0, k.Length);
+
+            return k;
+        }
+
+        /* Text is a 128 byte buffer, offset by 64 bytes in state, e.g.
+           state[64:192] */
+        public byte[] GetText()
+        {
+            byte[] text = new byte[Constants.InitSizeByte];
+
+            /* Copy 128 bytes from the state array, at an offset of 64, to
+               the text array */
+            Buffer.BlockCopy(state, 64, text, 0, text.Length);
+
+            return text;
+        }
+
+        public void SetText(byte[] text)
+        {
+            /* Copy 128 bytes from the text array, to the state array at an
+               offset of 64 */
+            Buffer.BlockCopy(text, 0, state, 64, text.Length);
+        }
+
+        public ulong[] GetHashState()
+        {
+            ulong[] hashState = new ulong[state.Length / 8];
+
+            /* Coerce state into an array of ulongs rather than bytes */
+            Buffer.BlockCopy(state, 0, hashState, 0, state.Length);
+
+            return hashState;
+        }
+
+        public void SetHashState(ulong[] hashState)
+        {
+            /* Coerce hashState back into an array of bytes */
+            Buffer.BlockCopy(hashState, 0, state, 0, state.Length);
+        }
+
+        public byte[] GetState()
+        {
+            return state;
+        }
+
+        /* The underlying 200 byte array */
+        private byte[] state;
+    }
+
     public static class CryptoNight
     {
         /* Takes a byte[] input, and return a byte[] output, of length 256 */
@@ -21,40 +112,22 @@ namespace Canti.Blockchain.Crypto.CryptoNight
         public static byte[] CryptoNightVersionZero(byte[] data)
         {
             /* CryptoNight Step 1: Use Keccak1600 to initialize the 'state'
-             * 'text', 'k', and 'aesKey' buffers
+             * buffer, encapsulated in cnState
              */
 
-
-            /* Hash the inputted data with keccak into a 200 byte hash */
-            byte[] state = Keccak.Keccak.keccak1600(data);
-
-            /* State returned is 200 bytes, k takes the first 64 bytes, and
-               text takes the latter 128 bytes */
-            byte[] k = new byte[64];
-            byte[] text = new byte[Constants.InitSizeByte];
-
-            /* Copy 64 bytes from the state array to the k array */
-            Buffer.BlockCopy(state, 0, k, 0, k.Length);
-
-            /* Copy InitSizeByte bytes from the state array, at an offset of
-               k.Length, to the text array */
-            Buffer.BlockCopy(state, k.Length, text, 0, text.Length);
-
-            byte[] aesKey = new byte[AES.Constants.KeySize];
-
-            /* Copy AESKeySize bytes from the state array to the aesKey array */
-            Buffer.BlockCopy(state, 0, aesKey, 0, aesKey.Length);
-
+            CNState cnState = new CNState(Keccak.Keccak.keccak1600(data));
 
             /* CryptoNight Step 2:  Iteratively encrypt the results from Keccak
              * to fill the 2MB large random access buffer.
              */
 
             /* Expand our initial key into many for each round of pseudo aes */
-            byte[] expandedKeys = AES.AES.ExpandKey(aesKey);
+            byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey());
 
             /* Our large scratchpad, 2MB in default CN */
             byte[] scratchpad = new byte[Constants.Memory];
+
+            byte[] text = cnState.GetText();
 
             for (int i = 0; i < Constants.CNIterations; i++)
             {
@@ -77,6 +150,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             byte[] b = new byte[AES.Constants.BlockSize];
             byte[] c = new byte[AES.Constants.BlockSize];
             byte[] d = new byte[AES.Constants.BlockSize];
+
+            byte[] k = cnState.GetK();
 
             for (int i = 0; i < AES.Constants.BlockSize; i++)
             {
@@ -132,15 +207,11 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 }
             }
 
-            /* Copy state offset to text again */
-            Buffer.BlockCopy(state, k.Length, text, 0, text.Length);
-
-            /* Copy AESKeySize bytes from the state array to the aesKey array,
-               offset by 32 bytes this time */
-            Buffer.BlockCopy(state, 32, aesKey, 0, aesKey.Length);
+            /* Reinitialize text from state */
+            text = cnState.GetText();
 
             /* Expand our initial key into many for each round of pseudo aes */
-            expandedKeys = AES.AES.ExpandKey(aesKey);
+            expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey2());
 
 
             /* CryptoNight Step 4:  Sequentially pass through the mixing buffer
@@ -171,19 +242,20 @@ namespace Canti.Blockchain.Crypto.CryptoNight
              * to the final 256 bit hash output.
              */
 
-            /* Copy text back to state with offset */
-            Buffer.BlockCopy(text, 0, state, k.Length, text.Length);
+            /* Copy text back to state */
+            cnState.SetText(text);
 
-            ulong[] tmp = new ulong[state.Length / 8];
+            /* Get the state buffer as an array of ulongs rather than bytes */
+            ulong[] hashState = cnState.GetHashState();
 
-            /* Coerce state into an array of ulongs, tmp */
-            Buffer.BlockCopy(state, 0, tmp, 0, state.Length);
+            Keccak.Keccak.keccakf(hashState, 24);
 
-            Keccak.Keccak.keccakf(tmp, 24);
+            /* Set the state buffer from the coerced hash state */
+            cnState.SetHashState(hashState);
 
-            /* Coerce tmp back into an array of bytes, state */
-            Buffer.BlockCopy(tmp, 0, state, 0, state.Length);
-
+            /* Get the actual state buffer finally */
+            byte[] state = cnState.GetState();
+            
             /* Choose the final hashing function to use based on the value of
                state[0] */
             switch(state[0] % 4)
