@@ -52,7 +52,7 @@ namespace Canti.Blockchain.Crypto.AES
             }
         }
 
-        private static void EncryptionRound(byte[] key, byte[] data, int offset)
+        public static void EncryptionRound(byte[] key, byte[] data, int offset = 0)
         {
             for (int i = 0; i < Constants.BlockSize; i++)
             {

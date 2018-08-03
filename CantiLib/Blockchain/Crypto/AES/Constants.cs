@@ -42,6 +42,8 @@ namespace Canti.Blockchain.Crypto.AES
         public const int RoundBase = 7;
 
         public const int BlockSize = 16;
+        
+        public const int KeySize = 32;
 
         public static readonly byte[] Gf8 =
         {
