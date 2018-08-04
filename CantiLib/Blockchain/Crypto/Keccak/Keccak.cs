@@ -8,6 +8,7 @@ using System;
 
 using Canti.Data;
 
+/* This is pre NIST keccak before the sha-3 revisions */
 namespace Canti.Blockchain.Crypto.Keccak
 {
     public static class Keccak

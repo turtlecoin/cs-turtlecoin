@@ -45,6 +45,11 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
         public Skein512() : base(512, 512) { }
     }
 
+    public class Skein512_256 : Skein
+    {
+        public Skein512_256() : base (512, 256) { }
+    }
+
     public class Skein1024 : Skein
     {
         public Skein1024() : base(1024, 1024) { }

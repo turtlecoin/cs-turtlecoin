@@ -21,6 +21,10 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
+
+Bug fixes:
+Copyright (c) 2015 Pavel Kovalenko
+Same licence, etc. applies.
 */
 
 using System;
@@ -28,169 +32,149 @@ using System.Security.Cryptography;
 
 namespace Canti.Blockchain.Crypto.Skein.SkeinFish
 {
-    public enum ThreefishTransformType
-    {
-        Encrypt, Decrypt
-    }
+    public enum ThreefishTransformMode {Encrypt, Decrypt}
 
     public class ThreefishTransform : ICryptoTransform
     {
-        delegate int TransformFunc(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset);
+        private delegate int TransformFunc(byte[] input, int inputOffset, int inputCount,
+            byte[] output, int outputOffset);
 
-        private readonly ThreefishCipher _cipher;
-        private readonly TransformFunc _transformFunc;
-
-        private readonly CipherMode  _cipherMode;
-        private readonly PaddingMode _paddingMode;
-
-        private readonly int _cipherBytes;
-        private readonly int _cipherWords;
-
-        private readonly ulong[] _block;
-        private readonly ulong[] _tempBlock;
-        private readonly ulong[] _iv;
-        
+        private readonly ThreefishCipher cipher;
+        private readonly TransformFunc transformFunc;
+        private readonly ThreefishTransformMode transformMode;
+        private readonly CipherMode cipherMode;
+        private readonly PaddingMode paddingMode;
+        private readonly int feedbackBytes;
+        private readonly int cipherBytes;
+        private readonly int cipherWords;
+        private readonly ulong[] block;
+        private readonly ulong[] tempBlock;
+        private readonly ulong[] iv;
+        private readonly byte[] depadBuffer;
+        private bool depadBufferFilled = false;
         // Used when in a stream ciphering mode
-        private readonly byte[] _streamBytes;
-        private int _usedStreamBytes;
+        private readonly byte[] streamBytes;
+        private int usedStreamBytes;
 
-        public ThreefishTransform(
-            byte[] key, byte[] iv, ThreefishTransformType type, CipherMode mode, PaddingMode padding
-        )
+        internal ThreefishTransform(byte[] key, byte[] iv, int feedbackSize, ThreefishTransformMode transformMode,
+            CipherMode cipherMode, PaddingMode paddingMode)
         {
-            _cipherMode    = mode;
-            _paddingMode   = padding;
-
-            _cipherBytes = key.Length;
-            _cipherWords = key.Length / 8;
-            OutputBlockSize  = key.Length * 8;
-
-            // Allocate working blocks now so that we don't
-            // have to allocate them each time 
-            // Transform(Final)Block is called
-            _block = new ulong[_cipherWords];
-            _tempBlock = new ulong[_cipherWords];
-            _streamBytes = new byte[_cipherBytes];
-
-            // Allocate IV and set value
-            _iv = new ulong[_cipherWords];
-            GetBytes(iv, 0, _iv, _cipherBytes);
-
-            // Figure out which cipher we need based on
-            // the cipher bit size
+            this.transformMode = transformMode;
+            this.cipherMode = cipherMode;
+            this.paddingMode = paddingMode;
+            cipherBytes = key.Length;
+            cipherWords = key.Length/8;
+            feedbackBytes = feedbackSize/8;
+            // Allocate working blocks now so that we don't have to allocate them
+            // each time Transform(Final)Block is called
+            block = new ulong[cipherWords];
+            tempBlock = new ulong[cipherWords];
+            streamBytes = new byte[cipherBytes];
+            depadBuffer = new byte[cipherBytes];
+            this.iv = new ulong[cipherWords];
+            GetBytes(iv, 0, this.iv, cipherBytes);
             switch (OutputBlockSize)
             {
-                case 256:
-                    _cipher = new Threefish256();
-                    break;
-                case 512:
-                    _cipher = new Threefish512();
-                    break;
-                case 1024:
-                    _cipher = new Threefish1024();
-                    break;
-
-                default:
-                    throw new CryptographicException("Unsupported key/block size.");
+            case 256/8: cipher = new Threefish256(); break;
+            case 512/8: cipher = new Threefish512(); break;
+            case 1024/8: cipher = new Threefish1024(); break;
+            default: throw new CryptographicException("Unsupported key/block size.");
             }
-
-            bool e = (type == ThreefishTransformType.Encrypt);
-
-            switch(_cipherMode)
+            bool e = transformMode==ThreefishTransformMode.Encrypt;
+            switch (cipherMode)
             {
-                case CipherMode.ECB:
-                    _transformFunc = e ? new TransformFunc(EcbEncrypt) : new TransformFunc(EcbDecrypt);
-                    break;
-                case CipherMode.CBC:
-                    _transformFunc = e ? new TransformFunc(CbcEncrypt) : new TransformFunc(CbcDecrypt);
-                    break;
-                case CipherMode.OFB:
-                    _transformFunc = new TransformFunc(OfbApplyStream);
-                    break;
-                case CipherMode.CFB:
-                    _transformFunc = e ? new TransformFunc(CfbEncrypt) : new TransformFunc(CfbDecrypt);
-                    break;
-                case CipherMode.CTS:
-                    throw new CryptographicException("CTS mode not supported.");
+            case CipherMode.ECB:
+                transformFunc = e ? EcbEncrypt : new TransformFunc(EcbDecrypt);
+                break;
+            case CipherMode.CBC:
+                transformFunc = e ? CbcEncrypt : new TransformFunc(CbcDecrypt);
+                break;
+            case CipherMode.OFB:
+                transformFunc = OfbApplyStream;
+                break;
+            case CipherMode.CFB:
+                transformFunc = e ? CfbEncrypt : new TransformFunc(CfbDecrypt);
+                break;
+            default:
+                throw new CryptographicException("Unsupported cipher mode.");
             }
-
-            // Set the key
-            var keyWords = new ulong[_cipherWords];
-            GetBytes(key, 0, keyWords, _cipherBytes);
-            _cipher.SetKey(keyWords);
-
+            var keyWords = new ulong[cipherWords];
+            GetBytes(key, 0, keyWords, cipherBytes);
+            cipher.SetKey(keyWords);
             InitializeBlocks();
         }
 
-        // (Re)initializes the blocks for encryption
-        void InitializeBlocks()
+        public void SetTweak(ulong[] tweak)
         {
-            switch (_cipherMode)
+            if (tweak.Length!=2)
+                throw new ArgumentException("Tweak must be an array of two unsigned 64-bit integers.");
+            InternalSetTweak(tweak);
+        }
+
+        public void InternalSetTweak(ulong[] tweak) { cipher.SetTweak(tweak); }
+
+        // (Re)initializes the blocks for encryption
+        private void InitializeBlocks()
+        {
+            switch (cipherMode)
             {
-                case CipherMode.ECB:
-                case CipherMode.CBC:
-                    // Clear the working block
-                    for (int i = 0; i < _cipherWords; i++)
-                        _block[i] = 0;
-                    break;
-
-                case CipherMode.OFB:
-                    // Copy the IV to the working block
-                    for (int i = 0; i < _cipherWords; i++)
-                        _block[i] = _iv[i];
-
-                    break;
-
-                case CipherMode.CFB:
-                    // Copy IV to cipher stream bytes
-                    PutBytes(_iv, _streamBytes, 0, _cipherBytes);
-                    break;
+            case CipherMode.ECB:
+            case CipherMode.CBC:
+                // Clear the working block
+                for (int i = 0; i<cipherWords; i++)
+                    block[i] = 0;
+                break;
+            case CipherMode.OFB:
+                // Copy the IV to the working block
+                for (int i = 0; i<cipherWords; i++)
+                    block[i] = iv[i];
+                break;
+            case CipherMode.CFB:
+                // Copy IV to cipher stream bytes
+                PutBytes(iv, streamBytes, 0, cipherBytes);
+                break;
             }
-
-            _usedStreamBytes = _cipherBytes;
+            depadBufferFilled = false;
+            usedStreamBytes = cipherBytes;
         }
 
         #region Utils
 
-        static ulong GetUInt64(byte[] buf, int offset)
+        private static ulong GetUInt64(byte[] buf, int offset)
         {
             ulong v = buf[offset];
-            v |= (ulong)buf[offset + 1] << 8;
-            v |= (ulong)buf[offset + 2] << 16;
-            v |= (ulong)buf[offset + 3] << 24;
-            v |= (ulong)buf[offset + 4] << 32;
-            v |= (ulong)buf[offset + 5] << 40;
-            v |= (ulong)buf[offset + 6] << 48;
-            v |= (ulong)buf[offset + 7] << 56;
+            v |= (ulong)buf[offset+1]<<8;
+            v |= (ulong)buf[offset+2]<<16;
+            v |= (ulong)buf[offset+3]<<24;
+            v |= (ulong)buf[offset+4]<<32;
+            v |= (ulong)buf[offset+5]<<40;
+            v |= (ulong)buf[offset+6]<<48;
+            v |= (ulong)buf[offset+7]<<56;
             return v;
         }
 
-        static void PutUInt64(byte[] buf, int offset, ulong v)
+        private static void PutUInt64(byte[] buf, int offset, ulong v)
         {
             buf[offset] = (byte)(v & 0xff);
-            buf[offset + 1] = (byte)((v >> 8) & 0xff);
-            buf[offset + 2] = (byte)((v >> 16) & 0xff);
-            buf[offset + 3] = (byte)((v >> 24) & 0xff);
-            buf[offset + 4] = (byte)((v >> 32) & 0xff);
-            buf[offset + 5] = (byte)((v >> 40) & 0xff);
-            buf[offset + 6] = (byte)((v >> 48) & 0xff);
-            buf[offset + 7] = (byte)(v >> 56);
+            buf[offset+1] = (byte)(v>>8 & 0xff);
+            buf[offset+2] = (byte)(v>>16 & 0xff);
+            buf[offset+3] = (byte)(v>>24 & 0xff);
+            buf[offset+4] = (byte)(v>>32 & 0xff);
+            buf[offset+5] = (byte)(v>>40 & 0xff);
+            buf[offset+6] = (byte)(v>>48 & 0xff);
+            buf[offset+7] = (byte)(v>>56);
         }
 
-        static void GetBytes(byte[] input, int offset, ulong[] output, int byteCount)
+        private static void GetBytes(byte[] input, int offset, ulong[] output, int byteCount)
         {
-            for (int i = 0; i < byteCount; i += 8)
-            {
-                output[i / 8] = GetUInt64(input, i + offset);
-            }
+            for (int i = 0; i<byteCount; i += 8)
+                output[i/8] = GetUInt64(input, i+offset);
         }
 
-        static void PutBytes(ulong[] input, byte[] output, int offset, int byteCount)
+        private static void PutBytes(ulong[] input, byte[] output, int offset, int byteCount)
         {
-            for (int i = 0; i < byteCount; i += 8)
-            {
-                PutUInt64(output, i + offset, input[i / 8]);
-            }
+            for (int i = 0; i<byteCount; i += 8)
+                PutUInt64(output, i+offset, input[i/8]);
         }
 
         #endregion
@@ -198,196 +182,151 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
         #region ModeTransformFunctions
 
         // ECB mode encryption
-        int EcbEncrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
+        private int EcbEncrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
         {
-            if (inputCount >= _cipherBytes)
-            {
-                GetBytes(input, inputOffset, _block, _cipherBytes);
-                _cipher.Encrypt(_block, _block);
-                PutBytes(_block, output, outputOffset, _cipherBytes);
-
-                return _cipherBytes;
-            }
-
-            return 0;
+            if (inputCount<cipherBytes)
+                return 0;
+            GetBytes(input, inputOffset, block, cipherBytes);
+            cipher.Encrypt(block, block);
+            PutBytes(block, output, outputOffset, cipherBytes);
+            return cipherBytes;
         }
 
         // ECB mode decryption
-        int EcbDecrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
+        private int EcbDecrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
         {
-            if (inputCount >= _cipherBytes)
-            {
-                GetBytes(input, inputOffset, _block, _cipherBytes);
-                _cipher.Decrypt(_block, _block);
-                PutBytes(_block, output, outputOffset, _cipherBytes);
-
-                return _cipherBytes;
-            }
-
-            return 0;
+            if (inputCount<cipherBytes)
+                return 0;
+            GetBytes(input, inputOffset, block, cipherBytes);
+            cipher.Decrypt(block, block);
+            PutBytes(block, output, outputOffset, cipherBytes);
+            return cipherBytes;
         }
 
         // CBC mode encryption
-        int CbcEncrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
+        private int CbcEncrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
         {
-            if (inputCount >= _cipherBytes)
-            {
-                int i;
-
-                GetBytes(input, inputOffset, _block, _cipherBytes);
-
-                // Apply the IV
-                for (i = 0; i < _cipherWords; i++)
-                    _block[i] ^= _iv[i];
-
-                _cipher.Encrypt(_block, _block);
-
-                // Copy the output to the IV
-                for (i = 0; i < _cipherWords; i++)
-                    _iv[i] = _block[i];
-
-                PutBytes(_block, output, outputOffset, _cipherBytes);
-
-                return _cipherBytes;
-            }
-
-            return 0;
+            if (inputCount<cipherBytes)
+                return 0;
+            GetBytes(input, inputOffset, block, cipherBytes);
+            // Apply the IV
+            for (int i = 0; i<cipherWords; i++)
+                block[i] ^= iv[i];
+            cipher.Encrypt(block, block);
+            // Copy the output to the IV
+            for (int i = 0; i<cipherWords; i++)
+                iv[i] = block[i];
+            PutBytes(block, output, outputOffset, cipherBytes);
+            return cipherBytes;
         }
 
         // CBC mode encryption
-        int CbcDecrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
+        private int CbcDecrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
         {
-            if (inputCount >= _cipherBytes)
+            if (inputCount<cipherBytes)
+                return 0;
+            GetBytes(input, inputOffset, block, cipherBytes);
+            // Copy the block to the temp block for later (wink wink)
+            for (int i = 0; i<cipherWords; i++)
+                tempBlock[i] = block[i];
+            cipher.Decrypt(block, block);
+            // Apply the IV and copy temp block
+            // to IV
+            for (int i = 0; i<cipherWords; i++)
             {
-                int i;
-
-                GetBytes(input, inputOffset, _block, _cipherBytes);
-                
-                // Copy the block to the temp block for later (wink wink)
-                for (i = 0; i < _cipherWords; i++)
-                    _tempBlock[i] = _block[i];
-
-                _cipher.Decrypt(_block, _block);
-
-                // Apply the IV and copy temp block
-                // to IV
-                for (i = 0; i < _cipherWords; i++)
-                {
-                    _block[i] ^= _iv[i];
-                    _iv[i] = _tempBlock[i];
-                }
-
-                PutBytes(_block, output, outputOffset, _cipherBytes);
-
-                return _cipherBytes;
+                block[i] ^= iv[i];
+                iv[i] = tempBlock[i];
             }
-
-            return 0;
+            PutBytes(block, output, outputOffset, cipherBytes);
+            return cipherBytes;
         }
 
         // OFB mode encryption/decryption
-        int OfbApplyStream(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
+        private int OfbApplyStream(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
         {
-            int i;
-
             // Input length doesn't matter in OFB, just encrypt
             // as much as we can
-            for (i = 0; i < inputCount; i++)
+            for (int i = 0; i<inputCount; i++)
             {
                 // Generate new stream bytes if we've used
                 // them all up
-                if (_usedStreamBytes >= _cipherBytes)
+                if (usedStreamBytes>=feedbackBytes)
                 {
-                    _cipher.Encrypt(_block, _block);
-                    PutBytes(_block, _streamBytes, 0, _cipherBytes);
-                    _usedStreamBytes = 0;
+                    cipher.Encrypt(block, block);
+                    PutBytes(block, streamBytes, 0, feedbackBytes);
+                    usedStreamBytes = 0;
                 }
-
                 // XOR input byte with stream byte, output it
-                output[outputOffset + i] = (byte)(input[inputOffset + i] ^
-                                             _streamBytes[_usedStreamBytes]);
-                _usedStreamBytes++;
+                output[outputOffset+i] = (byte)(input[inputOffset+i] ^ streamBytes[usedStreamBytes]);
+                usedStreamBytes++;
             }
-
             // Return bytes done
-            return i;
+            return inputCount;
         }
 
         // CFB mode encryption
-        int CfbEncrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
+        private int CfbEncrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
         {
-            int i;
-
-            for (i = 0; i < inputCount; i++)
+            for (int i = 0; i<inputCount; i++)
             {
                 // Generate new stream bytes if we've used
                 // them all up
-                if (_usedStreamBytes >= _cipherBytes)
+                if (usedStreamBytes>=feedbackBytes)
                 {
                     // Copy cipher stream bytes to working block
                     // (this is the feedback)
-                    GetBytes(_streamBytes, 0, _block, _cipherBytes);
+                    GetBytes(streamBytes, 0, block, feedbackBytes);
                     // Process
-                    _cipher.Encrypt(_block, _block);
+                    cipher.Encrypt(block, block);
                     // Put back
-                    PutBytes(_block, _streamBytes, 0, _cipherBytes);
+                    PutBytes(block, streamBytes, 0, feedbackBytes);
                     // Reset for next time
-                    _usedStreamBytes = 0;
+                    usedStreamBytes = 0;
                 }
-
                 // XOR input byte with stream byte
-                var b = (byte)(input[inputOffset + i] ^ _streamBytes[_usedStreamBytes]);
+                var b = (byte)(input[inputOffset+i] ^ streamBytes[usedStreamBytes]);
                 // Output cipher byte
-                output[outputOffset + i] = b;
+                output[outputOffset+i] = b;
                 // Put cipher byte into stream bytes for the feedback
-                _streamBytes[_usedStreamBytes] = b;
-
-                _usedStreamBytes++;
+                streamBytes[usedStreamBytes] = b;
+                usedStreamBytes++;
             }
-
             // Return bytes done
-            return i;
+            return inputCount;
         }
 
         // CFB mode decryption
-        int CfbDecrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
+        private int CfbDecrypt(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
         {
-            int i;
-
-            for (i = 0; i < inputCount; i++)
+            for (int i = 0; i<inputCount; i++)
             {
                 // Generate new stream bytes if we've used
                 // them all up
-                if (_usedStreamBytes >= _cipherBytes)
+                if (usedStreamBytes>=feedbackBytes)
                 {
                     // Copy cipher stream bytes to working block
                     // (this is the feedback)
-                    GetBytes(_streamBytes, 0, _block, _cipherBytes);
+                    GetBytes(streamBytes, 0, block, feedbackBytes);
                     // Process
-                    _cipher.Encrypt(_block, _block);
+                    cipher.Encrypt(block, block);
                     // Put back
-                    PutBytes(_block, _streamBytes, 0, _cipherBytes);
+                    PutBytes(block, streamBytes, 0, feedbackBytes);
                     // Reset for next time
-                    _usedStreamBytes = 0;
+                    usedStreamBytes = 0;
                 }
-
                 // Get ciphertext byte
-                byte b = input[inputOffset + i];
+                byte b = input[inputOffset+i];
                 // XOR input byte with stream byte, output plaintext
-                output[outputOffset + i] = (byte)(b ^ _streamBytes[_usedStreamBytes]);
+                output[outputOffset+i] = (byte)(b ^ streamBytes[usedStreamBytes]);
                 // Put ciphertext byte into stream bytes for the feedback
-                _streamBytes[_usedStreamBytes] = b;
-
-                _usedStreamBytes++;
+                streamBytes[usedStreamBytes] = b;
+                usedStreamBytes++;
             }
-
             // Return bytes done
-            return i;
+            return inputCount;
         }
 
-
         #endregion
-
 
         #region ICryptoTransform Members
 
@@ -403,148 +342,204 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
 
         public int InputBlockSize
         {
-            get { return OutputBlockSize; }
+            get { return cipherBytes; }
         }
 
-        public int OutputBlockSize { get; private set; }
-
+        public int OutputBlockSize
+        {
+            get { return cipherBytes; }
+        }
 
         private void PadBlock(byte[] input, int inputOffset, int alreadyFilled)
         {
             // Apply the type of padding we're using
-            switch (_paddingMode)
+            switch (paddingMode)
             {
-                case PaddingMode.None: break;
-                case PaddingMode.Zeros:
-                    // Fill with zeros
-                    for (int i = alreadyFilled; i < _cipherBytes; i++)
-                        input[i + inputOffset] = 0;
-
-                    break;
-
-                case PaddingMode.PKCS7:
-                    // Fill each byte value with the number of
-                    // bytes padded
-                    for (int i = alreadyFilled; i < _cipherBytes; i++)
-                        input[i + inputOffset] = (byte) (_cipherBytes - alreadyFilled);
-
-                    break;
-
-                case PaddingMode.ANSIX923:
-                    // fill with zeros, set last byte
-                    // to number of bytes padded
-                    for (int i = alreadyFilled; i < _cipherBytes; i++)
-                    {
-                        input[i + inputOffset] = 0;
-                        // If its the last byte, set to number of bytes padded
-                        if (i == _cipherBytes - 1)
-                            input[i + inputOffset] = (byte)(_cipherBytes - alreadyFilled);
-                    }
-
-                    break;
-
-                case PaddingMode.ISO10126:
-                    // Fill remaining bytes with random values
-                    if (alreadyFilled < _cipherBytes)
-                    {
-                        var randBytes = new byte[_cipherBytes - alreadyFilled];
-                        new RNGCryptoServiceProvider().GetBytes(randBytes);
-
-                        for (int i = alreadyFilled; i < _cipherBytes; i++)
-                            input[i + inputOffset] = randBytes[i - alreadyFilled];
-                    }
-
-                    break;
+            case PaddingMode.None:
+                break;
+            case PaddingMode.Zeros:
+                // Fill with zeros
+                for (int i = alreadyFilled; i<cipherBytes; i++)
+                    input[i+inputOffset] = 0;
+                break;
+            case PaddingMode.PKCS7:
+                // Fill each byte value with the number of
+                // bytes padded
+                for (int i = alreadyFilled; i<cipherBytes; i++)
+                    input[i+inputOffset] = (byte)(cipherBytes-alreadyFilled);
+                break;
+            case PaddingMode.ANSIX923:
+                // fill with zeros, set last byte
+                // to number of bytes padded
+                for (int i = alreadyFilled; i<cipherBytes; i++)
+                {
+                    input[i+inputOffset] = 0;
+                    // If its the last byte, set to number of bytes padded
+                    if (i==cipherBytes-1)
+                        input[i+inputOffset] = (byte)(cipherBytes-alreadyFilled);
+                }
+                break;
+            case PaddingMode.ISO10126:
+                // Fill remaining bytes with random values before the number of bytes padded
+                if (alreadyFilled<cipherBytes)
+                {
+                    var randBytes = new byte[cipherBytes-alreadyFilled];
+                    new RNGCryptoServiceProvider().GetBytes(randBytes);
+                    randBytes[randBytes.Length-1] = (byte)randBytes.Length;
+                    for (int i = alreadyFilled; i<cipherBytes; i++)
+                        input[i+inputOffset] = randBytes[i-alreadyFilled];
+                }
+                break;
             }
         }
 
-        public int TransformBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
+        private byte[] DepadBlock(byte[] input)
         {
-            // Make sure the input count is evenly
-            // divisible by the block size
-            if ((inputCount & (_cipherBytes - 1)) != 0)
-                throw new CryptographicException("inputCount must be divisible by the block size.");
+            var output = input;
+            int padSize;
+            switch (paddingMode)
+            {
+            case PaddingMode.None:
+                break;
+            case PaddingMode.Zeros:
+                break;
+            case PaddingMode.PKCS7:
+                padSize = input[input.Length-1];
+                if (padSize>input.Length || padSize>InputBlockSize || padSize<=0)
+                    throw new CryptographicException("PKCS7 invalid padding");
+                for (int i = 1; i<=padSize; i++)
+                {
+                    if (input[input.Length-i]!=padSize)
+                        throw new CryptographicException("PKCS7 invalid padding");
+                }
+                output = new byte[input.Length-padSize];
+                Buffer.BlockCopy(input, 0, output, 0, output.Length);
+                break;
+            case PaddingMode.ANSIX923:
+                padSize = input[input.Length-1];
+                if (padSize>input.Length || padSize>InputBlockSize || padSize<=0)
+                    throw new CryptographicException("ANSIX923 invalid padding");
+                for (int i = 2; i<=padSize; i++)
+                    if (output[input.Length-i]!=0)
+                        throw new CryptographicException("ANSIX923 invalid padding");
+                output = new byte[input.Length-padSize];
+                Buffer.BlockCopy(input, 0, output, 0, output.Length);
+                break;
+            case PaddingMode.ISO10126:
+                padSize = input[input.Length-1];
+                if (padSize>input.Length || padSize>InputBlockSize || padSize<=0)
+                    throw new CryptographicException("ISO10126 invalid padding");
+                output = new byte[input.Length-padSize];
+                Buffer.BlockCopy(input, 0, output, 0, output.Length);
+                break;
+            }
+            return output;
+        }
 
-            int totalDone = 0;
-            int done;
-            // Apply as much of the transform as we can
+        private int Transform(byte[] input, int inputOffset, int inputCount, byte[] output, int outputOffset)
+        {
+            int done, totalDone = 0;
             do
             {
-                done = _transformFunc(
-                    inputBuffer,
-                    inputOffset + totalDone,
-                    inputCount - totalDone,
-                    outputBuffer,
-                    outputOffset + totalDone
-                    );
-
+                done = transformFunc(input, inputOffset+totalDone, inputCount-totalDone, output,
+                    outputOffset+totalDone);
                 totalDone += done;
-
-            } while (done == _cipherBytes);
-           
+            } while (done==cipherBytes);
             return totalDone;
+        }
+
+        public int TransformBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer,
+            int outputOffset)
+        {
+            if ((inputCount & (cipherBytes-1))!=0)
+                throw new CryptographicException("inputCount must be divisible by the block size.");
+            int done = 0;
+            if (transformMode==ThreefishTransformMode.Encrypt ||
+                paddingMode==PaddingMode.Zeros || paddingMode==PaddingMode.None)
+            {
+                done = Transform(inputBuffer, inputOffset, inputCount, outputBuffer, outputOffset);
+            }
+            else
+            {
+                int inputToProcess = inputCount-cipherBytes;
+                if (depadBufferFilled)
+                {
+                    done = Transform(depadBuffer, 0, cipherBytes, outputBuffer, outputOffset);
+                    outputOffset += cipherBytes;
+                }
+                else
+                    depadBufferFilled = true;
+                Buffer.BlockCopy(inputBuffer, inputOffset+inputToProcess, depadBuffer, 0, cipherBytes);
+                done += Transform(inputBuffer, inputOffset+done, inputToProcess-done, outputBuffer, outputOffset+done);
+            }
+            return done;
         }
 
         public byte[] TransformFinalBlock(byte[] inputBuffer, int inputOffset, int inputCount)
         {
-            var output = new byte[inputCount];
-
-            int totalDone = 0;
-            int done;
-            // Apply as much of the transform as we can
-            do
+            byte[] output;
+            // Do the padding and the final transform if there's any data left
+            if (transformMode==ThreefishTransformMode.Encrypt)
             {
-                done = _transformFunc(
-                    inputBuffer,
-                    inputOffset + totalDone,
-                    inputCount - totalDone,
-                    output,
-                    totalDone
-                    );
-
-                totalDone += done;
-
-            } while (done == _cipherBytes);
-
-            int remaining = inputCount - totalDone;
-
-            // Do the padding and the final transform if
-            // there's any data left
-            if (totalDone < inputCount)
-            {
-                // Resize output buffer to be evenly
-                // divisible by the block size
-                if (inputCount % _cipherBytes != 0)
+                if (inputCount%cipherBytes!=0 && paddingMode==PaddingMode.None)
+                    throw new CryptographicException("inputCount must be divisible by the block size.");
+                output = new byte[inputCount];
+                int done = Transform(inputBuffer, inputOffset, inputCount, output, 0);
+                if ((done<inputCount || inputCount%cipherBytes==0) && paddingMode!=PaddingMode.None)
                 {
-                    int outputSize = inputCount + (_cipherBytes - (inputCount % _cipherBytes));
+                    // Resize output buffer to be evenly divisible by the block size
+                    int outputSize = inputCount+(cipherBytes-(inputCount%cipherBytes));
                     Array.Resize(ref output, outputSize);
+                    int remaining = inputCount-done;
+                    // Copy remaining bytes over to the output
+                    for (int i = 0; i<remaining; i++)
+                        output[i+done] = inputBuffer[inputOffset+done+i];
+                    PadBlock(output, done, remaining);
+                    Transform(output, done, cipherBytes, output, done);
                 }
-                                
-                // Copy remaining bytes over to the output
-                for (int i = 0; i < remaining; i++)
-                    output[i + totalDone] = inputBuffer[inputOffset + totalDone + i];
-
-                // Pad the block
-                PadBlock(output, totalDone, remaining);
-
-                // Encrypt the block
-                _transformFunc(output, totalDone, _cipherBytes, output, totalDone);
             }
-
+            else // decrypt
+            {
+                if (inputCount%cipherBytes!=0)
+                    throw new CryptographicException("inputCount must be divisible by the block size.");
+                if (!depadBufferFilled)
+                {
+                    output = new byte[inputCount];
+                    Transform(inputBuffer, inputOffset, inputCount, output, 0);
+                }
+                else
+                {
+                    // XXX nitrocaster: could be optimized: copy to output and perform in-place decryption
+                    var buf = new byte[cipherBytes+inputCount];
+                    Buffer.BlockCopy(depadBuffer, 0, buf, 0, cipherBytes);
+                    Buffer.BlockCopy(inputBuffer, inputOffset, buf, cipherBytes, inputCount);
+                    output = new byte[cipherBytes+inputCount];
+                    Transform(buf, 0, buf.Length, output, 0);
+                }
+                output = DepadBlock(output);
+            }
             // Reinitialize the cipher
             InitializeBlocks();
-
             return output;
-
         }
 
         #endregion
 
         #region IDisposable Members
 
-        public void Dispose()
+        public void Dispose() { Dispose(true); }
+
+        private void Dispose(bool disposing)
         {
-            // nothing to dispose
+            if (!disposing)
+                return;
+            // reset fields with sensitive data
+            cipher.Clear();
+            Array.Clear(block, 0, block.Length);
+            Array.Clear(tempBlock, 0, tempBlock.Length);
+            Array.Clear(iv, 0, iv.Length);
+            Array.Clear(depadBuffer, 0, depadBuffer.Length);
+            Array.Clear(streamBytes, 0, streamBytes.Length);
         }
 
         #endregion

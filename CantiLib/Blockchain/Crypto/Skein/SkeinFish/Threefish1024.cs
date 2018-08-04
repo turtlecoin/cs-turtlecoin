@@ -27,49 +27,63 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
 {
     internal class Threefish1024 : ThreefishCipher
     {
-        const int CIPHER_SIZE = 1024;
-        const int CIPHER_QWORDS = CIPHER_SIZE / 64;
-        const int EXPANDED_KEY_SIZE = CIPHER_QWORDS + 1;
+        private const int CipherSize = 1024;
+        private const int CipherQwords = CipherSize/64;
+        private const int ExpandedKeySize = CipherQwords+1;
 
         public Threefish1024()
         {
-            // Create the expanded key array
-            ExpandedKey = new ulong[EXPANDED_KEY_SIZE];
-            ExpandedKey[EXPANDED_KEY_SIZE - 1] = KeyScheduleConst;
+            ExpandedKey = new ulong[ExpandedKeySize];
+            ExpandedKey[ExpandedKeySize-1] = KeyScheduleConst;
         }
 
         public override void Encrypt(ulong[] input, ulong[] output)
         {
             // Cache the block, key, and tweak
-            ulong b0 = input[0], b1 = input[1],
-                  b2 = input[2], b3 = input[3],
-                  b4 = input[4], b5 = input[5],
-                  b6 = input[6], b7 = input[7],
-                  b8 = input[8], b9 = input[9],
-                  b10 = input[10], b11 = input[11],
-                  b12 = input[12], b13 = input[13],
-                  b14 = input[14], b15 = input[15];
-            ulong k0 = ExpandedKey[0], k1 = ExpandedKey[1],
-                  k2 = ExpandedKey[2], k3 = ExpandedKey[3],
-                  k4 = ExpandedKey[4], k5 = ExpandedKey[5],
-                  k6 = ExpandedKey[6], k7 = ExpandedKey[7],
-                  k8 = ExpandedKey[8], k9 = ExpandedKey[9],
-                  k10 = ExpandedKey[10], k11 = ExpandedKey[11],
-                  k12 = ExpandedKey[12], k13 = ExpandedKey[13],
-                  k14 = ExpandedKey[14], k15 = ExpandedKey[15],
-                  k16 = ExpandedKey[16];
-            ulong t0 = ExpandedTweak[0], t1 = ExpandedTweak[1],
-                  t2 = ExpandedTweak[2];
-
-
+            ulong b0 = input[0],
+                b1 = input[1],
+                b2 = input[2],
+                b3 = input[3],
+                b4 = input[4],
+                b5 = input[5],
+                b6 = input[6],
+                b7 = input[7],
+                b8 = input[8],
+                b9 = input[9],
+                b10 = input[10],
+                b11 = input[11],
+                b12 = input[12],
+                b13 = input[13],
+                b14 = input[14],
+                b15 = input[15];
+            ulong k0 = ExpandedKey[0],
+                k1 = ExpandedKey[1],
+                k2 = ExpandedKey[2],
+                k3 = ExpandedKey[3],
+                k4 = ExpandedKey[4],
+                k5 = ExpandedKey[5],
+                k6 = ExpandedKey[6],
+                k7 = ExpandedKey[7],
+                k8 = ExpandedKey[8],
+                k9 = ExpandedKey[9],
+                k10 = ExpandedKey[10],
+                k11 = ExpandedKey[11],
+                k12 = ExpandedKey[12],
+                k13 = ExpandedKey[13],
+                k14 = ExpandedKey[14],
+                k15 = ExpandedKey[15],
+                k16 = ExpandedKey[16];
+            ulong t0 = ExpandedTweak[0],
+                t1 = ExpandedTweak[1],
+                t2 = ExpandedTweak[2];
             Mix(ref b0, ref b1, 24, k0, k1);
             Mix(ref b2, ref b3, 13, k2, k3);
             Mix(ref b4, ref b5, 8, k4, k5);
             Mix(ref b6, ref b7, 47, k6, k7);
             Mix(ref b8, ref b9, 8, k8, k9);
             Mix(ref b10, ref b11, 17, k10, k11);
-            Mix(ref b12, ref b13, 22, k12, k13 + t0);
-            Mix(ref b14, ref b15, 37, k14 + t1, k15);
+            Mix(ref b12, ref b13, 22, k12, k13+t0);
+            Mix(ref b14, ref b15, 37, k14+t1, k15);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -100,8 +114,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k7, k8);
             Mix(ref b8, ref b9, 12, k9, k10);
             Mix(ref b10, ref b11, 47, k11, k12);
-            Mix(ref b12, ref b13, 44, k13, k14 + t1);
-            Mix(ref b14, ref b15, 30, k15 + t2, k16 + 1);
+            Mix(ref b12, ref b13, 44, k13, k14+t1);
+            Mix(ref b14, ref b15, 30, k15+t2, k16+1);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -132,8 +146,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k8, k9);
             Mix(ref b8, ref b9, 8, k10, k11);
             Mix(ref b10, ref b11, 17, k12, k13);
-            Mix(ref b12, ref b13, 22, k14, k15 + t2);
-            Mix(ref b14, ref b15, 37, k16 + t0, k0 + 2);
+            Mix(ref b12, ref b13, 22, k14, k15+t2);
+            Mix(ref b14, ref b15, 37, k16+t0, k0+2);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -164,8 +178,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k9, k10);
             Mix(ref b8, ref b9, 12, k11, k12);
             Mix(ref b10, ref b11, 47, k13, k14);
-            Mix(ref b12, ref b13, 44, k15, k16 + t0);
-            Mix(ref b14, ref b15, 30, k0 + t1, k1 + 3);
+            Mix(ref b12, ref b13, 44, k15, k16+t0);
+            Mix(ref b14, ref b15, 30, k0+t1, k1+3);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -196,8 +210,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k10, k11);
             Mix(ref b8, ref b9, 8, k12, k13);
             Mix(ref b10, ref b11, 17, k14, k15);
-            Mix(ref b12, ref b13, 22, k16, k0 + t1);
-            Mix(ref b14, ref b15, 37, k1 + t2, k2 + 4);
+            Mix(ref b12, ref b13, 22, k16, k0+t1);
+            Mix(ref b14, ref b15, 37, k1+t2, k2+4);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -228,8 +242,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k11, k12);
             Mix(ref b8, ref b9, 12, k13, k14);
             Mix(ref b10, ref b11, 47, k15, k16);
-            Mix(ref b12, ref b13, 44, k0, k1 + t2);
-            Mix(ref b14, ref b15, 30, k2 + t0, k3 + 5);
+            Mix(ref b12, ref b13, 44, k0, k1+t2);
+            Mix(ref b14, ref b15, 30, k2+t0, k3+5);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -260,8 +274,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k12, k13);
             Mix(ref b8, ref b9, 8, k14, k15);
             Mix(ref b10, ref b11, 17, k16, k0);
-            Mix(ref b12, ref b13, 22, k1, k2 + t0);
-            Mix(ref b14, ref b15, 37, k3 + t1, k4 + 6);
+            Mix(ref b12, ref b13, 22, k1, k2+t0);
+            Mix(ref b14, ref b15, 37, k3+t1, k4+6);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -292,8 +306,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k13, k14);
             Mix(ref b8, ref b9, 12, k15, k16);
             Mix(ref b10, ref b11, 47, k0, k1);
-            Mix(ref b12, ref b13, 44, k2, k3 + t1);
-            Mix(ref b14, ref b15, 30, k4 + t2, k5 + 7);
+            Mix(ref b12, ref b13, 44, k2, k3+t1);
+            Mix(ref b14, ref b15, 30, k4+t2, k5+7);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -324,8 +338,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k14, k15);
             Mix(ref b8, ref b9, 8, k16, k0);
             Mix(ref b10, ref b11, 17, k1, k2);
-            Mix(ref b12, ref b13, 22, k3, k4 + t2);
-            Mix(ref b14, ref b15, 37, k5 + t0, k6 + 8);
+            Mix(ref b12, ref b13, 22, k3, k4+t2);
+            Mix(ref b14, ref b15, 37, k5+t0, k6+8);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -356,8 +370,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k15, k16);
             Mix(ref b8, ref b9, 12, k0, k1);
             Mix(ref b10, ref b11, 47, k2, k3);
-            Mix(ref b12, ref b13, 44, k4, k5 + t0);
-            Mix(ref b14, ref b15, 30, k6 + t1, k7 + 9);
+            Mix(ref b12, ref b13, 44, k4, k5+t0);
+            Mix(ref b14, ref b15, 30, k6+t1, k7+9);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -388,8 +402,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k16, k0);
             Mix(ref b8, ref b9, 8, k1, k2);
             Mix(ref b10, ref b11, 17, k3, k4);
-            Mix(ref b12, ref b13, 22, k5, k6 + t1);
-            Mix(ref b14, ref b15, 37, k7 + t2, k8 + 10);
+            Mix(ref b12, ref b13, 22, k5, k6+t1);
+            Mix(ref b14, ref b15, 37, k7+t2, k8+10);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -420,8 +434,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k0, k1);
             Mix(ref b8, ref b9, 12, k2, k3);
             Mix(ref b10, ref b11, 47, k4, k5);
-            Mix(ref b12, ref b13, 44, k6, k7 + t2);
-            Mix(ref b14, ref b15, 30, k8 + t0, k9 + 11);
+            Mix(ref b12, ref b13, 44, k6, k7+t2);
+            Mix(ref b14, ref b15, 30, k8+t0, k9+11);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -452,8 +466,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k1, k2);
             Mix(ref b8, ref b9, 8, k3, k4);
             Mix(ref b10, ref b11, 17, k5, k6);
-            Mix(ref b12, ref b13, 22, k7, k8 + t0);
-            Mix(ref b14, ref b15, 37, k9 + t1, k10 + 12);
+            Mix(ref b12, ref b13, 22, k7, k8+t0);
+            Mix(ref b14, ref b15, 37, k9+t1, k10+12);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -484,8 +498,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k2, k3);
             Mix(ref b8, ref b9, 12, k4, k5);
             Mix(ref b10, ref b11, 47, k6, k7);
-            Mix(ref b12, ref b13, 44, k8, k9 + t1);
-            Mix(ref b14, ref b15, 30, k10 + t2, k11 + 13);
+            Mix(ref b12, ref b13, 44, k8, k9+t1);
+            Mix(ref b14, ref b15, 30, k10+t2, k11+13);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -516,8 +530,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k3, k4);
             Mix(ref b8, ref b9, 8, k5, k6);
             Mix(ref b10, ref b11, 17, k7, k8);
-            Mix(ref b12, ref b13, 22, k9, k10 + t2);
-            Mix(ref b14, ref b15, 37, k11 + t0, k12 + 14);
+            Mix(ref b12, ref b13, 22, k9, k10+t2);
+            Mix(ref b14, ref b15, 37, k11+t0, k12+14);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -548,8 +562,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k4, k5);
             Mix(ref b8, ref b9, 12, k6, k7);
             Mix(ref b10, ref b11, 47, k8, k9);
-            Mix(ref b12, ref b13, 44, k10, k11 + t0);
-            Mix(ref b14, ref b15, 30, k12 + t1, k13 + 15);
+            Mix(ref b12, ref b13, 44, k10, k11+t0);
+            Mix(ref b14, ref b15, 30, k12+t1, k13+15);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -580,8 +594,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k5, k6);
             Mix(ref b8, ref b9, 8, k7, k8);
             Mix(ref b10, ref b11, 17, k9, k10);
-            Mix(ref b12, ref b13, 22, k11, k12 + t1);
-            Mix(ref b14, ref b15, 37, k13 + t2, k14 + 16);
+            Mix(ref b12, ref b13, 22, k11, k12+t1);
+            Mix(ref b14, ref b15, 37, k13+t2, k14+16);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -612,8 +626,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k6, k7);
             Mix(ref b8, ref b9, 12, k8, k9);
             Mix(ref b10, ref b11, 47, k10, k11);
-            Mix(ref b12, ref b13, 44, k12, k13 + t2);
-            Mix(ref b14, ref b15, 30, k14 + t0, k15 + 17);
+            Mix(ref b12, ref b13, 44, k12, k13+t2);
+            Mix(ref b14, ref b15, 30, k14+t0, k15+17);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -644,8 +658,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 47, k7, k8);
             Mix(ref b8, ref b9, 8, k9, k10);
             Mix(ref b10, ref b11, 17, k11, k12);
-            Mix(ref b12, ref b13, 22, k13, k14 + t0);
-            Mix(ref b14, ref b15, 37, k15 + t1, k16 + 18);
+            Mix(ref b12, ref b13, 22, k13, k14+t0);
+            Mix(ref b14, ref b15, 37, k15+t1, k16+18);
             Mix(ref b0, ref b9, 38);
             Mix(ref b2, ref b13, 19);
             Mix(ref b6, ref b11, 10);
@@ -676,8 +690,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b6, ref b7, 31, k8, k9);
             Mix(ref b8, ref b9, 12, k10, k11);
             Mix(ref b10, ref b11, 47, k12, k13);
-            Mix(ref b12, ref b13, 44, k14, k15 + t1);
-            Mix(ref b14, ref b15, 30, k16 + t2, k0 + 19);
+            Mix(ref b12, ref b13, 44, k14, k15+t1);
+            Mix(ref b14, ref b15, 30, k16+t2, k0+19);
             Mix(ref b0, ref b9, 16);
             Mix(ref b2, ref b13, 34);
             Mix(ref b6, ref b11, 56);
@@ -704,47 +718,63 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             Mix(ref b12, ref b7, 20);
 
             // Final key schedule
-            output[0] = b0 + k3;
-            output[1] = b1 + k4;
-            output[2] = b2 + k5;
-            output[3] = b3 + k6;
-            output[4] = b4 + k7;
-            output[5] = b5 + k8;
-            output[6] = b6 + k9;
-            output[7] = b7 + k10;
-            output[8] = b8 + k11;
-            output[9] = b9 + k12;
-            output[10] = b10 + k13;
-            output[11] = b11 + k14;
-            output[12] = b12 + k15;
-            output[13] = b13 + k16 + t2;
-            output[14] = b14 + k0 + t0;
-            output[15] = b15 + k1 + 20;
+            output[0] = b0+k3;
+            output[1] = b1+k4;
+            output[2] = b2+k5;
+            output[3] = b3+k6;
+            output[4] = b4+k7;
+            output[5] = b5+k8;
+            output[6] = b6+k9;
+            output[7] = b7+k10;
+            output[8] = b8+k11;
+            output[9] = b9+k12;
+            output[10] = b10+k13;
+            output[11] = b11+k14;
+            output[12] = b12+k15;
+            output[13] = b13+k16+t2;
+            output[14] = b14+k0+t0;
+            output[15] = b15+k1+20;
         }
 
         public override void Decrypt(ulong[] input, ulong[] output)
         {
             // Cache the block, key, and tweak
-            ulong b0 = input[0], b1 = input[1],
-                  b2 = input[2], b3 = input[3],
-                  b4 = input[4], b5 = input[5],
-                  b6 = input[6], b7 = input[7],
-                  b8 = input[8], b9 = input[9],
-                  b10 = input[10], b11 = input[11],
-                  b12 = input[12], b13 = input[13],
-                  b14 = input[14], b15 = input[15];
-            ulong k0 = ExpandedKey[0], k1 = ExpandedKey[1],
-                  k2 = ExpandedKey[2], k3 = ExpandedKey[3],
-                  k4 = ExpandedKey[4], k5 = ExpandedKey[5],
-                  k6 = ExpandedKey[6], k7 = ExpandedKey[7],
-                  k8 = ExpandedKey[8], k9 = ExpandedKey[9],
-                  k10 = ExpandedKey[10], k11 = ExpandedKey[11],
-                  k12 = ExpandedKey[12], k13 = ExpandedKey[13],
-                  k14 = ExpandedKey[14], k15 = ExpandedKey[15],
-                  k16 = ExpandedKey[16];
-            ulong t0 = ExpandedTweak[0], t1 = ExpandedTweak[1],
-                  t2 = ExpandedTweak[2];
-
+            ulong b0 = input[0],
+                b1 = input[1],
+                b2 = input[2],
+                b3 = input[3],
+                b4 = input[4],
+                b5 = input[5],
+                b6 = input[6],
+                b7 = input[7],
+                b8 = input[8],
+                b9 = input[9],
+                b10 = input[10],
+                b11 = input[11],
+                b12 = input[12],
+                b13 = input[13],
+                b14 = input[14],
+                b15 = input[15];
+            ulong k0 = ExpandedKey[0],
+                k1 = ExpandedKey[1],
+                k2 = ExpandedKey[2],
+                k3 = ExpandedKey[3],
+                k4 = ExpandedKey[4],
+                k5 = ExpandedKey[5],
+                k6 = ExpandedKey[6],
+                k7 = ExpandedKey[7],
+                k8 = ExpandedKey[8],
+                k9 = ExpandedKey[9],
+                k10 = ExpandedKey[10],
+                k11 = ExpandedKey[11],
+                k12 = ExpandedKey[12],
+                k13 = ExpandedKey[13],
+                k14 = ExpandedKey[14],
+                k15 = ExpandedKey[15],
+                k16 = ExpandedKey[16];
+            ulong t0 = ExpandedTweak[0],
+                t1 = ExpandedTweak[1],
+                t2 = ExpandedTweak[2];
             b0 -= k3;
             b1 -= k4;
             b2 -= k5;
@@ -758,9 +788,9 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             b10 -= k13;
             b11 -= k14;
             b12 -= k15;
-            b13 -= k16 + t2;
-            b14 -= k0 + t0;
-            b15 -= k1 + 20;
+            b13 -= k16+t2;
+            b14 -= k0+t0;
+            b15 -= k1+20;
             UnMix(ref b12, ref b7, 20);
             UnMix(ref b10, ref b3, 37);
             UnMix(ref b8, ref b5, 31);
@@ -785,8 +815,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k16 + t2, k0 + 19);
-            UnMix(ref b12, ref b13, 44, k14, k15 + t1);
+            UnMix(ref b14, ref b15, 30, k16+t2, k0+19);
+            UnMix(ref b12, ref b13, 44, k14, k15+t1);
             UnMix(ref b10, ref b11, 47, k12, k13);
             UnMix(ref b8, ref b9, 12, k10, k11);
             UnMix(ref b6, ref b7, 31, k8, k9);
@@ -817,8 +847,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k15 + t1, k16 + 18);
-            UnMix(ref b12, ref b13, 22, k13, k14 + t0);
+            UnMix(ref b14, ref b15, 37, k15+t1, k16+18);
+            UnMix(ref b12, ref b13, 22, k13, k14+t0);
             UnMix(ref b10, ref b11, 17, k11, k12);
             UnMix(ref b8, ref b9, 8, k9, k10);
             UnMix(ref b6, ref b7, 47, k7, k8);
@@ -849,8 +879,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k14 + t0, k15 + 17);
-            UnMix(ref b12, ref b13, 44, k12, k13 + t2);
+            UnMix(ref b14, ref b15, 30, k14+t0, k15+17);
+            UnMix(ref b12, ref b13, 44, k12, k13+t2);
             UnMix(ref b10, ref b11, 47, k10, k11);
             UnMix(ref b8, ref b9, 12, k8, k9);
             UnMix(ref b6, ref b7, 31, k6, k7);
@@ -881,8 +911,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k13 + t2, k14 + 16);
-            UnMix(ref b12, ref b13, 22, k11, k12 + t1);
+            UnMix(ref b14, ref b15, 37, k13+t2, k14+16);
+            UnMix(ref b12, ref b13, 22, k11, k12+t1);
             UnMix(ref b10, ref b11, 17, k9, k10);
             UnMix(ref b8, ref b9, 8, k7, k8);
             UnMix(ref b6, ref b7, 47, k5, k6);
@@ -913,8 +943,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k12 + t1, k13 + 15);
-            UnMix(ref b12, ref b13, 44, k10, k11 + t0);
+            UnMix(ref b14, ref b15, 30, k12+t1, k13+15);
+            UnMix(ref b12, ref b13, 44, k10, k11+t0);
             UnMix(ref b10, ref b11, 47, k8, k9);
             UnMix(ref b8, ref b9, 12, k6, k7);
             UnMix(ref b6, ref b7, 31, k4, k5);
@@ -945,8 +975,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k11 + t0, k12 + 14);
-            UnMix(ref b12, ref b13, 22, k9, k10 + t2);
+            UnMix(ref b14, ref b15, 37, k11+t0, k12+14);
+            UnMix(ref b12, ref b13, 22, k9, k10+t2);
             UnMix(ref b10, ref b11, 17, k7, k8);
             UnMix(ref b8, ref b9, 8, k5, k6);
             UnMix(ref b6, ref b7, 47, k3, k4);
@@ -977,8 +1007,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k10 + t2, k11 + 13);
-            UnMix(ref b12, ref b13, 44, k8, k9 + t1);
+            UnMix(ref b14, ref b15, 30, k10+t2, k11+13);
+            UnMix(ref b12, ref b13, 44, k8, k9+t1);
             UnMix(ref b10, ref b11, 47, k6, k7);
             UnMix(ref b8, ref b9, 12, k4, k5);
             UnMix(ref b6, ref b7, 31, k2, k3);
@@ -1009,8 +1039,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k9 + t1, k10 + 12);
-            UnMix(ref b12, ref b13, 22, k7, k8 + t0);
+            UnMix(ref b14, ref b15, 37, k9+t1, k10+12);
+            UnMix(ref b12, ref b13, 22, k7, k8+t0);
             UnMix(ref b10, ref b11, 17, k5, k6);
             UnMix(ref b8, ref b9, 8, k3, k4);
             UnMix(ref b6, ref b7, 47, k1, k2);
@@ -1041,8 +1071,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k8 + t0, k9 + 11);
-            UnMix(ref b12, ref b13, 44, k6, k7 + t2);
+            UnMix(ref b14, ref b15, 30, k8+t0, k9+11);
+            UnMix(ref b12, ref b13, 44, k6, k7+t2);
             UnMix(ref b10, ref b11, 47, k4, k5);
             UnMix(ref b8, ref b9, 12, k2, k3);
             UnMix(ref b6, ref b7, 31, k0, k1);
@@ -1073,8 +1103,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k7 + t2, k8 + 10);
-            UnMix(ref b12, ref b13, 22, k5, k6 + t1);
+            UnMix(ref b14, ref b15, 37, k7+t2, k8+10);
+            UnMix(ref b12, ref b13, 22, k5, k6+t1);
             UnMix(ref b10, ref b11, 17, k3, k4);
             UnMix(ref b8, ref b9, 8, k1, k2);
             UnMix(ref b6, ref b7, 47, k16, k0);
@@ -1105,8 +1135,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k6 + t1, k7 + 9);
-            UnMix(ref b12, ref b13, 44, k4, k5 + t0);
+            UnMix(ref b14, ref b15, 30, k6+t1, k7+9);
+            UnMix(ref b12, ref b13, 44, k4, k5+t0);
             UnMix(ref b10, ref b11, 47, k2, k3);
             UnMix(ref b8, ref b9, 12, k0, k1);
             UnMix(ref b6, ref b7, 31, k15, k16);
@@ -1137,8 +1167,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k5 + t0, k6 + 8);
-            UnMix(ref b12, ref b13, 22, k3, k4 + t2);
+            UnMix(ref b14, ref b15, 37, k5+t0, k6+8);
+            UnMix(ref b12, ref b13, 22, k3, k4+t2);
             UnMix(ref b10, ref b11, 17, k1, k2);
             UnMix(ref b8, ref b9, 8, k16, k0);
             UnMix(ref b6, ref b7, 47, k14, k15);
@@ -1169,8 +1199,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k4 + t2, k5 + 7);
-            UnMix(ref b12, ref b13, 44, k2, k3 + t1);
+            UnMix(ref b14, ref b15, 30, k4+t2, k5+7);
+            UnMix(ref b12, ref b13, 44, k2, k3+t1);
             UnMix(ref b10, ref b11, 47, k0, k1);
             UnMix(ref b8, ref b9, 12, k15, k16);
             UnMix(ref b6, ref b7, 31, k13, k14);
@@ -1201,8 +1231,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k3 + t1, k4 + 6);
-            UnMix(ref b12, ref b13, 22, k1, k2 + t0);
+            UnMix(ref b14, ref b15, 37, k3+t1, k4+6);
+            UnMix(ref b12, ref b13, 22, k1, k2+t0);
             UnMix(ref b10, ref b11, 17, k16, k0);
             UnMix(ref b8, ref b9, 8, k14, k15);
             UnMix(ref b6, ref b7, 47, k12, k13);
@@ -1233,8 +1263,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k2 + t0, k3 + 5);
-            UnMix(ref b12, ref b13, 44, k0, k1 + t2);
+            UnMix(ref b14, ref b15, 30, k2+t0, k3+5);
+            UnMix(ref b12, ref b13, 44, k0, k1+t2);
             UnMix(ref b10, ref b11, 47, k15, k16);
             UnMix(ref b8, ref b9, 12, k13, k14);
             UnMix(ref b6, ref b7, 31, k11, k12);
@@ -1265,8 +1295,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k1 + t2, k2 + 4);
-            UnMix(ref b12, ref b13, 22, k16, k0 + t1);
+            UnMix(ref b14, ref b15, 37, k1+t2, k2+4);
+            UnMix(ref b12, ref b13, 22, k16, k0+t1);
             UnMix(ref b10, ref b11, 17, k14, k15);
             UnMix(ref b8, ref b9, 8, k12, k13);
             UnMix(ref b6, ref b7, 47, k10, k11);
@@ -1297,8 +1327,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k0 + t1, k1 + 3);
-            UnMix(ref b12, ref b13, 44, k15, k16 + t0);
+            UnMix(ref b14, ref b15, 30, k0+t1, k1+3);
+            UnMix(ref b12, ref b13, 44, k15, k16+t0);
             UnMix(ref b10, ref b11, 47, k13, k14);
             UnMix(ref b8, ref b9, 12, k11, k12);
             UnMix(ref b6, ref b7, 31, k9, k10);
@@ -1329,8 +1359,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k16 + t0, k0 + 2);
-            UnMix(ref b12, ref b13, 22, k14, k15 + t2);
+            UnMix(ref b14, ref b15, 37, k16+t0, k0+2);
+            UnMix(ref b12, ref b13, 22, k14, k15+t2);
             UnMix(ref b10, ref b11, 17, k12, k13);
             UnMix(ref b8, ref b9, 8, k10, k11);
             UnMix(ref b6, ref b7, 47, k8, k9);
@@ -1361,8 +1391,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 56);
             UnMix(ref b2, ref b13, 34);
             UnMix(ref b0, ref b9, 16);
-            UnMix(ref b14, ref b15, 30, k15 + t2, k16 + 1);
-            UnMix(ref b12, ref b13, 44, k13, k14 + t1);
+            UnMix(ref b14, ref b15, 30, k15+t2, k16+1);
+            UnMix(ref b12, ref b13, 44, k13, k14+t1);
             UnMix(ref b10, ref b11, 47, k11, k12);
             UnMix(ref b8, ref b9, 12, k9, k10);
             UnMix(ref b6, ref b7, 31, k7, k8);
@@ -1393,15 +1423,14 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
             UnMix(ref b6, ref b11, 10);
             UnMix(ref b2, ref b13, 19);
             UnMix(ref b0, ref b9, 38);
-            UnMix(ref b14, ref b15, 37, k14 + t1, k15);
-            UnMix(ref b12, ref b13, 22, k12, k13 + t0);
+            UnMix(ref b14, ref b15, 37, k14+t1, k15);
+            UnMix(ref b12, ref b13, 22, k12, k13+t0);
             UnMix(ref b10, ref b11, 17, k10, k11);
             UnMix(ref b8, ref b9, 8, k8, k9);
             UnMix(ref b6, ref b7, 47, k6, k7);
             UnMix(ref b4, ref b5, 8, k4, k5);
             UnMix(ref b2, ref b3, 13, k2, k3);
             UnMix(ref b0, ref b1, 24, k0, k1);
-
             output[15] = b15;
             output[14] = b14;
             output[13] = b13;

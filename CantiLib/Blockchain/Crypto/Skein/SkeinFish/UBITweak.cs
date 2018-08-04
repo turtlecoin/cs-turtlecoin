@@ -41,24 +41,22 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
 
     public class UbiTweak
     {
-        private const ulong T1FlagFinal = unchecked((ulong)1 << 63);
-        private const ulong T1FlagFirst = unchecked((ulong)1 << 62);
+        private const ulong T1FlagFinal = unchecked((ulong)1<<63);
+        private const ulong T1FlagFirst = unchecked((ulong)1<<62);
 
         public UbiTweak()
-        {
-            Tweak = new ulong[2];
-        }
+        { Tweak = new ulong[2]; }
 
         /// <summary>
         /// Gets or sets the first block flag.
         /// </summary>
         public bool IsFirstBlock
         {
-            get { return (Tweak[1] & T1FlagFirst) != 0; }
+            get { return (Tweak[1] & T1FlagFirst)!=0; }
             set
             {
                 long mask = value ? 1 : 0;
-                Tweak[1] = (Tweak[1] & ~T1FlagFirst) | ((ulong)-mask & T1FlagFirst);
+                Tweak[1] = Tweak[1] & ~T1FlagFirst | (ulong)-mask & T1FlagFirst;
             }
         }
 
@@ -67,11 +65,11 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
         /// </summary>
         public bool IsFinalBlock
         {
-            get { return (Tweak[1] & T1FlagFinal) != 0; }
+            get { return (Tweak[1] & T1FlagFinal)!=0; }
             set
             {
                 long mask = value ? 1 : 0;
-                Tweak[1] = (Tweak[1] & ~T1FlagFinal) | ((ulong)-mask & T1FlagFinal);
+                Tweak[1] = Tweak[1] & ~T1FlagFinal | (ulong)-mask & T1FlagFinal;
             }
         }
 
@@ -80,14 +78,13 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
         /// </summary>
         public byte TreeLevel
         {
-            get { return (byte) ((Tweak[1] >> 48) & 0x3f); }
+            get { return (byte)(Tweak[1]>>48 & 0x3f); }
             set
             {
-                if (value > 63)
+                if (value>63)
                     throw new Exception("Tree level must be between 0 and 63, inclusive.");
-
-                Tweak[1] &= ~((ulong) 0x3f << 48);
-                Tweak[1] |= (ulong) value << 48;
+                Tweak[1] &= ~((ulong)0x3f<<48);
+                Tweak[1] |= (ulong)value<<48;
             }
         }
 
@@ -105,8 +102,8 @@ namespace Canti.Blockchain.Crypto.Skein.SkeinFish
         /// </summary>
         public UbiType BlockType
         {
-            get { return (UbiType) (Tweak[1] >> 56); }
-            set { Tweak[1] = (ulong)value << 56; }
+            get { return (UbiType)(Tweak[1]>>56 & 0x3f); }
+            set { Tweak[1] = (ulong)value<<56; }
         }
 
         /// <summary>

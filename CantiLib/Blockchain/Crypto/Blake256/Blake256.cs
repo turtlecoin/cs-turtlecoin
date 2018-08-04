@@ -5,6 +5,7 @@
 using System;
 using System.Security.Cryptography;
 
+/* This is post NIST blake256, with 14 rounds */
 namespace Canti.Blockchain.Crypto.Blake256
 {
     public class Blake256
