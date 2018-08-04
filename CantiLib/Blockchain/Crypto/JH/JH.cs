@@ -6,11 +6,11 @@
 
 using System;
 
-namespace Canti.Blockchain.Crypto
+namespace Canti.Blockchain.Crypto.JH
 {
-    public static class Groestl
+    public static class JH
     {
-        public static byte[] groestl(byte[] input)
+        public static byte[] jh(byte[] input)
         {
             return input;
         }

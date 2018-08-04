@@ -76,14 +76,7 @@ namespace Canti.Blockchain.Crypto
 
             this.data = new byte[32];
 
-            /* We just copy the first 32 bytes. This allows us to take in a
-               byte[] of any length, without having to resize first. A loop
-               copy is apparently faster than Array.Copy() or
-               Buffer.BlockCopy() when the length is of this size */
-            for (int i = 0; i < 32; i++)
-            {
-                this.data[i] = data[i];
-            }
+            Buffer.BlockCopy(data, 0, this.data, 0, 32);
         }
 
         public ThirtyTwoByteKey(string input)
@@ -98,10 +91,7 @@ namespace Canti.Blockchain.Crypto
 
             this.data = new byte[32];
 
-            for (int i = 0; i < 32; i++)
-            {
-                this.data[i] = data[i];
-            }
+            Buffer.BlockCopy(data, 0, this.data, 0, 32);
         }
 
         public ThirtyTwoByteKey()

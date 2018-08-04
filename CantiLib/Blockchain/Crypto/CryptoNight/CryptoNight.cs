@@ -10,6 +10,10 @@ using System.Numerics;
 using Canti.Data;
 using Canti.Blockchain.Crypto.AES;
 using Canti.Blockchain.Crypto.Keccak;
+using Canti.Blockchain.Crypto.Blake256;
+using Canti.Blockchain.Crypto.Groestl;
+using Canti.Blockchain.Crypto.Skein;
+using Canti.Blockchain.Crypto.JH;
 
 namespace Canti.Blockchain.Crypto.CryptoNight
 {
@@ -122,7 +126,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey2());
 
 
-            /* CryptoNight Step 4:  Sequentially pass through the mixing buffer
+            /* CryptoNight Step 4: Sequentially pass through the mixing buffer
              * and use 10 rounds of AES encryption to mix the random data back
              * into the 'text' buffer. 'text' was originally created with the
              * output of Keccak1600.
@@ -143,11 +147,11 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 }
             }
 
-            /* CryptoNight Step 5:  Apply Keccak to the state again, and then
+            /* CryptoNight Step 5: Apply Keccak to the state again, and then
              * use the resulting data to select which of four finalizer
              * hash functions to apply to the data (Blake, Groestl, JH,
              * or Skein). Use this hash to squeeze the state array down
-             * to the final 256 bit hash output.
+             * to the final 32 byte hash output.
              */
 
             /* Copy text back to state */
@@ -170,19 +174,19 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             {
                 case 0:
                 {
-                    return Blake256.blake256(state);
+                    return Blake256.Blake256.blake256(state);
                 }
                 case 1:
                 {
-                    return Groestl.groestl(state);
+                    return Groestl.Groestl.groestl(state);
                 }
                 case 2:
                 {
-                    return Skein.skein(state);
+                    return Skein.Skein.skein(state);
                 }
                 default:
                 {
-                    return JH.jh(state);
+                    return JH.JH.jh(state);
                 }
             }
         }

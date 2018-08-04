@@ -6,11 +6,11 @@
 
 using System;
 
-namespace Canti.Blockchain.Crypto
+namespace Canti.Blockchain.Crypto.Groestl
 {
-    public static class Skein
+    public static class Groestl
     {
-        public static byte[] skein(byte[] input)
+        public static byte[] groestl(byte[] input)
         {
             return input;
         }
