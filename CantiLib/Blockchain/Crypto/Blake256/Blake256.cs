@@ -1,6 +1,27 @@
-// Copyright 2018 The TurtleCoin Developers
-//
-// Please see the included LICENSE file for more information.
+/*
+  BlakeSharp - Blake256
+  Public domain implementation of the BLAKE hash algorithm
+  by Dominik Reichl <dominik.reichl@t-online.de>
+  Web: http://www.dominik-reichl.de/
+  If you're using this class, it would be nice if you'd mention
+  me somewhere in the documentation of your program, but it's
+  not required.
+
+  BLAKE was designed by Jean-Philippe Aumasson, Luca Henzen,
+  Willi Meier and Raphael C.-W. Phan.
+  BlakeSharp was derived from the reference C implementation.
+
+  - 2018-07-04
+  Modified by The TurtleCoin Developers to use 14 rounds instead of 8
+
+  Version 1.0 - 2011-11-20
+  - Initial release (implementing BLAKE v1.4).
+ 
+  Modifications by BlueDragon747 for BlakeCoin Project
+ 
+  Version 1.1 - 14-03-2014
+  - 8 Rounds version 
+*/
 
 using System;
 using System.Security.Cryptography;
@@ -16,32 +37,7 @@ namespace Canti.Blockchain.Crypto.Blake256
             return b.ComputeHash(input);
         }
 
-        /*
-          BlakeSharp - Blake256
-          Public domain implementation of the BLAKE hash algorithm
-          by Dominik Reichl <dominik.reichl@t-online.de>
-          Web: http://www.dominik-reichl.de/
-          If you're using this class, it would be nice if you'd mention
-          me somewhere in the documentation of your program, but it's
-          not required.
-
-          BLAKE was designed by Jean-Philippe Aumasson, Luca Henzen,
-          Willi Meier and Raphael C.-W. Phan.
-          BlakeSharp was derived from the reference C implementation.
-
-          - 2018-07-04
-          Modified by The TurtleCoin Developers to use 14 rounds instead of 8
-
-          Version 1.0 - 2011-11-20
-          - Initial release (implementing BLAKE v1.4).
-         
-          Modifications by BlueDragon747 for BlakeCoin Project
-         
-          Version 1.1 - 14-03-2014
-          - 8 Rounds version 
-         
-        */
-        private sealed class _Blake256 : HashAlgorithm
+                private sealed class _Blake256 : HashAlgorithm
         {
             private uint[] m_h = new uint[8];
             private uint[] m_s = new uint[4];
