@@ -1,3 +1,5 @@
+//
+// Copyright 2011 Markku-Juhani O. Saarinen
 // Copyright 2012-2013 The CryptoNote Developers
 // Copyright 2014-2018 The Monero Developers
 // Copyright 2018 The TurtleCoin Developers
@@ -8,11 +10,12 @@ using System;
 
 using Canti.Data;
 
+/* This is pre NIST keccak before the sha-3 revisions */
 namespace Canti.Blockchain.Crypto.Keccak
 {
     public static class Keccak
     {
-        private static void Keccakf(ulong[] state, int rounds)
+        public static void keccakf(ulong[] state, int rounds = Constants.KeccakRounds)
         {
             ulong t;
 
@@ -66,71 +69,63 @@ namespace Canti.Blockchain.Crypto.Keccak
             }
         }
 
-        /* This can throw if the input size or outputSize is not of a valid
-           value. Suggestes output size values are 32 and 200, and suggested
-           input values are 1 - 136 */
+        /* Compute a hash of length outputSize from input */
         private static byte[] _keccak(byte[] input, int outputSize)
         {
             ulong[] state = new ulong[25];
 
-            int rsiz;
+            int rsiz = Constants.HashDataArea;
 
-            /* sizeof (state) == outputSize */
-            if ((state.Length * 8) == outputSize)
-            {
-                rsiz = Constants.HASH_DATA_AREA;
-            }
-            else
+            if (outputSize != 200)
             {
                 rsiz = 200 - 2 * outputSize;
             }
 
+            int rsizw = rsiz / 8;
+
             int inputLength = input.Length;
 
+            /* Offset of input array */
             int offset = 0;
 
-            /* We index the array 8 bytes at a time, and treat each set of
-               bytes as a long */
-            for (; inputLength >= rsiz; inputLength -= rsiz, offset += rsiz * 8)
+            for (; inputLength >= rsiz; inputLength -= rsiz, offset += rsiz)
             {
-                for (int i = 0; i < rsiz; i += 8)
+                for (int i = 0; i < rsizw; i++)
                 {
-                    /* Read 8 bytes as a ulong */
-                    state[i / 8] ^= Encoding.ByteArrayToInteger<ulong>(input, offset + i, 8);
+                    /* Read 8 bytes as a ulong, need to multiply i by 8
+                       because we're reading chunks of 8 at once */
+                    state[i] ^= Encoding.ByteArrayToInteger<ulong>(input, offset + (i * 8), 8);
                 }
 
-                Keccakf(state, Constants.KECCAK_ROUNDS);
+                keccakf(state);
             }
+            
+            byte[] tmp = new byte[144];
 
-            byte[] temp = new byte[144];
+            /* Copy inputLength bytes from input to tmp at an offset of offset from
+               input */
+            Buffer.BlockCopy(input, offset, tmp, 0, inputLength);
 
-            for (int i = 0; i < inputLength; i++)
+            tmp[inputLength++] = 1;
+
+            /* Zero (rsiz - inputLength) bytes in tmp, at an offset of inputLength */
+            Array.Clear(tmp, inputLength, rsiz - inputLength);
+
+            tmp[rsiz - 1] |= 0x80;
+
+            for (int i = 0; i < rsizw; i++)
             {
-                temp[i] = input[i + offset];
+                /* Read 8 bytes as a ulong - need to read at (i * 8) because
+                   we're reading chunks of 8 at once, rather than overlapping
+                   chunks of 8 */
+                state[i] ^= Encoding.ByteArrayToInteger<ulong>(tmp, i * 8, 8);
             }
 
-            temp[inputLength++] = 1;
-
-            for (int i = inputLength; i < rsiz - inputLength; i++)
-            {
-                temp[i] = 0;
-            }
-
-            temp[rsiz - 1] |= 0x80;
-
-            /* We proceed in chunks of 8 bytes as once */
-            for (int i = 0; i < rsiz; i += 8)
-            {
-                /* Read 8 bytes as a ulong */
-                state[i / 8] ^= Encoding.ByteArrayToInteger<ulong>(temp, i, 8);
-            }
-
-            Keccakf(state, Constants.KECCAK_ROUNDS);
+            keccakf(state, Constants.KeccakRounds);
 
             byte[] output = new byte[outputSize];
 
-            /* Copy the ulong state into the output array as bytes */
-            Buffer.BlockCopy(state, 0, output, 0, output.Length);
+            Buffer.BlockCopy(state, 0, output, 0, outputSize);
 
             return output;
         }
@@ -140,9 +135,23 @@ namespace Canti.Blockchain.Crypto.Keccak
             return x << (int)y | x >> (int)((64 - y));
         }
 
-        /* Output length must be 32 bytes or less */
+        /* Hashes the given input with keccak, into an output hash of 200
+           bytes. */
+        public static byte[] keccak1600(byte[] input)
+        {
+            return _keccak(input, 200);
+        }
+
+        /* Hashes the given input with keccak, into an output hash of 32 bytes.
+           Copies outputLength bytes of the output and returns it. Output
+           length cannot be larger than 32. */
         public static byte[] keccak(byte[] input, int outputLength = 32)
         {
+            if (outputLength > 32)
+            {
+                throw new ArgumentException("Output length must be 32 bytes or less!");
+            }
+
             byte[] result = _keccak(input, 32);
 
             byte[] output = new byte[outputLength];

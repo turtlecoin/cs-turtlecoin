@@ -1,5 +1,5 @@
 //
-// Original code modified by The CryptoNote Developers from SUPERCOP ref10
+// Copyright Dan Bernstein (djb) from Ref10 in SUPERCOP
 // Copyright 2012-2013 The CryptoNote Developers
 // Copyright 2014-2018 The Monero Developers
 // Copyright 2018 The TurtleCoin Developers
