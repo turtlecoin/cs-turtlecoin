@@ -53,11 +53,10 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                                              j * AES.Constants.BlockSize);
                 }
 
-                /* Write InitSizeBytes from text to the scratchpad, at the
-                   offset i * InitSizeByte */
+                /* Write text to the scratchpad, at the offset
+                   i * InitSizeByte */
                 Buffer.BlockCopy(text, 0, scratchpad,
-                                 i * Constants.InitSizeByte,
-                                 Constants.InitSizeByte);
+                                 i * Constants.InitSizeByte, text.Length);
             }
 
             byte[] a = new byte[AES.Constants.BlockSize];
@@ -78,11 +77,11 @@ namespace Canti.Blockchain.Crypto.CryptoNight
              * following mixing function.  Each execution performs two reads
              * and writes from the mixing scratchpad.
              */
-
             for (int i = 0; i < Constants.Iterations / 2; i++)
             {
                 for (int iteration = 1; iteration < 3; iteration++)
                 {
+                    
                     /* Get our 'memory' address we're using for this round */
                     int j = e2i(a);
 
@@ -126,7 +125,6 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             /* Expand our initial key into many for each round of pseudo aes */
             expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey2());
 
-
             /* CryptoNight Step 4: Sequentially pass through the mixing buffer
              * and use 10 rounds of AES encryption to mix the random data back
              * into the 'text' buffer. 'text' was originally created with the
@@ -147,7 +145,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     AES.AES.PseudoEncryptECB(expandedKeys, text, offsetA);
                 }
             }
-
+            
             /* CryptoNight Step 5: Apply Keccak to the state again, and then
              * use the resulting data to select which of four finalizer
              * hash functions to apply to the data (Blake, Groestl, JH,
@@ -168,7 +166,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             /* Get the actual state buffer finally */
             byte[] state = cnState.GetState();
-            
+
             /* Choose the final hashing function to use based on the value of
                state[0] */
             switch(state[0] % 4)
@@ -183,16 +181,15 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 }
                 case 2:
                 {
-                    return Skein.Skein.skein(state);
+                    return JH.JH.jh(state);
                 }
                 default:
                 {
-                    return JH.JH.jh(state);
+                    return Skein.Skein.skein(state);
                 }
             }
         }
 
-        /* TODO: Verify correctness of this function */
         private static void SumHalfBlocks(byte[] a, byte[] b)
         {
             /* Read the two byte arrays into 4 separate ulongs */
@@ -212,29 +209,34 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             Buffer.BlockCopy(tmpA1, 0, a, 8, 8);
         }
 
-        /* TODO: Verify correctness of this function */
+        /* Thanks to https://stackoverflow.com/a/42426934/8737306 */
         private static void Multiply128(byte[] a, byte[] b, byte[] result)
         {
             /* Read 8 bytes from a and b as a ulong */
-            ulong a0 = Encoding.ByteArrayToInteger<ulong>(a, 0, 8);
-            ulong b0 = Encoding.ByteArrayToInteger<ulong>(b, 0, 8);
+            ulong x = Encoding.ByteArrayToInteger<ulong>(a, 0, 8);
+            ulong y = Encoding.ByteArrayToInteger<ulong>(b, 0, 8);
 
-            /* Multiply as big ints then convert back to byte array.
-               This format has the low bits first, rather than the high bits
-               first as the result expects */
-            byte[] multiplied = (new BigInteger(a0)
-                               * new BigInteger(b0)).ToByteArray();
+            ulong x_lo = x & 0xffffffff;
+            ulong x_hi = x >> 32;
 
-            /* Need to copy a max of 16 bytes, so we don't overflow the result
-               array (sometimes ignoring sign bit) but we need to make sure
-               we don't copy more than the length of the multiplied array,
-               as it uses less bytes when the value is smaller */
-            int toCopy = Math.Min(multiplied.Length, 16);
+            ulong y_lo = y & 0xffffffff;
+            ulong y_hi = y >> 32;
 
-            Buffer.BlockCopy(multiplied, 0, result, 0, toCopy);
+            ulong mul_lo = x_lo * y_lo;
+            ulong mul_hi = (x_hi * y_lo) + (mul_lo >> 32);
+            ulong mul_carry = (x_lo * y_hi) + (mul_hi & 0xffffffff);
 
-            /* Reverse to put the high bits first */
-            Array.Reverse(result);
+            ulong result_hi = (x_hi * y_hi) + (mul_hi >> 32) + (mul_carry >> 32);
+            ulong result_lo = (mul_carry << 32) + (mul_lo & 0xffffffff);
+
+            /* Convert the ulongs back into byte arrays */
+            byte[] low = Encoding.IntegerToByteArray<ulong>(result_lo);
+            byte[] high = Encoding.IntegerToByteArray<ulong>(result_hi);
+
+            /* Copy the 8 high bits to result[0..7] */
+            Buffer.BlockCopy(high, 0, result, 0, 8);
+            /* Copy the 8 low bits to result[8..15] */
+            Buffer.BlockCopy(low, 0, result, 8, 8);
         }
 
         /* Copy blocksize bytes from the scratchpad at an offset of
@@ -257,7 +259,6 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                              offset * AES.Constants.BlockSize,
                              AES.Constants.BlockSize);
         }
-
 
         /* XOR a and b, with optional offsets in the array */
         private static void XORBlocks(byte[] a, byte[] b, int offsetA = 0,

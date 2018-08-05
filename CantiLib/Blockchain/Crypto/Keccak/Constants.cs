@@ -36,8 +36,8 @@ namespace Canti.Blockchain.Crypto.Keccak
             15, 23, 19, 13, 12, 2, 20, 14, 22, 9,  6,  1 
         };
 
-        public const int KECCAK_ROUNDS = 24;
+        public const int KeccakRounds = 24;
 
-        public const int HASH_DATA_AREA = 136;
+        public const int HashDataArea = 136;
     }
 }

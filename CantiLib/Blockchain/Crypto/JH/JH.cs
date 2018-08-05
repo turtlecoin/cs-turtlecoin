@@ -11,8 +11,6 @@ namespace Canti.Blockchain.Crypto.JH
 {
     public static class JH
     {
-        private static bool flag = false;
-
         public static byte[] jh(byte[] input)
         {
             HashState state = new HashState();
@@ -143,8 +141,6 @@ namespace Canti.Blockchain.Crypto.JH
                 /* Pad and process the partial block when databitlen is not
                    a multiple of 512 bits, then hash the padded blocks*/
                 state.buffer[index] |= (byte)(1 << (int)(7- (state.dataBitLen & 7)));
-
-                flag = true;
 
                 F8(state);
 

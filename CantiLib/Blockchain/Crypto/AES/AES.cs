@@ -36,23 +36,15 @@ namespace Canti.Blockchain.Crypto.AES
     public static class AES
     {
         /* Offset = offset of input array to access */
-        /* Array is passed by reference so nothing returned */
         public static void PseudoEncryptECB(byte[] keys, byte[] input, int offset)
         {
             for (int i = 0; i < 10; i++)
             {
-                byte[] key = new byte[Constants.BlockSize];
-
-                int x = i * Constants.RoundKeyLength * Constants.ColumnLength;
-
-                /* Extract our single key from keys */
-                Buffer.BlockCopy(keys, x, key, 0, Constants.BlockSize);
-
-                EncryptionRound(key, input, offset);
+                EncryptionRound(keys, input, offset, Constants.BlockSize * i);
             }
         }
 
-        public static void EncryptionRound(byte[] key, byte[] data, int offset = 0)
+        public static void EncryptionRound(byte[] keys, byte[] data, int offset = 0, int keyOffset = 0)
         {
             for (int i = 0; i < Constants.BlockSize; i++)
             {
@@ -65,23 +57,22 @@ namespace Canti.Blockchain.Crypto.AES
 
             for (int i = 0; i < Constants.BlockSize; i++)
             {
-                data[i + offset] ^= key[i];
+                /* Select the appropriate key to use via the offset */
+                data[i + offset] ^= keys[i + keyOffset];
             }
         }
 
         private static void ShiftRows(byte[] input, int offset)
         {
-            byte[] tmp = new byte[input.Length - offset];
+            byte[] tmp = new byte[Constants.BlockSize];
 
-            /* Copy input to tmp array to work with */
-            Buffer.BlockCopy(input, offset, tmp, 0, tmp.Length);
-
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < Constants.BlockSize; i++)
             {
-                tmp[i] = input[(i * 5) % 16];
+                int index = (i * 5) % Constants.BlockSize;
+                tmp[i] = input[offset + index];
             }
 
-            /* Copy tmp array back out to output */
+            /* Copy tmp array to output */
             Buffer.BlockCopy(tmp, 0, input, offset, tmp.Length);
         }
 
@@ -171,7 +162,7 @@ namespace Canti.Blockchain.Crypto.AES
             return Constants.SubByteValue[y,x];
         }
 
-        /* Rotate array one step left, e.g. [1, 2, 3, 4] becomes [4, 1, 2, 3]
+        /* Rotate array one step left, e.g. [1, 2, 3, 4] becomes [2, 3, 4, 1]
            Assumes input is Constants.ColumnLength long */
         private static byte[] RotLeft(byte[] input)
         {
@@ -179,7 +170,7 @@ namespace Canti.Blockchain.Crypto.AES
 
             for (int i = 0; i < Constants.ColumnLength; i++)
             {
-                output[i] = input[(i +1) % Constants.ColumnLength];
+                output[i] = input[(i + 1) % Constants.ColumnLength];
             }
 
             return output;
@@ -229,7 +220,7 @@ namespace Canti.Blockchain.Crypto.AES
 
                 for (int j = 0; j < Constants.ColumnLength; j++)
                 {
-                    int index = (i - keyBase) * Constants.RoundKeyLength + j;
+                    int index = ((i - keyBase) * Constants.RoundKeyLength) + j;
 
                     expanded[(i * Constants.RoundKeyLength) + j]
                         = (byte)(expanded[index] ^ tmp[j]);
