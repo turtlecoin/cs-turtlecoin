@@ -8,6 +8,7 @@
 using System;
 
 using Canti.Data;
+using Canti.Blockchain.Crypto;
 using Canti.Blockchain.Crypto.AES;
 using Canti.Blockchain.Crypto.Keccak;
 using Canti.Blockchain.Crypto.Blake256;
@@ -19,32 +20,30 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 {
     public static class CryptoNight
     {
-        public static byte[] CryptoNightVersionZero(byte[] input)
+        public static byte[] SlowHash(byte[] input, ICryptoNight cnParams)
         {
-            /* 2^21, 2^20 */
-            return cryptonightV0(input, new CNParams(2097152, 1048576));
+            int variant = cnParams.Variant();
+
+            switch(variant)
+            {
+                case 0:
+                {
+                    return CryptoNightV0(input, cnParams);
+                }
+                case 1:
+                {
+                    return CryptoNightV1(input, cnParams);
+                }
+                default:
+                {
+                    throw new ArgumentException(
+                        "Variants other than 0 and 1 are not supported!"
+                    );
+                }
+            }
         }
 
-        public static byte[] CryptoNightLiteVersionZero(byte[] input)
-        {
-            /* 2^20, 2^19 */
-            return cryptonightV0(input, new CNParams(1048576, 524288));
-        }
-
-        public static byte[] CryptoNightVersionOne(byte[] input)
-        {
-            /* 2^21, 2^20 */
-            return cryptonightV1(input, new CNParams(2097152, 1048576));
-        }
-
-        public static byte[] CryptoNightLiteVersionOne(byte[] input)
-        {
-            /* 2^20, 2^19 */
-            return cryptonightV1(input, new CNParams(1048576, 524288));
-        }
-
-        /* Returns a 32 byte hash */
-        private static byte[] cryptonightV0(byte[] input, CNParams cnParams)
+        private static byte[] CryptoNightV0(byte[] input, ICryptoNight cnParams)
         {
             /* CryptoNight Step 1: Use Keccak1600 to initialize the 'state'
              * buffer, encapsulated in cnState
@@ -60,7 +59,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             return HashFinalState(cnState);
         }
 
-        private static byte[] cryptonightV1(byte[] input, CNParams cnParams)
+        private static byte[] CryptoNightV1(byte[] input, ICryptoNight cnParams)
         {
             if (input.Length < 43)
             {
@@ -88,18 +87,18 @@ namespace Canti.Blockchain.Crypto.CryptoNight
         /* CryptoNight Step 2:  Iteratively encrypt the results from Keccak
          * to fill the large scratchpad
          */
-        private static byte[] FillScratchpad(CNState cnState, CNParams cnParams)
+        private static byte[] FillScratchpad(CNState cnState, ICryptoNight cnParams)
         {
             /* Expand our initial key into many for each round of pseudo aes */
             byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey());
 
             /* Our large scratchpad, 2MB in default CN */
-            byte[] scratchpad = new byte[cnParams.Memory];
+            byte[] scratchpad = new byte[cnParams.Memory()];
 
             byte[] text = cnState.GetText();
 
             /* Fill the scratchpad with AES encryption of text */
-            for (int i = 0; i < cnParams.CNIterations; i++)
+            for (int i = 0; i < cnParams.Memory() / Constants.InitSizeByte; i++)
             {
                 for (int j = 0; j < Constants.InitSizeBlock; j++)
                 {
@@ -123,17 +122,17 @@ namespace Canti.Blockchain.Crypto.CryptoNight
          * following mixing function.  Each execution performs two reads
          * and writes from the mixing scratchpad.
          */
-        private static void MixScratchpadV0(CNState cnState, CNParams cnParams,
+        private static void MixScratchpadV0(CNState cnState, ICryptoNight cnParams,
                                             byte[] scratchpad)
         {
             MixScratchpadState mixingState = new MixScratchpadState(cnState);
 
-            for (int i = 0; i < cnParams.Iterations / 2; i++)
+            for (int i = 0; i < cnParams.Iterations() / 2; i++)
             {
                 for (int iteration = 1; iteration < 3; iteration++)
                 {
                     /* Get our 'memory' address we're using for this round */
-                    int j = e2i(mixingState.a, cnParams.Memory);
+                    int j = e2i(mixingState.a, cnParams.Memory());
 
                     /* Load c from the scratchpad */
                     CopyBlockFromScratchpad(scratchpad, mixingState.c, j);
@@ -161,17 +160,18 @@ namespace Canti.Blockchain.Crypto.CryptoNight
          * following mixing function.  Each execution performs two reads
          * and writes from the mixing scratchpad.
          */
-        private static void MixScratchpadV1(CNState cnState, CNParams cnParams,
+        private static void MixScratchpadV1(CNState cnState,
+                                            ICryptoNight cnParams,
                                             byte[] scratchpad, byte[] tweak)
         {
             MixScratchpadState mixingState = new MixScratchpadState(cnState);
 
-            for (int i = 0; i < cnParams.Iterations / 2; i++)
+            for (int i = 0; i < cnParams.Iterations() / 2; i++)
             {
                 for (int iteration = 1; iteration < 3; iteration++)
                 {
                     /* Get our 'memory' address we're using for this round */
-                    int j = e2i(mixingState.a, cnParams.Memory);
+                    int j = e2i(mixingState.a, cnParams.Memory());
 
                     /* Load c from the scratchpad */
                     CopyBlockFromScratchpad(scratchpad, mixingState.c, j);
@@ -231,7 +231,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
          * into the 'text' buffer.
          */
         private static void EncryptScratchpadToText(CNState cnState,
-                                                    CNParams cnParams, 
+                                                    ICryptoNight cnParams, 
                                                     byte[] scratchpad)
         {
             /* Reinitialize text from state */
@@ -239,9 +239,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             /* Expand our initial key into many for each round of pseudo aes */
             byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey2());
-
             
-            for (int i = 0; i < cnParams.CNIterations; i++)
+            for (int i = 0; i < cnParams.Memory() / Constants.InitSizeByte; i++)
             {
                 for (int j = 0; j < Constants.InitSizeBlock; j++)
                 {

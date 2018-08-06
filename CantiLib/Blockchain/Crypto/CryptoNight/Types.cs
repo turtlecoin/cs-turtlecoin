@@ -11,20 +11,6 @@ using Canti.Blockchain.Crypto.AES;
 
 namespace Canti.Blockchain.Crypto.CryptoNight
 {
-    public class CNParams
-    {
-        public CNParams(int Memory, int Iterations)
-        {
-            this.Memory = Memory;
-            this.Iterations = Iterations;
-            this.CNIterations = Memory / Constants.InitSizeByte;
-        }
-
-        public int Memory { get; }
-        public int Iterations { get; }
-        public int CNIterations { get; }
-    }
-
     public class MixScratchpadState
     {
         public MixScratchpadState(CNState cnState)

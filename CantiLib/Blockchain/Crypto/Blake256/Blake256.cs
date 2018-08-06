@@ -37,7 +37,7 @@ namespace Canti.Blockchain.Crypto.Blake256
             return b.ComputeHash(input);
         }
 
-                private sealed class _Blake256 : HashAlgorithm
+        private sealed class _Blake256 : HashAlgorithm
         {
             private uint[] m_h = new uint[8];
             private uint[] m_s = new uint[4];
