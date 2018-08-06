@@ -20,9 +20,9 @@ using System.IO;
 
 namespace Canti.Blockchain.Crypto.Groestl
 {
-    public static class Groestl
+    public class Groestl : IHashProvider
     {
-        public static byte[] groestl(byte[] input)
+        public byte[] Hash(byte[] input)
         {
             // The following variables follow the same naming convention used in the
             // specification:

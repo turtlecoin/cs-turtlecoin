@@ -5,6 +5,7 @@
 
 using System;
 
+using Canti.Blockchain.Crypto;
 using Canti.Blockchain.Crypto.Skein.SkeinFish;
 
 /* This is post NIST skein, with a 512 bit state and a 256 bit output */
@@ -22,9 +23,9 @@ using Canti.Blockchain.Crypto.Skein.SkeinFish;
 
 namespace Canti.Blockchain.Crypto.Skein
 {
-    public static class Skein
+    public class Skein : IHashProvider
     {
-        public static byte[] skein(byte[] input)
+        public byte[] Hash(byte[] input)
         {
             Skein512_256 s = new Skein512_256();
             return s.ComputeHash(input);

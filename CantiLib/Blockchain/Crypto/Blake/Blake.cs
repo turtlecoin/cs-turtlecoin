@@ -26,18 +26,20 @@
 using System;
 using System.Security.Cryptography;
 
+using Canti.Blockchain.Crypto;
+
 /* This is post NIST blake256, with 14 rounds */
-namespace Canti.Blockchain.Crypto.Blake256
+namespace Canti.Blockchain.Crypto.Blake
 {
-    public class Blake256
+    public class Blake : IHashProvider
     {
-        public static byte[] blake256(byte[] input)
+        public byte[] Hash(byte[] input)
         {
-            _Blake256 b = new _Blake256();
+            _Blake b = new _Blake();
             return b.ComputeHash(input);
         }
 
-        private sealed class _Blake256 : HashAlgorithm
+        private sealed class _Blake : HashAlgorithm
         {
             private uint[] m_h = new uint[8];
             private uint[] m_s = new uint[4];
@@ -85,7 +87,7 @@ namespace Canti.Blockchain.Crypto.Blake256
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
             };
 
-            public _Blake256()
+            public _Blake()
             {
                 this.HashSizeValue = 256; // Hash size in bits
                 Initialize();

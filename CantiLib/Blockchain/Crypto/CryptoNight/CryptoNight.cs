@@ -11,7 +11,7 @@ using Canti.Data;
 using Canti.Blockchain.Crypto;
 using Canti.Blockchain.Crypto.AES;
 using Canti.Blockchain.Crypto.Keccak;
-using Canti.Blockchain.Crypto.Blake256;
+using Canti.Blockchain.Crypto.Blake;
 using Canti.Blockchain.Crypto.Groestl;
 using Canti.Blockchain.Crypto.Skein;
 using Canti.Blockchain.Crypto.JH;
@@ -277,25 +277,31 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             /* Get the actual state buffer finally */
             byte[] state = cnState.GetState();
 
+            IHashProvider p;
+
             /* Choose the final hashing function to use based on the value of
                state[0] */
             switch(state[0] % 4)
             {
                 case 0:
                 {
-                    return Blake256.Blake256.blake256(state);
+                    p = new Blake.Blake();
+                    return p.Hash(state);
                 }
                 case 1:
                 {
-                    return Groestl.Groestl.groestl(state);
+                    p = new Groestl.Groestl();
+                    return p.Hash(state);
                 }
                 case 2:
                 {
-                    return JH.JH.jh(state);
+                    p = new JH.JH();
+                    return p.Hash(state);
                 }
                 default:
                 {
-                    return Skein.Skein.skein(state);
+                    p = new Skein.Skein();
+                    return p.Hash(state);
                 }
             }
         }
