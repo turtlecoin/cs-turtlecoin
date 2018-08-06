@@ -16,10 +16,5 @@ namespace Canti.Blockchain.Crypto.CryptoNight
         public const int InitSizeBlock = 8;
 
         public const int InitSizeByte = InitSizeBlock * AES.Constants.BlockSize;
-
-        public const int Memory = 2097152; /* 2 ^ 21 */
-        public const int Iterations = 1048576; /* 2 ^ 20 */
-
-        public const int CNIterations = Memory / InitSizeByte;
     }
 }

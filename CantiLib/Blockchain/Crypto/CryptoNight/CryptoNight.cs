@@ -6,7 +6,6 @@
 // Please see the included LICENSE file for more information.
 
 using System;
-using System.Numerics;
 
 using Canti.Data;
 using Canti.Blockchain.Crypto.AES;
@@ -20,30 +19,87 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 {
     public static class CryptoNight
     {
-        /* TODO: Take memory, iterations, etc as input struct, or possibly
-           use an interface */
+        public static byte[] CryptoNightVersionZero(byte[] input)
+        {
+            /* 2^21, 2^20 */
+            return cryptonightV0(input, new CNParams(2097152, 1048576));
+        }
+
+        public static byte[] CryptoNightLiteVersionZero(byte[] input)
+        {
+            /* 2^20, 2^19 */
+            return cryptonightV0(input, new CNParams(1048576, 524288));
+        }
+
+        public static byte[] CryptoNightVersionOne(byte[] input)
+        {
+            /* 2^21, 2^20 */
+            return cryptonightV1(input, new CNParams(2097152, 1048576));
+        }
+
+        public static byte[] CryptoNightLiteVersionOne(byte[] input)
+        {
+            /* 2^20, 2^19 */
+            return cryptonightV1(input, new CNParams(1048576, 524288));
+        }
+
         /* Returns a 32 byte hash */
-        public static byte[] CryptoNightVersionZero(byte[] data)
+        private static byte[] cryptonightV0(byte[] input, CNParams cnParams)
         {
             /* CryptoNight Step 1: Use Keccak1600 to initialize the 'state'
              * buffer, encapsulated in cnState
              */
+            CNState cnState = new CNState(Keccak.Keccak.keccak1600(input));
 
-            CNState cnState = new CNState(Keccak.Keccak.keccak1600(data));
+            byte[] scratchpad = FillScratchpad(cnState, cnParams);
 
-            /* CryptoNight Step 2:  Iteratively encrypt the results from Keccak
-             * to fill the 2MB large random access buffer.
+            MixScratchpadV0(cnState, cnParams, scratchpad);
+
+            EncryptScratchpadToText(cnState, cnParams, scratchpad);
+
+            return HashFinalState(cnState);
+        }
+
+        private static byte[] cryptonightV1(byte[] input, CNParams cnParams)
+        {
+            if (input.Length < 43)
+            {
+                throw new ArgumentException(
+                    "Input to cryptonightV1 must be at least 43 bytes!"
+                );
+            }
+
+            /* CryptoNight Step 1: Use Keccak1600 to initialize the 'state'
+             * buffer, encapsulated in cnState
              */
+            CNState cnState = new CNState(Keccak.Keccak.keccak1600(input));
 
+            byte[] scratchpad = FillScratchpad(cnState, cnParams);
+
+            byte[] tweak = VariantOneInit(cnState, input);
+
+            MixScratchpadV1(cnState, cnParams, scratchpad, tweak);
+
+            EncryptScratchpadToText(cnState, cnParams, scratchpad);
+
+            return HashFinalState(cnState);
+        }
+
+        /* CryptoNight Step 2:  Iteratively encrypt the results from Keccak
+         * to fill the large scratchpad
+         */
+        private static byte[] FillScratchpad(CNState cnState, CNParams cnParams)
+        {
             /* Expand our initial key into many for each round of pseudo aes */
             byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey());
 
             /* Our large scratchpad, 2MB in default CN */
-            byte[] scratchpad = new byte[Constants.Memory];
+            byte[] scratchpad = new byte[cnParams.Memory];
 
             byte[] text = cnState.GetText();
 
-            for (int i = 0; i < Constants.CNIterations; i++)
+            /* Fill the scratchpad with AES encryption of text */
+            for (int i = 0; i < cnParams.CNIterations; i++)
             {
                 for (int j = 0; j < Constants.InitSizeBlock; j++)
                 {
@@ -59,79 +115,133 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                                  i * Constants.InitSizeByte, text.Length);
             }
 
-            byte[] a = new byte[AES.Constants.BlockSize];
-            byte[] b = new byte[AES.Constants.BlockSize];
-            byte[] c = new byte[AES.Constants.BlockSize];
-            byte[] d = new byte[AES.Constants.BlockSize];
+            return scratchpad;
+        }
 
-            byte[] k = cnState.GetK();
+        /* CryptoNight Step 3: Bounce randomly 1,048,576 times (1<<20)
+         * through the mixing scratchpad, using 524,288 iterations of the
+         * following mixing function.  Each execution performs two reads
+         * and writes from the mixing scratchpad.
+         */
+        private static void MixScratchpadV0(CNState cnState, CNParams cnParams,
+                                            byte[] scratchpad)
+        {
+            MixScratchpadState mixingState = new MixScratchpadState(cnState);
 
-            for (int i = 0; i < AES.Constants.BlockSize; i++)
-            {
-                a[i] = (byte)(k[i] ^ k[i+32]);
-                b[i] = (byte)(k[i+16] ^ k[i+48]);
-            }
-
-            /* CryptoNight Step 3: Bounce randomly 1,048,576 times (1<<20)
-             * through the mixing scratchpad, using 524,288 iterations of the
-             * following mixing function.  Each execution performs two reads
-             * and writes from the mixing scratchpad.
-             */
-            for (int i = 0; i < Constants.Iterations / 2; i++)
+            for (int i = 0; i < cnParams.Iterations / 2; i++)
             {
                 for (int iteration = 1; iteration < 3; iteration++)
                 {
-                    
                     /* Get our 'memory' address we're using for this round */
-                    int j = e2i(a);
+                    int j = e2i(mixingState.a, cnParams.Memory);
 
                     /* Load c from the scratchpad */
-                    CopyBlockFromScratchpad(scratchpad, c, j);
+                    CopyBlockFromScratchpad(scratchpad, mixingState.c, j);
 
-                    /* ITERATION ONE */
+                    /* Perform the mixing function */
                     if (iteration == 1)
                     {
-                        AES.AES.EncryptionRound(a, c);
-
-                        XORBlocks(b, c);
-
-                        SwapBlocks(b, c);
+                        MixScratchpadIterationOne(mixingState);
                     }
-                    /* ITERATION TWO */
                     else
                     {
-                        /* Multiply a and c together, and place the result in
-                           b, a and c are ulongs stored as byte arrays, d is a
-                           128 bit value stored as a byte array */
-                        Multiply128(a, c, d);
-
-                        SumHalfBlocks(b, d);
-
-                        SwapBlocks(b, c);
-
-                        XORBlocks(b, c);
+                        MixScratchpadIterationTwo(mixingState);
                     }
 
                     /* Write c back to the scratchpad */
-                    CopyBlockToScratchpad(scratchpad, c, j);
+                    CopyBlockToScratchpad(scratchpad, mixingState.c, j);
 
-                    SwapBlocks(a, b);
+                    SwapBlocks(mixingState.a, mixingState.b);
                 }
             }
+        }
 
+        /* CryptoNight Step 3: Bounce randomly 1,048,576 times (1<<20)
+         * through the mixing scratchpad, using 524,288 iterations of the
+         * following mixing function.  Each execution performs two reads
+         * and writes from the mixing scratchpad.
+         */
+        private static void MixScratchpadV1(CNState cnState, CNParams cnParams,
+                                            byte[] scratchpad, byte[] tweak)
+        {
+            MixScratchpadState mixingState = new MixScratchpadState(cnState);
+
+            for (int i = 0; i < cnParams.Iterations / 2; i++)
+            {
+                for (int iteration = 1; iteration < 3; iteration++)
+                {
+                    /* Get our 'memory' address we're using for this round */
+                    int j = e2i(mixingState.a, cnParams.Memory);
+
+                    /* Load c from the scratchpad */
+                    CopyBlockFromScratchpad(scratchpad, mixingState.c, j);
+
+                    /* Perform the mixing function */
+                    if (iteration == 1)
+                    {
+                        MixScratchpadIterationOne(mixingState);
+                    }
+                    else
+                    {
+                        MixScratchpadIterationTwo(mixingState);
+                        VariantOneStepTwo(mixingState.c, 8, tweak);
+                    }
+
+                    /* Write c back to the scratchpad */
+                    CopyBlockToScratchpad(scratchpad, mixingState.c, j);
+
+                    SwapBlocks(mixingState.a, mixingState.b);
+
+                    /* Perform the variant one tweak */
+                    if (iteration == 1)
+                    {
+                        VariantOneStepOne(scratchpad, j);
+                    }
+                }
+            }
+        }
+
+        private static void MixScratchpadIterationOne(MixScratchpadState
+                                                      mixingState)
+        {
+            AES.AES.EncryptionRound(mixingState.a, mixingState.c);
+
+            XORBlocks(mixingState.b, mixingState.c);
+
+            SwapBlocks(mixingState.b, mixingState.c);
+        }
+
+        private static void MixScratchpadIterationTwo(MixScratchpadState
+                                                      mixingState)
+        {
+            /* Multiply a and c together, and place the result in
+               b, a and c are ulongs stored as byte arrays, d is a
+               128 bit value stored as a byte array */
+            Multiply128(mixingState.a, mixingState.c, mixingState.d);
+
+            SumHalfBlocks(mixingState.b, mixingState.d);
+
+            SwapBlocks(mixingState.b, mixingState.c);
+
+            XORBlocks(mixingState.b, mixingState.c);
+        }
+
+        /* CryptoNight Step 4: Sequentially pass through the mixing buffer
+         * and use 10 rounds of AES encryption to mix the random data back
+         * into the 'text' buffer.
+         */
+        private static void EncryptScratchpadToText(CNState cnState,
+                                                    CNParams cnParams, 
+                                                    byte[] scratchpad)
+        {
             /* Reinitialize text from state */
-            text = cnState.GetText();
+            byte[] text = cnState.GetText();
 
             /* Expand our initial key into many for each round of pseudo aes */
-            expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey2());
+            byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey2());
 
-            /* CryptoNight Step 4: Sequentially pass through the mixing buffer
-             * and use 10 rounds of AES encryption to mix the random data back
-             * into the 'text' buffer. 'text' was originally created with the
-             * output of Keccak1600.
-             */
-
-            for (int i = 0; i < Constants.CNIterations; i++)
+            
+            for (int i = 0; i < cnParams.CNIterations; i++)
             {
                 for (int j = 0; j < Constants.InitSizeBlock; j++)
                 {
@@ -145,17 +255,18 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     AES.AES.PseudoEncryptECB(expandedKeys, text, offsetA);
                 }
             }
-            
-            /* CryptoNight Step 5: Apply Keccak to the state again, and then
-             * use the resulting data to select which of four finalizer
-             * hash functions to apply to the data (Blake, Groestl, JH,
-             * or Skein). Use this hash to squeeze the state array down
-             * to the final 32 byte hash output.
-             */
 
-            /* Copy text back to state */
             cnState.SetText(text);
-
+        }
+        
+        /* CryptoNight Step 5: Apply Keccak to the state again, and then
+         * use the resulting data to select which of four finalizer
+         * hash functions to apply to the data (Blake, Groestl, JH,
+         * or Skein). Use this hash to squeeze the state array down
+         * to the final 32 byte hash output.
+         */
+        private static byte[] HashFinalState(CNState cnState)
+        {
             /* Get the state buffer as an array of ulongs rather than bytes */
             ulong[] hashState = cnState.GetHashState();
 
@@ -188,6 +299,43 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     return Skein.Skein.skein(state);
                 }
             }
+        }
+
+        private static byte[] VariantOneInit(CNState state, byte[] input)
+        {
+            byte[] tweak = state.GetTweak();
+
+            XOR64(tweak, input, 0, 35);
+
+            return tweak;
+        }
+
+        private static void XOR64(byte[] a, byte[] b, int offsetA = 0,
+                                  int offsetB = 0)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                a[i + offsetA] ^= b[i + offsetB];
+            }
+        }
+
+        private static void VariantOneStepOne(byte[] scratchpad, int j)
+        {
+            int offset = (j * AES.Constants.BlockSize) + 11;
+
+            byte tmp = scratchpad[offset];
+
+            uint table = 0x75310;
+
+            byte index = (byte)((((tmp >> 3) & 6) | (tmp & 1)) << 1);
+
+            scratchpad[offset] = (byte)(tmp ^ ((table >> index) & 0x30));
+        }
+
+        private static void VariantOneStepTwo(byte[] c, int offset,
+                                              byte[] tweak)
+        {
+            XOR64(c, tweak, offset, 0);
         }
 
         private static void SumHalfBlocks(byte[] a, byte[] b)
@@ -282,7 +430,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
         }
 
         /* Get a memory address to work with in our scratchpad */
-        private static int e2i(byte[] input)
+        private static int e2i(byte[] input, int memorySize)
         {
             /* Read 8 bytes as a ulong */
             ulong j = Encoding.ByteArrayToInteger<ulong>(input, 0, 8);
@@ -290,99 +438,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             /* Divide by aes block size */
             j /= AES.Constants.BlockSize;
 
-            /* Bitwise AND with (memory / blocksize) - 1*/
-            return (int)(j & (Constants.Memory / AES.Constants.BlockSize - 1));
-        }
-
-        /* This class encapsulates the different ways we index the 200 byte
-           state buffer. There are different bits we use each section for,
-           of different lengths and offsets. */
-        private sealed class CNState
-        {
-            /* State is a 200 byte buffer */
-            public CNState(byte[] state)
-            {
-                this.state = state;
-            }
-
-            /* AESKey is the first 32 bytes of our 200 byte state buffer */
-            public byte[] GetAESKey()
-            {
-                byte[] AESKey = new byte[AES.Constants.KeySize];
-
-                /* Copy 32 bytes from the state array to the AESKey array */
-                Buffer.BlockCopy(state, 0, AESKey, 0, AESKey.Length);
-
-                return AESKey;
-            }
-
-            /* AESKey2 is a 32 byte array, offset by 32 in state, e.g.
-               state[32:64] */
-            public byte[] GetAESKey2()
-            {
-                byte[] AESKey2 = new byte[AES.Constants.KeySize];
-
-                /* Copy 32 bytes from the state array, at an offset of 32, to the
-                   AESKey2 array */
-                Buffer.BlockCopy(state, 32, AESKey2, 0, AESKey2.Length);
-
-                return AESKey2;
-            }
-
-            /* K is the first 64 bytes of our 200 byte state buffer */
-            public byte[] GetK()
-            {
-                byte[] k = new byte[64];
-
-                /* Copy 64 bytes from the state array to the k array */
-                Buffer.BlockCopy(state, 0, k, 0, k.Length);
-
-                return k;
-            }
-
-            /* Text is a 128 byte buffer, offset by 64 bytes in state, e.g.
-               state[64:192] */
-            public byte[] GetText()
-            {
-                byte[] text = new byte[Constants.InitSizeByte];
-
-                /* Copy 128 bytes from the state array, at an offset of 64, to
-                   the text array */
-                Buffer.BlockCopy(state, 64, text, 0, text.Length);
-
-                return text;
-            }
-
-            public void SetText(byte[] text)
-            {
-                /* Copy 128 bytes from the text array, to the state array at an
-                   offset of 64 */
-                Buffer.BlockCopy(text, 0, state, 64, text.Length);
-            }
-
-            public ulong[] GetHashState()
-            {
-                ulong[] hashState = new ulong[state.Length / 8];
-
-                /* Coerce state into an array of ulongs rather than bytes */
-                Buffer.BlockCopy(state, 0, hashState, 0, state.Length);
-
-                return hashState;
-            }
-
-            public void SetHashState(ulong[] hashState)
-            {
-                /* Coerce hashState back into an array of bytes */
-                Buffer.BlockCopy(hashState, 0, state, 0, state.Length);
-            }
-
-            public byte[] GetState()
-            {
-                return state;
-            }
-
-            /* The underlying 200 byte array */
-            private byte[] state;
+            /* Bitwise AND with (memorySize / blocksize) - 1*/
+            return (int)(j & (ulong)(memorySize / AES.Constants.BlockSize - 1));
         }
     }
 }
