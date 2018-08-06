@@ -37,6 +37,15 @@ namespace Tests
             HashTests.Test(testVectors, new CNV1());
         }
 
+        /* V1 requires input length of >= 43 bytes */
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestCNV1Throws()
+        {
+            var testVectors = new Dictionary<string, string>();
+            testVectors.Add("", "");
+            HashTests.Test(testVectors, new CNV1());
+        }
 
         [TestMethod]
         public void TestCNLiteV0()
@@ -60,6 +69,16 @@ namespace Tests
             testVectors.Add("The quick brown fox jumps over the lazy dog.", "b860f59d6aef32c7cacac02c4ac794066402dbd30c64c7fb733600a91441326d");
             testVectors.Add("I'd just like to interject for a moment. What you're referring to as Linux, is in fact, GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself", "f7a5217873b802940a629573f6a100deb25764af254f8f4fef1a8b9d51ef3cc5");
 
+            HashTests.Test(testVectors, new CNLiteV1());
+        }
+
+        /* V1 requires input length of >= 43 bytes */
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestCNLiteV1Throws()
+        {
+            var testVectors = new Dictionary<string, string>();
+            testVectors.Add("", "");
             HashTests.Test(testVectors, new CNLiteV1());
         }
     }
