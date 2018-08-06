@@ -9,13 +9,20 @@
 using System;
 
 using Canti.Data;
+using Canti.Blockchain.Crypto;
 
 /* This is pre NIST keccak before the sha-3 revisions */
 namespace Canti.Blockchain.Crypto.Keccak
 {
-    public static class Keccak
+    public class Keccak : IHashProvider
     {
-        public static void keccakf(ulong[] state, int rounds = Constants.KeccakRounds)
+        public byte[] Hash(byte[] input)
+        {
+            return keccak(input);
+        }
+
+        public static void keccakf(ulong[] state, 
+                                   int rounds = Constants.KeccakRounds)
         {
             ulong t;
 
@@ -26,7 +33,8 @@ namespace Canti.Blockchain.Crypto.Keccak
                 /* Theta */
                 for (int i = 0; i < 5; i++)
                 {
-                    bc[i] = state[i] ^ state[i+5] ^ state[i+10] ^ state[i+15] ^ state[i + 20];
+                    bc[i] = state[i] ^ state[i+5] ^ state[i+10] ^ state[i+15]
+                                     ^ state[i + 20];
                 }
 
                 for (int i = 0; i < 5; i++)
@@ -94,7 +102,9 @@ namespace Canti.Blockchain.Crypto.Keccak
                 {
                     /* Read 8 bytes as a ulong, need to multiply i by 8
                        because we're reading chunks of 8 at once */
-                    state[i] ^= Encoding.ByteArrayToInteger<ulong>(input, offset + (i * 8), 8);
+                    state[i] ^= Encoding.ByteArrayToInteger<ulong>(
+                        input, offset + (i * 8), 8
+                    );
                 }
 
                 keccakf(state);
@@ -102,13 +112,14 @@ namespace Canti.Blockchain.Crypto.Keccak
             
             byte[] tmp = new byte[144];
 
-            /* Copy inputLength bytes from input to tmp at an offset of offset from
-               input */
+            /* Copy inputLength bytes from input to tmp at an offset of
+               offset from input */
             Buffer.BlockCopy(input, offset, tmp, 0, inputLength);
 
             tmp[inputLength++] = 1;
 
-            /* Zero (rsiz - inputLength) bytes in tmp, at an offset of inputLength */
+            /* Zero (rsiz - inputLength) bytes in tmp, at an offset of
+               inputLength */
             Array.Clear(tmp, inputLength, rsiz - inputLength);
 
             tmp[rsiz - 1] |= 0x80;
@@ -149,7 +160,9 @@ namespace Canti.Blockchain.Crypto.Keccak
         {
             if (outputLength > 32)
             {
-                throw new ArgumentException("Output length must be 32 bytes or less!");
+                throw new ArgumentException(
+                    "Output length must be 32 bytes or less!"
+                );
             }
 
             byte[] result = _keccak(input, 32);

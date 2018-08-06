@@ -6,12 +6,14 @@
 
 using System;
 
+using Canti.Blockchain.Crypto;
+
 /* JH-256, post NIST modifications (42 rounds) */
 namespace Canti.Blockchain.Crypto.JH
 {
-    public static class JH
+    public class JH : IHashProvider
     {
-        public static byte[] jh(byte[] input)
+        public byte[] Hash(byte[] input)
         {
             HashState state = new HashState();
 
