@@ -154,6 +154,44 @@ namespace Canti.Data
                 Output |= ((ulong)Bytes[i] << i * 8);
             return (T)Convert.ChangeType(Output, typeof(T));
         }
+
+        /* Only use this if you really need performance! It's not safe */
+        public static unsafe ulong UnsafeByteArrayToUlong(byte[] Input, int Offset = 0)
+        {
+            /* The offset is an offset in bytes - since we're indexing the array as a
+             * ulong ptr, we need to divide by 8. */
+            int ulongOffset = Offset / 8;
+
+            /* Fix the array in memory, so it doesn't get garbage collected. Then,
+             * get a pointer to the array's memory. */
+            fixed (byte *bytePtr = Input)
+            {
+                /* Cast the pointer to a ulong pointer */
+                ulong* ulongPtr = (ulong*)bytePtr;
+                /* Return the element at the offset (default 0), 8 bytes as a ulong */
+                return ulongPtr[ulongOffset];
+            }
+        }
+
+        /* Only use this if you really need performance! It's not safe */
+        public static unsafe void UnsafeWriteUlongToByteArray(byte[] Input, ulong value, int Offset = 0)
+        {
+            /* The offset is an offset in bytes - since we're indexing the array as a
+             * ulong ptr, we need to divide by 8. */
+            int ulongOffset = Offset / 8;
+
+            /* Fix the array in memory, so it doesn't get garbage collected. Then,
+             * get a pointer to the array's memory. */
+            fixed (byte *bytePtr = Input)
+            {
+                /* Cast the pointer to a ulong pointer */
+                ulong* ulongPtr = (ulong*)bytePtr;
+
+                /* Set the ulong value to the 8 bytes this part of the array points
+                 * to (with offset) */
+                ulongPtr[ulongOffset] = value;
+            }
+        }
         #endregion
 
         #region Conversion

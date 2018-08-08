@@ -46,6 +46,16 @@ Yep, it's a special snowflake edition
 
 * Run `dotnet test`
 
+* This will run the test suite, and report any failures.
+
+### Benchmarking
+
+* Enter the `Benchmark` directory
+
+* Run `dotnet run`
+
+* This will launch the benchmark program.
+
 ### Experimenting
 
 If you want to test out a few functions without having to set up a whole new

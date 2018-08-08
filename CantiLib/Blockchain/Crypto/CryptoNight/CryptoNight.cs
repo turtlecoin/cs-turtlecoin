@@ -8,13 +8,6 @@
 using System;
 
 using Canti.Data;
-using Canti.Blockchain.Crypto;
-using Canti.Blockchain.Crypto.AES;
-using Canti.Blockchain.Crypto.Keccak;
-using Canti.Blockchain.Crypto.Blake;
-using Canti.Blockchain.Crypto.Groestl;
-using Canti.Blockchain.Crypto.Skein;
-using Canti.Blockchain.Crypto.JH;
 
 namespace Canti.Blockchain.Crypto.CryptoNight
 {
@@ -132,7 +125,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 for (int iteration = 1; iteration < 3; iteration++)
                 {
                     /* Get our 'memory' address we're using for this round */
-                    int j = e2i(mixingState.a, cnParams.Memory());
+                    int j = E2I(mixingState.a, cnParams.Memory());
 
                     /* Load c from the scratchpad */
                     CopyBlockFromScratchpad(scratchpad, mixingState.c, j);
@@ -171,7 +164,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 for (int iteration = 1; iteration < 3; iteration++)
                 {
                     /* Get our 'memory' address we're using for this round */
-                    int j = e2i(mixingState.a, cnParams.Memory());
+                    int j = E2I(mixingState.a, cnParams.Memory());
 
                     /* Load c from the scratchpad */
                     CopyBlockFromScratchpad(scratchpad, mixingState.c, j);
@@ -346,29 +339,25 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
         private static void SumHalfBlocks(byte[] a, byte[] b)
         {
-            /* Read the two byte arrays into 4 separate ulongs */
-            ulong a0 = Encoding.ByteArrayToInteger<ulong>(a, 0, 8);
-            ulong a1 = Encoding.ByteArrayToInteger<ulong>(a, 8, 8);
-            ulong b0 = Encoding.ByteArrayToInteger<ulong>(b, 0, 8);
-            ulong b1 = Encoding.ByteArrayToInteger<ulong>(b, 8, 8);
+            /* a0 = a[0..7] + b[0..7] */
+            ulong a0 = Encoding.UnsafeByteArrayToUlong(a)
+                     + Encoding.UnsafeByteArrayToUlong(b);
 
-            a0 += b0;
-            a1 += b1;
+            /* b0 = a[8..15] + b[8..15] */
+            ulong b0 = Encoding.UnsafeByteArrayToUlong(a, 8)
+                     + Encoding.UnsafeByteArrayToUlong(b, 8);
 
-            byte[] tmpA0 = Encoding.IntegerToByteArray<ulong>(a0);
-            byte[] tmpA1 = Encoding.IntegerToByteArray<ulong>(a1);
-
-            /* Copy tmpA0 into a[0..7], and tmpA1 into a[8..15] */
-            Buffer.BlockCopy(tmpA0, 0, a, 0, 8);
-            Buffer.BlockCopy(tmpA1, 0, a, 8, 8);
+            /* Copy a0 into a[0..7], and b0 into a[8..15] */
+            Encoding.UnsafeWriteUlongToByteArray(a, a0, 0);
+            Encoding.UnsafeWriteUlongToByteArray(a, b0, 8);
         }
 
         /* Thanks to https://stackoverflow.com/a/42426934/8737306 */
         private static void Multiply128(byte[] a, byte[] b, byte[] result)
         {
             /* Read 8 bytes from a and b as a ulong */
-            ulong x = Encoding.ByteArrayToInteger<ulong>(a, 0, 8);
-            ulong y = Encoding.ByteArrayToInteger<ulong>(b, 0, 8);
+            ulong x = Encoding.UnsafeByteArrayToUlong(a);
+            ulong y = Encoding.UnsafeByteArrayToUlong(b);
 
             ulong x_lo = x & 0xffffffff;
             ulong x_hi = x >> 32;
@@ -385,14 +374,10 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             ulong result_lo = (mul_carry << 32) + (mul_lo & 0xffffffff);
 
-            /* Convert the ulongs back into byte arrays */
-            byte[] low = Encoding.IntegerToByteArray<ulong>(result_lo);
-            byte[] high = Encoding.IntegerToByteArray<ulong>(result_hi);
-
-            /* Copy the 8 high bits to result[0..7] */
-            Buffer.BlockCopy(high, 0, result, 0, 8);
-            /* Copy the 8 low bits to result[8..15] */
-            Buffer.BlockCopy(low, 0, result, 8, 8);
+            /* Write result_hi to result[0..7] and result_lo to
+             * result[8..15] */
+            Encoding.UnsafeWriteUlongToByteArray(result, result_hi);
+            Encoding.UnsafeWriteUlongToByteArray(result, result_lo, 8);
         }
 
         /* Copy blocksize bytes from the scratchpad at an offset of
@@ -438,10 +423,10 @@ namespace Canti.Blockchain.Crypto.CryptoNight
         }
 
         /* Get a memory address to work with in our scratchpad */
-        private static int e2i(byte[] input, int memorySize)
+        private static int E2I(byte[] input, int memorySize)
         {
             /* Read 8 bytes as a ulong */
-            ulong j = Encoding.ByteArrayToInteger<ulong>(input, 0, 8);
+            ulong j = Encoding.UnsafeByteArrayToUlong(input);
 
             /* Divide by aes block size */
             j /= AES.Constants.BlockSize;
