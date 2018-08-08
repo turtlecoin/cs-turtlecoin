@@ -12,7 +12,15 @@ You need the `dotnet` command line tools.
 
 #### Windows
 
-??? someone fill this in
+Install the dotnet sdk from here - https://www.microsoft.com/net/download
+
+Once this is installed, you should have access to the `dotnet` executable from a standard cmd.
+
+Alternatively you can attempt installing Visual Studio to install dotnet, however I found that it installed the wrong version for me.
+
+Once you have the correct dotnet sdk installed (Verify by running `dotnet build` or another of the below commands via CLI) you can interact with the project via Visual Studio, if you like.
+
+To do so, open up the CantiLib.sln file in Visual Studio. To run the daemon, just hit the green arrow labeled Daemon. To run the tests, choose the Test menu, then Run, then All Tests.
 
 #### Ubuntu, Debian, Fedora, CentOS, RHEL, openSUSE
 
@@ -59,7 +67,7 @@ project, we have provided the `TestZone` project for you to do this in.
 
 * Run `dotnet run` again.
 
-* Hopefully it compiled!
+* Happy Hacking!
 
 ### Exploring
 
