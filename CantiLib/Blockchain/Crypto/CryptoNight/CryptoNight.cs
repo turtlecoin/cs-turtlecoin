@@ -22,9 +22,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
     {
         public static byte[] SlowHash(byte[] input, ICryptoNight cnParams)
         {
-            int variant = cnParams.Variant();
-
-            switch(variant)
+            switch(cnParams.Variant())
             {
                 case 0:
                 {
@@ -64,7 +62,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             if (input.Length < 43)
             {
                 throw new ArgumentException(
-                    "Input to cryptonightV1 must be at least 43 bytes!"
+                    "Input to CryptoNightV1 must be at least 43 bytes!"
                 );
             }
 
@@ -87,7 +85,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
         /* CryptoNight Step 2:  Iteratively encrypt the results from Keccak
          * to fill the large scratchpad
          */
-        private static byte[] FillScratchpad(CNState cnState, ICryptoNight cnParams)
+        private static byte[] FillScratchpad(CNState cnState,
+                                             ICryptoNight cnParams)
         {
             /* Expand our initial key into many for each round of pseudo aes */
             byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey());
@@ -122,7 +121,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
          * following mixing function.  Each execution performs two reads
          * and writes from the mixing scratchpad.
          */
-        private static void MixScratchpadV0(CNState cnState, ICryptoNight cnParams,
+        private static void MixScratchpadV0(CNState cnState,
+                                            ICryptoNight cnParams,
                                             byte[] scratchpad)
         {
             MixScratchpadState mixingState = new MixScratchpadState(cnState);
@@ -184,6 +184,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     else
                     {
                         MixScratchpadIterationTwo(mixingState);
+                        /* Perform the variant one tweak, second iteration */
                         VariantOneStepTwo(mixingState.c, 8, tweak);
                     }
 
@@ -192,7 +193,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
                     SwapBlocks(mixingState.a, mixingState.b);
 
-                    /* Perform the variant one tweak */
+                    /* Perform the variant one tweak, first iteration */
                     if (iteration == 1)
                     {
                         VariantOneStepOne(scratchpad, j);
@@ -379,7 +380,9 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             ulong mul_hi = (x_hi * y_lo) + (mul_lo >> 32);
             ulong mul_carry = (x_lo * y_hi) + (mul_hi & 0xffffffff);
 
-            ulong result_hi = (x_hi * y_hi) + (mul_hi >> 32) + (mul_carry >> 32);
+            ulong result_hi = (x_hi * y_hi) + (mul_hi >> 32) 
+                                            + (mul_carry >> 32);
+
             ulong result_lo = (mul_carry << 32) + (mul_lo & 0xffffffff);
 
             /* Convert the ulongs back into byte arrays */
