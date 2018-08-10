@@ -1,6 +1,7 @@
 /*
 MIT License
 
+Copyright (c) 2018 Adrian Herridge
 Copyright (c) 2018 CodIsAFish
 Copyright (c) 2018 The TurtleCoin Developers
 
