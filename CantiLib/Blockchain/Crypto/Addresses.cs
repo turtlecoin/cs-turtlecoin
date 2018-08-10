@@ -20,8 +20,13 @@ namespace Canti.Blockchain.Crypto
         public static string AddressFromKeys(PrivateKey privateSpendKey,
                                              PrivateKey privateViewKey)
         {
-            PublicKey publicSpendKey = KeyOps.PrivateKeyToPublicKey(privateSpendKey);
-            PublicKey publicViewKey = KeyOps.PrivateKeyToPublicKey(privateViewKey);
+            PublicKey publicSpendKey = KeyOps.PrivateKeyToPublicKey(
+                privateSpendKey
+            );
+
+            PublicKey publicViewKey = KeyOps.PrivateKeyToPublicKey(
+                privateViewKey
+            );
 
             return AddressFromKeys(publicSpendKey, publicViewKey);
         }
@@ -38,10 +43,16 @@ namespace Canti.Blockchain.Crypto
                                              PrivateKey privateViewKey,
                                              ulong addressPrefix)
         {
-            PublicKey publicSpendKey = KeyOps.PrivateKeyToPublicKey(privateSpendKey);
-            PublicKey publicViewKey = KeyOps.PrivateKeyToPublicKey(privateViewKey);
+            PublicKey publicSpendKey = KeyOps.PrivateKeyToPublicKey(
+                privateSpendKey
+            );
 
-            return AddressFromKeys(publicSpendKey, publicViewKey, addressPrefix);
+            PublicKey publicViewKey = KeyOps.PrivateKeyToPublicKey(
+                privateViewKey
+            );
+
+            return AddressFromKeys(publicSpendKey, publicViewKey,
+                                   addressPrefix);
         }
 
         public static string AddressFromKeys(PublicKey publicSpendKey,
@@ -102,13 +113,14 @@ namespace Canti.Blockchain.Crypto
             return address;
         }
 
-        public static IEither<string, PublicKeys> KeysFromAddress(string address)
+        public static IEither<string, PublicKeys>
+                      KeysFromAddress(string address)
         {
             return KeysFromAddress(address, Globals.addressPrefix);
         }
 
-        public static IEither<string, PublicKeys> KeysFromAddress(string address,
-                                                                  ulong prefix)
+        public static IEither<string, PublicKeys>
+                      KeysFromAddress(string address, ulong prefix)
         {
             /* Split into chunks of 11 */
             List<List<char>> chunks = address.ToList().ChunkBy(11);
@@ -122,7 +134,9 @@ namespace Canti.Blockchain.Crypto
                 try
                 {
                     /* Convert char list to string, and decode from base58 */
-                    decodedChunk = new List<byte>(Base58.Decode(string.Concat(chunk)));
+                    decodedChunk = new List<byte>(
+                        Base58.Decode(string.Concat(chunk))
+                    );
                 }
                 catch (FormatException)
                 {
