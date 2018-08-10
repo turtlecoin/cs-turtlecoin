@@ -48,22 +48,19 @@ namespace Canti.Blockchain.Crypto
                                               isCorrectPasswordIdentifier);
 
             using (Aes aes = Aes.Create())
-            using (SHA512 sha = SHA512.Create())
+            using (SHA256 sha256 = SHA256.Create())
             {
                 aes.KeySize = 256;
 
-                /* Hash the password with sha512 to get the AES key, take
-                   32 bytes */
-                aes.Key = sha.ComputeHash(Encoding.UTF8.GetBytes(password))
-                             .Take(32).ToArray();
+                /* Hash the password with sha256 to get the AES key */
+                aes.Key = sha256.ComputeHash(Encoding.UTF8.GetBytes(password))
+                                .ToArray();
 
                 aes.BlockSize = 128;
 
-                /*Hash the password with sha512 twice to get the IV, take 
-                  16 bytes */
-                aes.IV = sha.ComputeHash(sha.ComputeHash(
-                    Encoding.UTF8.GetBytes(password)
-                )).Take(16).ToArray();
+                byte[] IV = SecureRandom.Bytes(16);
+
+                aes.IV = IV;
 
                 ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key,
                                                                  aes.IV);
@@ -87,6 +84,11 @@ namespace Canti.Blockchain.Crypto
                     fileStream.Write(
                         isAWalletIdentifier, 0, isAWalletIdentifier.Length
                     );
+
+                    /* Write the IV to the file, UNENCRYPTED! We will use this
+                       to unencrypt the file when we reopen it. We need the
+                       IV to be different on each creation of the file. */
+                    fileStream.Write(IV, 0, IV.Length);
 
                     /* Write the wallet file data to the file, encrypted. */
                     streamWriter.Write(jsonFileData);
@@ -119,25 +121,36 @@ namespace Canti.Blockchain.Crypto
         private static IEither<string, byte[]>
                        DecryptBytesOrError(byte[] input, string password)
         {
+            byte[] IV = new byte[16];
+
+            if (input.Length < IV.Length)
+            {
+                return Either.Left<string, byte[]>(
+                    "Failed to parse wallet file! It appears corrupted."
+                );
+            }
+
+            /* Extract IV from input */
+            Buffer.BlockCopy(input, 0, IV, 0, IV.Length);
+
+            /* Remove the IV from the inputted bytes, we don't need it any
+               more */
+            input = RemoveMagicIdentifier(input, IV);
+
             byte[] decryptedBytes;
 
             using (Aes aes = Aes.Create())
-            using (SHA512 sha = SHA512.Create())
+            using (SHA256 sha256 = SHA256.Create())
             {
                 aes.KeySize = 256;
 
-                /* Hash the password with sha512 to get the AES key, take
-                   32 bytes */
-                aes.Key = sha.ComputeHash(Encoding.UTF8.GetBytes(password))
-                             .Take(32).ToArray();
+                /* Hash the password with sha256 to get the AES key */
+                aes.Key = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
 
                 aes.BlockSize = 128;
 
-                /* Hash the password with sha512 twice to get the IV, take 
-                   16 bytes */
-                aes.IV = sha.ComputeHash(sha.ComputeHash(
-                    Encoding.UTF8.GetBytes(password)
-                )).Take(16).ToArray();
+                /* Use the random IV we extracted earlier */
+                aes.IV = IV;
 
                 /* Initialize our aes decrypter, using the given Key and IV */
                 ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key,
@@ -145,17 +158,28 @@ namespace Canti.Blockchain.Crypto
 
                 string decryptedData;
 
-                using (MemoryStream memoryStream = new MemoryStream(input))
-                /* Decode the AES encrypted file in a stream */
-                using (CryptoStream cryptoStream = new CryptoStream(
-                    memoryStream, decryptor, CryptoStreamMode.Read
-                ))
-                /* Write the decoded data into the string */
-                using (StreamReader streamReader = new StreamReader(
-                    cryptoStream
-                ))
+                try
                 {
-                    decryptedData = streamReader.ReadToEnd();
+                    using (MemoryStream memoryStream = new MemoryStream(input))
+                    /* Decode the AES encrypted file in a stream */
+                    using (CryptoStream cryptoStream = new CryptoStream(
+                        memoryStream, decryptor, CryptoStreamMode.Read
+                    ))
+                    /* Write the decoded data into the string */
+                    using (StreamReader streamReader = new StreamReader(
+                        cryptoStream
+                    ))
+                    {
+                            decryptedData = streamReader.ReadToEnd();
+                    }
+                }
+                /* This exception will be thrown if the data has invalid
+                   padding, which indicates an incorrect password */
+                catch (CryptographicException)
+                {
+                    return Either.Left<string, byte[]>(
+                        "Incorrect password! Try again."
+                    );
                 }
 
                 decryptedBytes = Data.Encoding.StringToByteArray(decryptedData);
