@@ -11,15 +11,18 @@ using Canti.Utilities;
 using Canti.Blockchain.Crypto;
 using Canti.Blockchain.Crypto.Mnemonics;
 
-namespace Canti.Blockchain.Wallet
+namespace Canti.Blockchain.WalletBackend
 {
-    public class Wallet
+    public class WalletBackend
     {
+        /* So it can't be called by end users */
+        private WalletBackend() {}
+
         /* Private constructor so we can validate a few prerequisites before
            creating an instance, rather than throwing exceptions, e.g.
            are we overwriting an old file */
-        private Wallet(string filename, string password,
-                       PrivateKeys privateKeys)
+        private WalletBackend(string filename, string password,
+                              PrivateKeys privateKeys)
         {
             PublicKey publicSpendKey = KeyOps.PrivateKeyToPublicKey(
                 privateKeys.spendKey
@@ -39,8 +42,8 @@ namespace Canti.Blockchain.Wallet
         }
 
         /* Makes a new view wallet */
-        private Wallet(string filename, string password,
-                       PrivateKey privateViewKey, PublicKeys publicKeys)
+        private WalletBackend(string filename, string password,
+                              PrivateKey privateViewKey, PublicKeys publicKeys)
         {
             this.filename = filename;
             this.password = password;
@@ -56,8 +59,8 @@ namespace Canti.Blockchain.Wallet
 
         /* Make a new wallet with the given filename and password, returning
            either the wallet or an error */
-        public static IEither<string, Wallet> NewWallet(string filename,
-                                                        string password)
+        public static IEither<string, WalletBackend> NewWallet(string filename,
+                                                               string password)
         {
             WalletKeys keys = KeyOps.GenerateWalletKeys();
 
@@ -66,9 +69,9 @@ namespace Canti.Blockchain.Wallet
 
         /* Make a new wallet with the given filename and password, and
            mnemonic seed, returning either the wallet or an error */
-        public static IEither<string, Wallet> NewWallet(string filename, 
-                                                        string password,
-                                                        string mnemonicSeed)
+        public static IEither<string, WalletBackend>
+                      NewWallet(string filename, string password,
+                                string mnemonicSeed)
         {
             /* Derive the mnemonic into a private spend key if possible */
             return Mnemonics.MnemonicToPrivateKey(mnemonicSeed)
@@ -87,37 +90,39 @@ namespace Canti.Blockchain.Wallet
         /* Make a new wallet with the given filename and password, and
            private spend and view key, returning either the wallet or
            an error */
-        public static IEither<string, Wallet> NewWallet(string filename, 
-                                                        string password,
-                                                        PrivateKeys privateKeys)
+        public static IEither<string, WalletBackend>
+                      NewWallet(string filename, string password,
+                                PrivateKeys privateKeys)
         {
-            if (!File.Exists(filename))
+            if (File.Exists(filename))
             {
-                return Either.Left<string, Wallet>(
-                    "The filename given already exists! Did you mean to"
+                return Either.Left<string, WalletBackend>(
+                    "The filename given already exists! Did you mean to "
                   + "open it?"
                 );
             }
 
             /* Create the wallet instance */
-            Wallet wallet = new Wallet(filename, password, privateKeys);
+            WalletBackend wallet = new WalletBackend(
+                filename, password, privateKeys
+            );
 
             /* Save it */
             wallet.Save();
 
             /* Return it */
-            return Either.Right<string, Wallet>(wallet);
+            return Either.Right<string, WalletBackend>(wallet);
         }
 
         /* Make a new view wallet with the given filename and password,
            and public view key, returning either the wallet or an error */
-        public static IEither<string, Wallet>
+        public static IEither<string, WalletBackend>
                       NewWallet(string filename, string password,
                                 PrivateKey privateViewKey, string address)
         {
-            if (!File.Exists(filename))
+            if (File.Exists(filename))
             {
-                return Either.Left<string, Wallet>(
+                return Either.Left<string, WalletBackend>(
                     "The filename given already exists! Did you mean to "
                   + "open it?"
                 );
@@ -127,23 +132,25 @@ namespace Canti.Blockchain.Wallet
                save it, and return it. Else, return the error */
             return Addresses.KeysFromAddress(address).Fmap(
                 publicKeys => {
-                    Wallet wallet = new Wallet(
+                    WalletBackend wallet = new WalletBackend(
                         filename, password, privateViewKey, publicKeys
                     );
 
                     wallet.Save();
 
-                    return Either.Right<string, Wallet>(wallet);
+                    return Either.Right<string, WalletBackend>(wallet);
                 }
             );
         }
 
         /* Load a wallet from the given filename with the given password,
            returning either the wallet, or an error */
-        public static IEither<string, Wallet> Load(string filename,
-                                                   string password)
+        public static IEither<string, WalletBackend> Load(string filename,
+                                                          string password)
         {
-            FileEncrypter<Wallet> fileEncrypter = new JSONWalletEncrypter();
+            FileEncrypter<WalletBackend> fileEncrypter
+                = new JSONWalletEncrypter();
+
             return fileEncrypter.Load(filename, password);
         }
 
@@ -151,7 +158,9 @@ namespace Canti.Blockchain.Wallet
            specified when loading the wallet */
         public void Save()
         {
-            FileEncrypter<Wallet> fileEncrypter = new JSONWalletEncrypter();
+            FileEncrypter<WalletBackend> fileEncrypter
+                = new JSONWalletEncrypter();
+
             fileEncrypter.Save(filename, password, this);
         }
 
