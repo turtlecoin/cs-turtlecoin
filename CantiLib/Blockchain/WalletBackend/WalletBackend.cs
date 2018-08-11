@@ -7,6 +7,7 @@ using System;
 using System.IO;
 
 using Canti.Data;
+using Canti.Errors;
 using Canti.Utilities;
 using Canti.Blockchain.Crypto;
 using Canti.Blockchain.Crypto.Mnemonics;
@@ -59,17 +60,17 @@ namespace Canti.Blockchain.WalletBackend
 
         /* Make a new wallet with the given filename and password, returning
            either the wallet or an error */
-        public static IEither<string, WalletBackend> NewWallet(string filename,
-                                                               string password)
+        public static IEither<Error, WalletBackend> NewWallet(string filename,
+                                                              string password)
         {
             WalletKeys keys = KeyOps.GenerateWalletKeys();
 
-            return NewWallet(filename, password, keys.privateKeys);
+            return NewWallet(filename, password, keys.GetPrivateKeys());
         }
 
         /* Make a new wallet with the given filename and password, and
            mnemonic seed, returning either the wallet or an error */
-        public static IEither<string, WalletBackend>
+        public static IEither<Error, WalletBackend>
                       NewWallet(string filename, string password,
                                 string mnemonicSeed)
         {
@@ -90,15 +91,14 @@ namespace Canti.Blockchain.WalletBackend
         /* Make a new wallet with the given filename and password, and
            private spend and view key, returning either the wallet or
            an error */
-        public static IEither<string, WalletBackend>
+        public static IEither<Error, WalletBackend>
                       NewWallet(string filename, string password,
                                 PrivateKeys privateKeys)
         {
             if (File.Exists(filename))
             {
-                return Either.Left<string, WalletBackend>(
-                    "The filename given already exists! Did you mean to "
-                  + "open it?"
+                return Either.Left<Error, WalletBackend>(
+                    Error.FileAlreadyExists()
                 );
             }
 
@@ -111,20 +111,19 @@ namespace Canti.Blockchain.WalletBackend
             wallet.Save();
 
             /* Return it */
-            return Either.Right<string, WalletBackend>(wallet);
+            return Either.Right<Error, WalletBackend>(wallet);
         }
 
         /* Make a new view wallet with the given filename and password,
            and public view key, returning either the wallet or an error */
-        public static IEither<string, WalletBackend>
+        public static IEither<Error, WalletBackend>
                       NewWallet(string filename, string password,
                                 PrivateKey privateViewKey, string address)
         {
             if (File.Exists(filename))
             {
-                return Either.Left<string, WalletBackend>(
-                    "The filename given already exists! Did you mean to "
-                  + "open it?"
+                return Either.Left<Error, WalletBackend>(
+                    Error.FileAlreadyExists()
                 );
             }
 
@@ -138,15 +137,15 @@ namespace Canti.Blockchain.WalletBackend
 
                     wallet.Save();
 
-                    return Either.Right<string, WalletBackend>(wallet);
+                    return Either.Right<Error, WalletBackend>(wallet);
                 }
             );
         }
 
         /* Load a wallet from the given filename with the given password,
            returning either the wallet, or an error */
-        public static IEither<string, WalletBackend> Load(string filename,
-                                                          string password)
+        public static IEither<Error, WalletBackend> Load(string filename,
+                                                         string password)
         {
             FileEncrypter<WalletBackend> fileEncrypter
                 = new JSONWalletEncrypter();

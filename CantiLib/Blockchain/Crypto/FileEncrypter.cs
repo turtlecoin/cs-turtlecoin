@@ -8,6 +8,7 @@ using System.Linq;
 using System.IO;
 
 using Canti.Data;
+using Canti.Errors;
 using Canti.Utilities;
 
 namespace Canti.Blockchain.Crypto
@@ -17,8 +18,8 @@ namespace Canti.Blockchain.Crypto
     {
         /* Unencrypt the file in fileName, using the password password, and
            return either an error, or it encoded into type T */
-        public abstract IEither<string, T> Load(string filename,
-                                                string password);
+        public abstract IEither<Error, T> Load(string filename,
+                                               string password);
 
         /* Save the data into filename, with the password password */
         public abstract void Save(string filename, string password, T data);
@@ -109,15 +110,14 @@ namespace Canti.Blockchain.Crypto
         /* Get the bytes of the file pointed to by filePath, and return it.
            If the file doesn't exist, or doesn't have the magic identifier,
            return an error */
-        protected static IEither<string, byte[]> GetFileBytesOrError(string
-                                                                     filePath)
+        protected static IEither<Error, byte[]> GetFileBytesOrError(string
+                                                                    filePath)
         {
             /* Make sure the file exists */
             if (!File.Exists(filePath))
             {
-                return Either.Left<string, byte[]>(
-                    "The filename given doesn't exist! Ensure you entered it "
-                  + "correctly."
+                return Either.Left<Error, byte[]>(
+                    Error.FileDoesntExist()
                 );
             }
 
@@ -126,15 +126,15 @@ namespace Canti.Blockchain.Crypto
 
             if (!HasMagicIdentifier(fileData, isAWalletIdentifier))
             {
-                return Either.Left<string, byte[]>(
-                    "The filename given does not appear to be a wallet file!"
+                return Either.Left<Error, byte[]>(
+                    Error.FileNotWalletFile()
                 );
             }
 
             /* Don't want to decrypt the magic identifier, so remove it */
             fileData = RemoveMagicIdentifier(fileData, isAWalletIdentifier);
 
-            return Either.Right<string, byte[]>(fileData);
+            return Either.Right<Error, byte[]>(fileData);
         }
     }
 }

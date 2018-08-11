@@ -34,19 +34,21 @@ using Newtonsoft.Json;
 
 /* Clashes with System.Text Encoding namespace */
 using Data = Canti.Data;
+using Canti.Errors;
 using Canti.Utilities;
 using Canti.Blockchain.WalletBackend;
 
 namespace Canti.Blockchain.Crypto
 {
-    /* So using the Wallet class doesn't conflict with the Wallet namespace */
+    /* So using the WalletBackend class doesn't conflict with the
+       WalletBackend namespace */
     using WalletBackend;
 
     public class JSONWalletEncrypter : FileEncrypter<WalletBackend>
     {
         /* Returns either an error message, or the unencrypted file */
-        public override IEither<string, WalletBackend> Load(string filePath,
-                                                            string password)
+        public override IEither<Error, WalletBackend> Load(string filePath,
+                                                           string password)
         {
             /* Get the bytes if we can. If we can, then we decode the bytes.
                Finally, attempt to convert the bytes to a Wallet object.
@@ -118,12 +120,12 @@ namespace Canti.Blockchain.Crypto
         }
 
         /* Parse the bytes in input into a Wallet class, or return an error */
-        private static IEither<string, WalletBackend>
+        private static IEither<Error, WalletBackend>
                        TryDecodeJson(byte[] input)
         {
             try
             {
-                return Either.Right<string, WalletBackend>(
+                return Either.Right<Error, WalletBackend>(
                     JsonConvert.DeserializeObject<WalletBackend>(
                         Data.Encoding.ByteArrayToString(input)
                     )
@@ -131,24 +133,22 @@ namespace Canti.Blockchain.Crypto
             }
             catch
             {
-                return Either.Left<string, WalletBackend>(
-                    "Failed to parse wallet file! It appears corrupted."
+                return Either.Left<Error, WalletBackend>(
+                    Error.WalletCorrupted()
                 );
             }
         }
 
         /* Decrypt the bytes in input with the password password, using AES
            decryption, or return an error */
-        private static IEither<string, byte[]>
+        private static IEither<Error, byte[]>
                        DecryptBytesOrError(byte[] input, string password)
         {
             byte[] IV = new byte[16];
 
             if (input.Length < IV.Length)
             {
-                return Either.Left<string, byte[]>(
-                    "Failed to parse wallet file! It appears corrupted."
-                );
+                return Either.Left<Error, byte[]>(Error.WalletCorrupted());
             }
 
             /* Extract IV from input */
@@ -198,20 +198,20 @@ namespace Canti.Blockchain.Crypto
                    padding, which indicates an incorrect password */
                 catch (CryptographicException)
                 {
-                    return Either.Left<string, byte[]>(
-                        "Incorrect password! Try again."
+                    return Either.Left<Error, byte[]>(
+                        Error.IncorrectPassword()
                     );
                 }
 
                 decryptedBytes = Data.Encoding.StringToByteArray(decryptedData);
             }
 
+            /* Check it decoded by verifying the isCorrectPasswordIdentifier
+               bytes are present */
             if (!HasMagicIdentifier(decryptedBytes,
                                     isCorrectPasswordIdentifier))
             {
-                return Either.Left<string, byte[]>(
-                    "Incorrect password! Try again."
-                );
+                return Either.Left<Error, byte[]>(Error.IncorrectPassword());
             }
 
             /* Remove the magic identifier from the decrypted bytes, we don't
@@ -219,7 +219,7 @@ namespace Canti.Blockchain.Crypto
             decryptedBytes = RemoveMagicIdentifier(decryptedBytes,
                                                    isCorrectPasswordIdentifier);
 
-            return Either.Right<string, byte[]>(decryptedBytes);
+            return Either.Right<Error, byte[]>(decryptedBytes);
         }
     }
 }
