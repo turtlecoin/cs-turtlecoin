@@ -9,26 +9,30 @@ using System.Linq;
 using System.Collections.Generic;
 
 using Canti.Data;
+using Canti.Errors;
 using Canti.Utilities;
 
 namespace Canti.Blockchain.Crypto.Mnemonics
 {
     public static class Mnemonics
     {
-        public static IEither<string, PrivateKey> MnemonicToPrivateKey(string words)
+        /* Split the input into an array of strings, split on spaces, then
+           get the private key if possible, else return an error */
+        public static IEither<Error, PrivateKey>
+                      MnemonicToPrivateKey(string words)
         {
             return MnemonicToPrivateKey(words.Split(' '));
         }
 
         /* Return either left an error message, or right a private key */
-        public static IEither<string, PrivateKey> MnemonicToPrivateKey(string[] words)
+        public static IEither<Error, PrivateKey>
+                      MnemonicToPrivateKey(string[] words)
         {
             /* Mnemonics must be 25 words long */
             if (words.Length != 25)
             {
-                return Either.Left<string, PrivateKey>(
-                    "Mnemonic seed is wrong length - It should be 25 words " +
-                   $"long, but it is {words.Length} words long!"
+                return Either.Left<Error, PrivateKey>(
+                    Error.MnemonicWrongLength(words.Length)
                 );
             }
             
@@ -37,9 +41,8 @@ namespace Canti.Blockchain.Crypto.Mnemonics
             {
                 if (!WordList.English.Contains(word))
                 {
-                    return Either.Left<string, PrivateKey>(
-                        $"Mnemonic seed has invalid word - {word} is not " +
-                         "in the English word list!"
+                    return Either.Left<Error, PrivateKey>(
+                        Error.MnemonicWrongWord(word)
                     );
                 }
             }
@@ -47,8 +50,8 @@ namespace Canti.Blockchain.Crypto.Mnemonics
             /* The checksum must be correct */
             if (!HasValidChecksum(words))
             {
-                return Either.Left<string, PrivateKey>(
-                    "Mnemonic seed has incorrect checksum!"
+                return Either.Left<Error, PrivateKey>(
+                    Error.MnemonicWrongChecksum()
                 );
             }
 
@@ -75,10 +78,11 @@ namespace Canti.Blockchain.Crypto.Mnemonics
                 uint val = w1 + wlLen * (((wlLen - w1) + w2) % wlLen) + wlLen 
                                       * wlLen * (((wlLen - w2) + w3) % wlLen);
 
+                /* What is this testing?? */
                 if (!(val % wlLen == w1))
                 {
-                    return Either.Left<string, PrivateKey>(
-                        "Invalid mnemonic!"
+                    return Either.Left<Error, PrivateKey>(
+                        Error.InvalidMnemonic()
                     );
                 }
 
@@ -88,7 +92,7 @@ namespace Canti.Blockchain.Crypto.Mnemonics
             }
 
             /* And return our new private key */
-            return Either.Right<string, PrivateKey>(
+            return Either.Right<Error, PrivateKey>(
                 new PrivateKey(data.ToArray())
             );
         }

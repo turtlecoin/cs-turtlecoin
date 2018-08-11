@@ -9,6 +9,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
+using Canti.Errors;
 using Canti.Utilities;
 
 using static Canti.Blockchain.Crypto.Keccak.Keccak;
@@ -113,13 +114,13 @@ namespace Canti.Blockchain.Crypto
             return address;
         }
 
-        public static IEither<string, PublicKeys>
+        public static IEither<Error, PublicKeys>
                       KeysFromAddress(string address)
         {
             return KeysFromAddress(address, Globals.addressPrefix);
         }
 
-        public static IEither<string, PublicKeys>
+        public static IEither<Error, PublicKeys>
                       KeysFromAddress(string address, ulong prefix)
         {
             /* Split into chunks of 11 */
@@ -140,8 +141,8 @@ namespace Canti.Blockchain.Crypto
                 }
                 catch (FormatException)
                 {
-                    return Either.Left<string, PublicKeys>(
-                        "Address is not a valid base58 string!"
+                    return Either.Left<Error, PublicKeys>(
+                        Error.AddressNotBase58()
                     );
                 }
 
@@ -160,8 +161,8 @@ namespace Canti.Blockchain.Crypto
 
             if (decoded.Count != expectedLength)
             {
-                return Either.Left<string, PublicKeys>(
-                    "Address is not expected length!"
+                return Either.Left<Error, PublicKeys>(
+                    Error.AddressWrongLength()
                 );
             }
 
@@ -199,8 +200,8 @@ namespace Canti.Blockchain.Crypto
                    of bounds */
                 if (actualPrefix[j] != expectedPrefix[j])
                 {
-                    return Either.Left<string, PublicKeys>(
-                        "Address prefix is incorrect!"
+                    return Either.Left<Error, PublicKeys>(
+                        Error.AddressWrongPrefix()
                     );
                 }
             }
@@ -217,13 +218,13 @@ namespace Canti.Blockchain.Crypto
             {
                 if (actualChecksum[j] != expectedChecksum[j])
                 {
-                    return Either.Left<string, PublicKeys>(
-                        "Address checksum is incorrect!"
+                    return Either.Left<Error, PublicKeys>(
+                        Error.AddressWrongChecksum()
                     );
                 }
             }
 
-            return Either.Right<string, PublicKeys>(
+            return Either.Right<Error, PublicKeys>(
                 new PublicKeys(new PublicKey(spendKey), new PublicKey(viewKey))
             );
         }

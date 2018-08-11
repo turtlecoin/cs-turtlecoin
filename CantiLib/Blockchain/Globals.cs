@@ -19,5 +19,17 @@ namespace Canti.Blockchain
 
         /* What prefix does your address start with - see https://cryptonotestarter.org/tools.html */
         public static ulong addressPrefix = 0x3bbb1d; /* == TRTL */
+
+        /* What is your coin ticker, e.g. Bitcoin = BTC, Monero = XMR */
+        public static string ticker = "TRTL";
+
+        /* The name of your coin */
+        public static string coinName = "TurtleCoin";
+
+        /* The version of your software you are currently on */
+        public static string version = "v0.0.1";
+
+        /* The name of the CLI Wallet */
+        public static string CLIWalletName = "zedwallet++";
     }
 }

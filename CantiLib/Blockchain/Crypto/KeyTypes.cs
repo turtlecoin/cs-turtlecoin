@@ -14,33 +14,45 @@ namespace Canti.Blockchain.Crypto
     {
         public WalletKeys(KeyPair spendKeys, KeyPair viewKeys)
         {
-            this.spendKeys = spendKeys;
-            this.viewKeys = viewKeys;
-
-            this.privateKeys = new PrivateKeys(spendKeys.privateKey,
-                                               viewKeys.privateKey);
-
-            this.publicKeys = new PublicKeys(spendKeys.publicKey,
-                                             viewKeys.publicKey);
+            publicSpendKey = spendKeys.publicKey;
+            publicViewKey = viewKeys.publicKey;
+            privateSpendKey = spendKeys.privateKey;
+            privateViewKey = viewKeys.privateKey;
         }
 
         public WalletKeys(PublicKey publicSpendKey, PrivateKey privateSpendKey,
                           PublicKey publicViewKey, PrivateKey privateViewKey)
         {
-            this.spendKeys = new KeyPair(publicSpendKey, privateSpendKey);
-            this.viewKeys = new KeyPair(publicViewKey, privateViewKey);
-
-            this.privateKeys = new PrivateKeys(spendKeys.privateKey,
-                                               viewKeys.privateKey);
-
-            this.publicKeys = new PublicKeys(spendKeys.publicKey,
-                                             viewKeys.publicKey);
+            this.publicSpendKey = publicSpendKey;
+            this.publicViewKey = publicViewKey;
+            this.privateSpendKey = privateSpendKey;
+            this.privateViewKey = privateViewKey;
         }
 
-        public KeyPair spendKeys { get; }
-        public KeyPair viewKeys { get; }
-        public PrivateKeys privateKeys { get; }
-        public PublicKeys publicKeys { get; }
+        public PublicKeys GetPublicKeys()
+        {
+            return new PublicKeys(publicSpendKey, publicViewKey);
+        }
+
+        public PrivateKeys GetPrivateKeys()
+        {
+            return new PrivateKeys(privateSpendKey, privateViewKey);
+        }
+
+        public KeyPair GetSpendKeys()
+        {
+            return new KeyPair(publicSpendKey, privateSpendKey);
+        }
+
+        public KeyPair GetViewKeys()
+        {
+            return new KeyPair(publicViewKey, privateViewKey);
+        }
+
+        public PublicKey publicSpendKey { get; }
+        public PublicKey publicViewKey { get; }
+        public PrivateKey privateSpendKey { get; }
+        public PrivateKey privateViewKey { get; }
     }
 
     public class KeyPair
@@ -85,7 +97,9 @@ namespace Canti.Blockchain.Crypto
         {
             if (data.Length < 32)
             {
-                throw new ArgumentException("Input array must be at least 32 bytes long!");
+                throw new ArgumentException(
+                    "Input array must be at least 32 bytes long!"
+                );
             }
 
             this.data = new byte[32];
@@ -98,7 +112,9 @@ namespace Canti.Blockchain.Crypto
             /* 64 chars in hex == 32 bytes */
             if (input.Length < 64)
             {
-                throw new ArgumentException("Input string must be at least 64 chars long!");
+                throw new ArgumentException(
+                    "Input string must be at least 64 chars long!"
+                );
             }
 
             byte[] data = Encoding.HexStringToByteArray(input);
