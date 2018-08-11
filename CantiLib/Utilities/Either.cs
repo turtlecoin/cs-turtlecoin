@@ -26,13 +26,13 @@ namespace Canti.Utilities
     /// <summary>
     ///     Either monad converted to non-functional C# idioms
     /// </summary>
-    public interface IEither<out TLeft, out TRight>
+    public interface IEither<TLeft, TRight>
     {
         TReturn Select<TReturn>(Func<TLeft, TReturn> ofLeft, Func<TRight, TReturn> ofRight);
 
         void Do(Action<TLeft> ofLeft, Action<TRight> ofRight);
 
-        IEither<TLeft, TReturn> Fmap<TReturn>(Func<TRight, TReturn> f);
+        IEither<TLeft, TReturn> Fmap<TReturn>(Func<TRight, IEither<TLeft, TReturn>> f);
 
         /// <summary>
         ///     Provides the left value
@@ -74,7 +74,7 @@ namespace Canti.Utilities
             /* Fmap on a left is a no-op, just return the left value, wrapped
                in an either. The Right type of the new either becomes TReturn
                instead of TRight */
-            public IEither<TLeft, TReturn> Fmap<TReturn>(Func<TRight, TReturn> f)
+            public IEither<TLeft, TReturn> Fmap<TReturn>(Func<TRight, IEither<TLeft, TReturn>> f)
             {
                 return Either.Left<TLeft, TReturn>(Value);
             }
@@ -107,11 +107,10 @@ namespace Canti.Utilities
                 return ofRight(Value);
             }
 
-            /* If it's a right, apply the function to the item within then pop
-               it back in an either */
-            public IEither<TLeft, TReturn> Fmap<TReturn>(Func<TRight, TReturn> f)
+            /* If it's a right, apply the function to the item within */
+            public IEither<TLeft, TReturn> Fmap<TReturn>(Func<TRight, IEither<TLeft, TReturn>> f)
             {
-                return Either.Right<TLeft, TReturn>(f(Value));
+                return f(Value);
             }
 
             public void Do(Action<TLeft> ofLeft, Action<TRight> ofRight)

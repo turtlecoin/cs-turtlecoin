@@ -16,6 +16,12 @@ namespace Canti.Blockchain.Crypto
         {
             this.spendKeys = spendKeys;
             this.viewKeys = viewKeys;
+
+            this.privateKeys = new PrivateKeys(spendKeys.privateKey,
+                                               viewKeys.privateKey);
+
+            this.publicKeys = new PublicKeys(spendKeys.publicKey,
+                                             viewKeys.publicKey);
         }
 
         public WalletKeys(PublicKey publicSpendKey, PrivateKey privateSpendKey,
@@ -23,10 +29,18 @@ namespace Canti.Blockchain.Crypto
         {
             this.spendKeys = new KeyPair(publicSpendKey, privateSpendKey);
             this.viewKeys = new KeyPair(publicViewKey, privateViewKey);
+
+            this.privateKeys = new PrivateKeys(spendKeys.privateKey,
+                                               viewKeys.privateKey);
+
+            this.publicKeys = new PublicKeys(spendKeys.publicKey,
+                                             viewKeys.publicKey);
         }
 
-        public KeyPair spendKeys;
-        public KeyPair viewKeys;
+        public KeyPair spendKeys { get; }
+        public KeyPair viewKeys { get; }
+        public PrivateKeys privateKeys { get; }
+        public PublicKeys publicKeys { get; }
     }
 
     public class KeyPair
