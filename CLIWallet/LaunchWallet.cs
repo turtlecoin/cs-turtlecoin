@@ -5,10 +5,13 @@
 
 using System;
 using System.IO;
+using System.Linq;
 
+using Canti.Data;
 using Canti.Errors;
 using Canti.Utilities;
 using Canti.Blockchain.Crypto;
+using Canti.Blockchain.Crypto.Mnemonics;
 using Canti.Blockchain.WalletBackend;
 
 namespace CLIWallet
@@ -47,7 +50,9 @@ namespace CLIWallet
                 }
                 case LaunchAction.ViewWallet:
                 {
-                    PrivateKey privateViewKey = GetViewKey();
+                    PrivateKey privateViewKey
+                        = GetPrivateKey("Private view key: ");
+
                     string address = GetAddress();
                     return CreateWallet(privateViewKey, address);
                 }
@@ -60,14 +65,37 @@ namespace CLIWallet
             }
         }
 
-        private static PrivateKeys GetPrivateKeys()
+        private static PrivateKey GetPrivateKey(string msg)
         {
-            throw new NotImplementedException();
+            while (true)
+            {
+                YellowMsg.Write(msg);
+                string input = Console.ReadLine();
+
+                if (input.Length != 64)
+                {
+                    RedMsg.WriteLine("Invalid private key, should be 64 "
+                                   + "characters long! Try again.");
+
+                    continue;
+                }
+
+                if (!GeneralUtilities.IsHex(input))
+                {
+                    RedMsg.WriteLine("Invalid private key, is not a valid "
+                                   + "hexadecimal string!");
+
+                    continue;
+                }
+
+                return new PrivateKey(Encoding.HexStringToByteArray(input));
+            }
         }
 
-        private static PrivateKey GetViewKey()
+        private static PrivateKeys GetPrivateKeys()
         {
-            throw new NotImplementedException();
+            return new PrivateKeys(GetPrivateKey("Private spend key: "),
+                                   GetPrivateKey("Private view key: "));
         }
 
         private static string GetAddress()
@@ -77,7 +105,31 @@ namespace CLIWallet
 
         private static PrivateKeys GetPrivateKeysFromSeed()
         {
-            throw new NotImplementedException();
+            while (true)
+            {
+                YellowMsg.Write("Mnemonic seed (25 words): ");
+                string input = Console.ReadLine();
+
+                switch (Mnemonics.MnemonicToPrivateKey(input))
+                {
+                    case ILeft<Error> error:
+                    {
+                        RedMsg.WriteLine(error.Value.errorMessage);
+                        Console.WriteLine("Try again.");
+                        continue;
+                    }
+                    case IRight<PrivateKey> key:
+                    {
+                        var privateSpendKey = key.Value;
+
+                        var privateViewKey
+                            = KeyOps.GenerateDeterministicKeys(privateSpendKey)
+                                    .privateKey;
+
+                        return new PrivateKeys(privateSpendKey, privateViewKey);
+                    }
+                }
+            }
         }
 
         /* Get the filename to use for a new wallet */

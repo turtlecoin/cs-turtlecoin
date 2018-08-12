@@ -126,9 +126,11 @@ namespace Canti.Errors
            25 */
         public static Error MnemonicWrongLength(int actualLength)
         {
+            string word = actualLength == 1 ? "word" : "words";
+
             return new Error(
                 "Mnemonic seed is wrong length - It should be 25 words " +
-               $"long, but it is {actualLength} words long!",
+               $"long, but it is {actualLength} {word} long!",
                 "MNEMONIC_WRONG_LENGTH"
             );
         }

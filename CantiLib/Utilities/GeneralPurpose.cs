@@ -56,5 +56,38 @@ namespace Canti.Utilities
                 yield return (kvp.Key, kvp.Value);
             }
         }
+
+        public static bool IsHex(string str)
+        {
+            return str.All(c => IsHex(c));
+        }
+
+        /* Must be 0..9, or A..F, or a..f - order of chars goes like so -
+           0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`
+           abcdefghijklmnopqrstuvwxyz */
+        public static bool IsHex(char c)
+        {
+            if (c < '0')
+            {
+                return false;
+            }
+
+            if (c > '9' && c < 'A')
+            {
+                return false;
+            }
+
+            if (c > 'F' && c < 'a')
+            {
+                return false;
+            }
+
+            if (c > 'f')
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }
