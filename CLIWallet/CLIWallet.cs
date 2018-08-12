@@ -12,13 +12,56 @@ using Canti.Blockchain;
 
 namespace CLIWallet
 {
+    /* Possible actions the user can do on startup */
+    public enum LaunchAction
+    {
+        Open, Create, SeedRestore, KeyRestore, ViewWallet, Exit
+    };
+
     class CLIWallet
     {
         public static void Main(string[] args)
         {
             StartupMsg();
 
-            Action action = GetAction();
+            while (true)
+            {
+                LaunchAction action = GetAction();
+
+                if (action == LaunchAction.Exit)
+                {
+                    Console.WriteLine("Bye.");
+                    return;
+                }
+
+                /* Get the walletbackend, or an error. On error, return
+                   to selection screen. */
+                bool exit = LaunchWallet.HandleAction(action).Select(
+                    error => {
+                        RedMsg.WriteLine(
+                            "Failed to start wallet: {error.errorMessage}"
+                        );
+
+                        Console.WriteLine("Returning to selection screen.");
+
+                        return false;
+                    },
+
+                    wallet => {
+                        /* Do something with the wallet */
+                        Console.WriteLine("Got wallet");
+                        Console.WriteLine("Bye.");
+
+                        return true;
+                    }
+                );
+
+                /* Else go back to the selection screen */
+                if (exit)
+                {
+                    return;
+                }
+            }
         }
 
         /* Writes out the coin name, version, and wallet name */
@@ -28,13 +71,8 @@ namespace CLIWallet
                               + $"{Globals.CLIWalletName}\n");
         }
 
-        /* Possible actions the user can do on startup */
-        private enum Action
-        {
-            Open, Create, SeedRestore, KeyRestore, ViewWallet, Exit
-        };
-
-        private static Action GetAction()
+        /* Get the startup action, e.g. open, create */
+        private static LaunchAction GetAction()
         {
             /* Grab the command list */
             var commands = DefaultCommands.StartupCommands();
@@ -98,27 +136,27 @@ namespace CLIWallet
             {
                 case "create":
                 {
-                    return Action.Create;
+                    return LaunchAction.Create;
                 }
                 case "open":
                 {
-                    return Action.Open;
+                    return LaunchAction.Open;
                 }
                 case "seed_restore":
                 {
-                    return Action.SeedRestore;
+                    return LaunchAction.SeedRestore;
                 }
                 case "key_restore":
                 {
-                    return Action.KeyRestore;
+                    return LaunchAction.KeyRestore;
                 }
                 case "view_wallet":
                 {
-                    return Action.ViewWallet;
+                    return LaunchAction.ViewWallet;
                 }
                 case "exit":
                 {
-                    return Action.Exit;
+                    return LaunchAction.Exit;
                 }
                 /* This should never happen */
                 default:
