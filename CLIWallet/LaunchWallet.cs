@@ -10,6 +10,7 @@ using System.Linq;
 using Canti.Data;
 using Canti.Errors;
 using Canti.Utilities;
+using Canti.Blockchain;
 using Canti.Blockchain.Crypto;
 using Canti.Blockchain.Crypto.Mnemonics;
 using Canti.Blockchain.WalletBackend;
@@ -65,6 +66,31 @@ namespace CLIWallet
             }
         }
 
+        private static string GetAddress()
+        {
+            while (true)
+            {
+                YellowMsg.Write($"Public {Globals.ticker} address: ");
+
+                string input = Console.ReadLine();
+
+                /* Try and parse into public keys to see if it's valid, don't
+                   need the keys so ignore the result. */
+                switch(Addresses.KeysFromAddress(input))
+                {
+                    case ILeft<Error> error:
+                    {
+                        RedMsg.WriteLine(error.Value.errorMessage);
+                        continue;
+                    }
+                    default:
+                    {
+                        return input;
+                    }
+                }
+            }
+        }
+
         private static PrivateKey GetPrivateKey(string msg)
         {
             while (true)
@@ -88,7 +114,15 @@ namespace CLIWallet
                     continue;
                 }
 
-                return new PrivateKey(Encoding.HexStringToByteArray(input));
+                var p = new PrivateKey(Encoding.HexStringToByteArray(input));
+
+                if (!KeyOps.IsValidKey(p))
+                {
+                    RedMsg.WriteLine("Invalid private key, is not a valid "
+                                   + "ED25519 key!");
+                }
+
+                return p;
             }
         }
 
@@ -96,11 +130,6 @@ namespace CLIWallet
         {
             return new PrivateKeys(GetPrivateKey("Private spend key: "),
                                    GetPrivateKey("Private view key: "));
-        }
-
-        private static string GetAddress()
-        {
-            throw new NotImplementedException();
         }
 
         private static PrivateKeys GetPrivateKeysFromSeed()

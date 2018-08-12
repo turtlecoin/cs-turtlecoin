@@ -159,7 +159,7 @@ namespace Canti.Blockchain.Crypto
             return Encoding.ByteArrayToHexString(data);
         }
 
-        public byte[] data { get; set; }
+        public byte[] data { get; }
     }
 
     public class EllipticCurvePoint : ThirtyTwoByteKey

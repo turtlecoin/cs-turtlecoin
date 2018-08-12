@@ -25,6 +25,17 @@ namespace Canti.Blockchain.Crypto
             return new EllipticCurveScalar(tmp);
         }
 
+        public static bool IsValidKey(PublicKey key)
+        {
+            ED25519.ge_p3 point = new ge_p3();
+            return ge_frombytes_vartime(point, key.data) == 0;
+        }
+
+        public static bool IsValidKey(PrivateKey key)
+        {
+            return sc_check(key.data) == 0;
+        }
+
         /* Generate a private + public spend, and private + public view key,
            where the spend key is derived from the view key */
         public static WalletKeys GenerateWalletKeys()

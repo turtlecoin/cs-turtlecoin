@@ -171,5 +171,27 @@ namespace Canti.Errors
                 "INVALID_MNEMONIC"
             );
         }
+
+        /* There is a concept where a 64 char, hex string, is not a valid
+           public key. I am not sure exactly what that reason is, I suspect
+           it may be to do with it not falling on the ED25519 curve. */
+        public static Error InvalidPublicKey()
+        {
+            return new Error(
+                "Public key is not a valid ED25519 public key!",
+                "INVALID_PUBLIC_KEY"
+            );
+        }
+
+        /* There is a concept where a 64 char, hex string, is not a valid
+           private key. I am not sure exactly what that reason is, I suspect
+           it may be to do with it not falling on the ED25519 curve. */
+        public static Error InvalidPrivateKey()
+        {
+            return new Error(
+                "Private key is not a valid ED25519 private key!",
+                "INVALID_PRIVATE_KEY"
+            );
+        }
     }
 }

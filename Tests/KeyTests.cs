@@ -18,19 +18,23 @@ namespace Tests
         {
             WalletKeys keys = KeyOps.GenerateWalletKeys();
 
-            var privateSpendKey = keys.spendKeys.privateKey;
-            var privateViewKey = keys.viewKeys.privateKey;
-
             /* All newly generated keys should be a deterministic pair */
-            Assert.IsTrue(KeyOps.AreKeysDeterministic(privateSpendKey, privateViewKey));
+            Assert.IsTrue(KeyOps.AreKeysDeterministic(
+                keys.privateSpendKey, keys.privateViewKey
+            ));
 
-            var publicSpendKey = KeyOps.PrivateKeyToPublicKey(privateSpendKey);
-            var publicViewKey = KeyOps.PrivateKeyToPublicKey(privateViewKey);
+            var publicSpendKey = KeyOps.PrivateKeyToPublicKey(
+                keys.privateSpendKey
+            );
+
+            var publicViewKey = KeyOps.PrivateKeyToPublicKey(
+                keys.privateViewKey
+            );
 
             /* We should derive the same public keys from the private keys
                as the ones returned from GenerateWalletKeys() */
-            Assert.AreEqual<PublicKey>(publicSpendKey, keys.spendKeys.publicKey);
-            Assert.AreEqual<PublicKey>(publicViewKey, keys.viewKeys.publicKey);
+            Assert.AreEqual<PublicKey>(publicSpendKey, keys.publicSpendKey);
+            Assert.AreEqual<PublicKey>(publicViewKey, keys.publicViewKey);
         }
 
         [TestMethod]
