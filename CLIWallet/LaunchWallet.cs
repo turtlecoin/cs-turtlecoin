@@ -80,7 +80,7 @@ namespace CLIWallet
                 {
                     case ILeft<Error> error:
                     {
-                        RedMsg.WriteLine(error.Value.errorMessage);
+                        RedMsg.WriteLine(error.Value.errorMessage + "\n");
                         continue;
                     }
                     default:
@@ -101,7 +101,7 @@ namespace CLIWallet
                 if (input.Length != 64)
                 {
                     RedMsg.WriteLine("Invalid private key, should be 64 "
-                                   + "characters long! Try again.");
+                                   + "characters long! Try again.\n");
 
                     continue;
                 }
@@ -144,7 +144,7 @@ namespace CLIWallet
                     case ILeft<Error> error:
                     {
                         RedMsg.WriteLine(error.Value.errorMessage);
-                        Console.WriteLine("Try again.");
+                        Console.WriteLine("Try again.\n");
                         continue;
                     }
                     case IRight<PrivateKey> key:
@@ -176,17 +176,21 @@ namespace CLIWallet
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    RedMsg.WriteLine("Wallet name cannot be empty! Try again.");
+                    RedMsg.WriteLine(
+                        "Wallet name cannot be empty! Try again.\n"
+                    );
+
                     continue;
                 }
 
+                /* TODO: Check for folders as well */
                 if (File.Exists(filename) || File.Exists(appended))
                 {
                     RedMsg.Write("A file with the name ");
                     YellowMsg.Write(filename);
                     RedMsg.Write(" or ");
                     YellowMsg.Write(appended);
-                    RedMsg.WriteLine(" already exists! Try again.");
+                    RedMsg.WriteLine(" already exists! Try again.\n");
                 }
                 /* If the file already ends with .wallet, return it. */
                 else if (filename.EndsWith(".wallet"))
@@ -223,7 +227,7 @@ namespace CLIWallet
 
                 if (firstPassword != secondPassword)
                 {
-                    RedMsg.WriteLine("Passwords do not match! Try again.");
+                    RedMsg.WriteLine("Passwords do not match! Try again.\n");
                 }
                 else
                 {
@@ -268,7 +272,7 @@ namespace CLIWallet
                     YellowMsg.Write(appended);
                     RedMsg.WriteLine(" doesn't exist!");
                     Console.WriteLine(
-                        "Ensure you entered your wallet name correctly."
+                        "Ensure you entered your wallet name correctly.\n"
                     );
                 }
             }
@@ -296,7 +300,7 @@ namespace CLIWallet
                        the error. */
                     if (err.errorName == "INCORRECT_PASSWORD")
                     {
-                        RedMsg.WriteLine(err.errorMessage);
+                        RedMsg.WriteLine(err.errorMessage + "\n");
                         continue;
                     }
                 }

@@ -65,6 +65,7 @@ namespace Canti.Utilities
         /* Must be 0..9, or A..F, or a..f - order of chars goes like so -
            0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`
            abcdefghijklmnopqrstuvwxyz */
+        /* TODO: Do this in a better way */
         public static bool IsHex(char c)
         {
             if (c < '0')

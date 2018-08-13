@@ -167,11 +167,13 @@ namespace Canti.Blockchain.WalletBackend
         public WalletKeys keys { get; }
 
         /* The filename this wallet is stored in */
-        private string filename;
+        public string filename { get; }
 
         /* The password this wallet has */
-        private string password;
+        public string password { get; }
 
-        bool isViewWallet = false;
+        /* Is the wallet a view only wallet */
+        /* TODO: How do I do a getter here */
+        public bool isViewWallet = false;
     }
 }

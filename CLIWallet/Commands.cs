@@ -3,13 +3,16 @@
 // 
 // Please see the included LICENSE file for more information.
 
+using System.Linq;
 using System.Collections.Generic;
+
+using Canti.Blockchain;
 
 namespace CLIWallet
 {
-    public class OpenCommand
+    public class Command
     {
-        public OpenCommand(string commandName, string description)
+        public Command(string commandName, string description)
         {
             this.commandName = commandName;
             this.description = description;
@@ -22,11 +25,11 @@ namespace CLIWallet
         public string description { get; }
     }
 
-    public class Command : OpenCommand
+    public class AdvancedCommand : Command
     {
-        public Command(string commandName, string description,
-                       bool viewWalletSupport, bool advanced)
-                     : base(commandName, description)
+        public AdvancedCommand(string commandName, string description,
+                               bool viewWalletSupport, bool advanced)
+                             : base(commandName, description)
         {
             this.viewWalletSupport = viewWalletSupport;
             this.advanced = advanced;
@@ -43,49 +46,59 @@ namespace CLIWallet
 
     public static class DefaultCommands
     {
-        public static List<OpenCommand> StartupCommands()
-        {
-            return new List<OpenCommand>
-            {
-                new OpenCommand("open", "Open a wallet already on your system"),
-                new OpenCommand("create", "Create a new wallet"),
-                new OpenCommand("seed_restore", "Restore a wallet using a seed phrase of words"),
-                new OpenCommand("key_restore", "Restore a wallet using a view and spend key"),
-                new OpenCommand("view_wallet", "Import a view only wallet (Unable to send transactions)"),
-                new OpenCommand("exit", "Exit the program"),
-            };
-        }
-
-        public static List<Command> AllCommands()
+        public static List<Command> StartupCommands()
         {
             return new List<Command>
             {
+                new Command("open", "Open a wallet already on your system"),
+                new Command("create", "Create a new wallet"),
+                new Command("seed_restore", "Restore a wallet using a seed phrase of words"),
+                new Command("key_restore", "Restore a wallet using a view and spend key"),
+                new Command("view_wallet", "Import a view only wallet (Unable to send transactions)"),
+                new Command("exit", "Exit the program"),
+            };
+        }
+
+        public static List<AdvancedCommand> AllCommands()
+        {
+            return new List<AdvancedCommand>
+            {
                 /* Basic commands */
-                new Command("advanced", "List available advanced commands", true, false),
-                new Command("address", "Display your payment address", true, false),
-                new Command("balance", "Display how much {Globals.ticker} you have", true, false),
-                new Command("backup", "Print the relevant data needed to restore your wallet", true, false),
-                new Command("exit", "Exit and save your wallet", true, false),
-                new Command("help", "List this help message", true, false),
-                new Command("transfer", "Send {Globals.ticker} to someone", false, false),
+                new AdvancedCommand("advanced", "List available advanced commands", true, false),
+                new AdvancedCommand("address", "Display your payment address", true, false),
+                new AdvancedCommand("balance", $"Display how much {Globals.ticker} you have", true, false),
+                new AdvancedCommand("backup", "Print the relevant data needed to restore your wallet", true, false),
+                new AdvancedCommand("exit", "Exit and save your wallet", true, false),
+                new AdvancedCommand("help", "List this help message", true, false),
+                new AdvancedCommand("transfer", $"Send {Globals.ticker} to someone", false, false),
                 
                 /* Advanced commands */
-                new Command("ab_add", "Add a person to your address book", true, true),
-                new Command("ab_delete", "Delete a person in your address book", true, true),
-                new Command("ab_list", "List everyone in your address book", true, true),
-                new Command("ab_send", "Send {Globals.ticker} to someone in your address book", false, true),
-                new Command("change_password", "Change your wallet password", true, true),
-                new Command("make_integrated_address", "Make an integrated address from an address + payment ID", true, true),
-                new Command("incoming_transfers", "Show incoming transfers", true, true),
-                new Command("list_transfers", "Show all transfers", false, true),
-                new Command("optimize", "Optimize your wallet to send large amounts", false, true),
-                new Command("outgoing_transfers", "Show outgoing transfers", false, true),
-                new Command("reset", "Recheck the chain from zero for transactions", true, true),
-                new Command("save", "Save your wallet state", true, true),
-                new Command("save_csv", "Save all wallet transactions to a CSV file", true, true),
-                new Command("send_all", "Send all your balance to someone", false, true),
-                new Command("status", "Display sync status and network hashrate", true, true),
+                new AdvancedCommand("ab_add", "Add a person to your address book", true, true),
+                new AdvancedCommand("ab_delete", "Delete a person in your address book", true, true),
+                new AdvancedCommand("ab_list", "List everyone in your address book", true, true),
+                new AdvancedCommand("ab_send", $"Send {Globals.ticker} to someone in your address book", false, true),
+                new AdvancedCommand("change_password", "Change your wallet password", true, true),
+                new AdvancedCommand("make_integrated_address", "Make an integrated address from an address + payment ID", true, true),
+                new AdvancedCommand("incoming_transfers", "Show incoming transfers", true, true),
+                new AdvancedCommand("list_transfers", "Show all transfers", false, true),
+                new AdvancedCommand("optimize", "Optimize your wallet to send large amounts", false, true),
+                new AdvancedCommand("outgoing_transfers", "Show outgoing transfers", false, true),
+                new AdvancedCommand("reset", "Recheck the chain from zero for transactions", true, true),
+                new AdvancedCommand("save", "Save your wallet state", true, true),
+                new AdvancedCommand("save_csv", "Save all wallet transactions to a CSV file", true, true),
+                new AdvancedCommand("send_all", "Send all your balance to someone", false, true),
+                new AdvancedCommand("status", "Display sync status and network hashrate", true, true),
             };
+        }
+
+        public static IEnumerable<AdvancedCommand> BasicCommands()
+        {
+            return AllCommands().Where(c => !c.advanced);
+        }
+
+        public static IEnumerable<AdvancedCommand> AdvancedCommands()
+        {
+            return AllCommands().Where(c => c.advanced);
         }
     }
 }
