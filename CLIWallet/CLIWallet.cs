@@ -39,6 +39,15 @@ namespace CLIWallet
                 string command = ParseCommand(DefaultCommands.BasicCommands(),
                                               DefaultCommands.AllCommands(),
                                               GetPrompt(wallet));
+
+                bool exit = CommandImplementations.HandleCommand(
+                    command, wallet
+                );
+                
+                if (exit)
+                {
+                    return;
+                }
             }
         }
 

@@ -5,6 +5,7 @@
 
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 using Canti.Data;
 using Canti.Errors;
@@ -40,6 +41,11 @@ namespace Canti.Blockchain.WalletBackend
                 publicSpendKey, privateKeys.spendKey,
                 publicViewKey, privateKeys.viewKey
             );
+
+            this.addresses = new List<string>
+            {
+                Addresses.AddressFromKeys(publicSpendKey, publicViewKey)
+            };
         }
 
         /* Makes a new view wallet */
@@ -95,6 +101,14 @@ namespace Canti.Blockchain.WalletBackend
                       NewWallet(string filename, string password,
                                 PrivateKeys privateKeys)
         {
+            if (!KeyOps.IsValidKey(privateKeys.spendKey)
+             || !KeyOps.IsValidKey(privateKeys.viewKey))
+            {
+                return Either.Left<Error, WalletBackend>(
+                    Error.InvalidPrivateKey()
+                );
+            }
+
             if (File.Exists(filename))
             {
                 return Either.Left<Error, WalletBackend>(
@@ -120,6 +134,13 @@ namespace Canti.Blockchain.WalletBackend
                       NewWallet(string filename, string password,
                                 PrivateKey privateViewKey, string address)
         {
+            if (!KeyOps.IsValidKey(privateViewKey))
+            {
+                return Either.Left<Error, WalletBackend>(
+                    Error.InvalidPrivateKey()
+                );
+            }
+
             if (File.Exists(filename))
             {
                 return Either.Left<Error, WalletBackend>(
@@ -150,7 +171,15 @@ namespace Canti.Blockchain.WalletBackend
             FileEncrypter<WalletBackend> fileEncrypter
                 = new JSONWalletEncrypter();
 
-            return fileEncrypter.Load(filename, password);
+            return fileEncrypter.Load(filename, password).Fmap(
+                /* Loading filename / password from file is dumb. The filename
+                   can for sure change - the password maybe could? */
+                wallet => {
+                    wallet.filename = filename;
+                    wallet.password = password;
+                    return Either.Right<Error, WalletBackend>(wallet);
+                }
+            );
         }
 
         /* Save the wallet data to the filename and password previously
@@ -163,14 +192,23 @@ namespace Canti.Blockchain.WalletBackend
             fileEncrypter.Save(filename, password, this);
         }
 
+        /* NOTE: EVERYTHING BELOW MUST HAVE A SETTER OR BE PUBLIC, ELSE
+           THE JSON SERIALIZATION WILL NOT SET ITS VALUE
+           
+           This can of course be used for internal fields we don't want to
+           serialize. */
+
         /* The private and public keys of this wallet */
-        public WalletKeys keys { get; }
+        public WalletKeys keys { get; set; }
 
         /* The filename this wallet is stored in */
-        public string filename { get; }
+        public string filename { get; set; }
 
         /* The password this wallet has */
-        public string password { get; }
+        public string password { get; set; }
+
+        /* The addresses this wallet contains */
+        public List<string> addresses { get; set; }
 
         /* Is the wallet a view only wallet */
         /* TODO: How do I do a getter here */
