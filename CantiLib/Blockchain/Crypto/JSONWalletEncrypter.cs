@@ -131,10 +131,10 @@ namespace Canti.Blockchain.Crypto
                     )
                 );
             }
-            catch
+            catch (JsonSerializationException e)
             {
                 return Either.Left<Error, WalletBackend>(
-                    Error.WalletCorrupted()
+                    Error.WalletCorrupted(e.ToString())
                 );
             }
         }
@@ -191,11 +191,16 @@ namespace Canti.Blockchain.Crypto
                         cryptoStream
                     ))
                     {
-                            decryptedData = streamReader.ReadToEnd();
+                        decryptedData = streamReader.ReadToEnd();
                     }
                 }
                 /* This exception will be thrown if the data has invalid
-                   padding, which indicates an incorrect password */
+                   padding, which indicates an incorrect password.
+
+                   !! MAKE SURE YOU USE A GENERIC WRONG PASSWORD ERROR HERE !!
+
+                   Otherwise, I believe this can be abused to decrypt the
+                   plaintext by using it as a padding oracle attack. */
                 catch (CryptographicException)
                 {
                     return Either.Left<Error, byte[]>(

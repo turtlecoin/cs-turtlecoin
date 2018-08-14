@@ -4,6 +4,7 @@
 // Please see the included LICENSE file for more information.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -55,6 +56,25 @@ namespace Canti.Utilities
             {
                 yield return (kvp.Key, kvp.Value);
             }
+        }
+
+        public static bool IsHex(this string str)
+        {
+            return str.All(c => IsHex(c));
+        }
+
+        /* Must be 0..9, or A..F, or a..f */
+        public static bool IsHex(char c)
+        {
+            return ((c >= '0' && c <= '9') ||
+                    (c >= 'a' && c <= 'f') ||
+                    (c >= 'A' && c <= 'F'));
+        }
+
+        /* Is the filename being used by a file or directory already */
+        public static bool FilenameInUse(string filename)
+        {
+            return File.Exists(filename) || Directory.Exists(filename);
         }
     }
 }

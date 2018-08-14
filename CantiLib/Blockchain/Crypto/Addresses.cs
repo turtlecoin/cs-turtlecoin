@@ -139,6 +139,7 @@ namespace Canti.Blockchain.Crypto
                         Base58.Decode(string.Concat(chunk))
                     );
                 }
+                /* Contains non base58 characters */
                 catch (FormatException)
                 {
                     return Either.Left<Error, PublicKeys>(
@@ -167,8 +168,8 @@ namespace Canti.Blockchain.Crypto
             }
 
             byte[] actualPrefix = new byte[expectedPrefix.Length];
-            byte[] spendKey = new byte[32];
-            byte[] viewKey = new byte[32];
+            byte[] spendKeyData = new byte[32];
+            byte[] viewKeyData = new byte[32];
             byte[] actualChecksum = new byte[4];
 
             int i = 0;
@@ -178,14 +179,14 @@ namespace Canti.Blockchain.Crypto
                 actualPrefix[j] = decoded[i++];
             }
 
-            for (int j = 0; j < spendKey.Length; j++)
+            for (int j = 0; j < spendKeyData.Length; j++)
             {
-                spendKey[j] = decoded[i++];
+                spendKeyData[j] = decoded[i++];
             }
 
-            for (int j = 0; j < viewKey.Length; j++)
+            for (int j = 0; j < viewKeyData.Length; j++)
             {
-                viewKey[j] = decoded[i++];
+                viewKeyData[j] = decoded[i++];
             }
 
             for (int j = 0; j < actualChecksum.Length; j++)
@@ -209,8 +210,8 @@ namespace Canti.Blockchain.Crypto
             List<byte> addressNoChecksum = new List<byte>();
 
             addressNoChecksum.AddRange(actualPrefix);
-            addressNoChecksum.AddRange(spendKey);
-            addressNoChecksum.AddRange(viewKey);
+            addressNoChecksum.AddRange(spendKeyData);
+            addressNoChecksum.AddRange(viewKeyData);
 
             byte[] expectedChecksum = GetAddressChecksum(addressNoChecksum);
 
@@ -224,8 +225,18 @@ namespace Canti.Blockchain.Crypto
                 }
             }
 
+            var spendKey = new PublicKey(spendKeyData);
+            var viewKey = new PublicKey(viewKeyData);
+
+            if (!KeyOps.IsValidKey(spendKey) || !KeyOps.IsValidKey(viewKey))
+            {
+                return Either.Left<Error, PublicKeys>(
+                    Error.InvalidPublicKey()
+                );
+            }
+
             return Either.Right<Error, PublicKeys>(
-                new PublicKeys(new PublicKey(spendKey), new PublicKey(viewKey))
+                new PublicKeys(spendKey, viewKey)
             );
         }
 

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using Canti.Data;
 using Canti.Errors;
 using Canti.Utilities;
+using Canti.Blockchain.Crypto;
 
 namespace Canti.Blockchain.Crypto.Mnemonics
 {
@@ -91,10 +92,17 @@ namespace Canti.Blockchain.Crypto.Mnemonics
                 data.AddRange(Encoding.IntegerToByteArray<uint>(val));
             }
 
+            var privateKey = new PrivateKey(data.ToArray());
+
+            if (!KeyOps.IsValidKey(privateKey))
+            {
+                return Either.Left<Error, PrivateKey>(
+                    Error.InvalidPrivateKey()
+                );
+            }
+
             /* And return our new private key */
-            return Either.Right<Error, PrivateKey>(
-                new PrivateKey(data.ToArray())
-            );
+            return Either.Right<Error, PrivateKey>(privateKey);
         }
 
         public static string PrivateKeyToMnemonic(PrivateKey privateKey)

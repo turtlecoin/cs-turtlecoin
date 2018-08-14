@@ -17,11 +17,11 @@ namespace TestZone
             WalletKeys Keys = KeyOps.GenerateWalletKeys();
 
             // Get an address string from the generated wallet keys
-            string Address = Addresses.AddressFromKeys(Keys.spendKeys.publicKey, Keys.viewKeys.publicKey);
+            string Address = Addresses.AddressFromKeys(Keys.publicSpendKey, Keys.publicViewKey);
 
             // Output generated keys to console
-            Console.WriteLine($"Private spend key: {Keys.spendKeys.privateKey.ToString()}");
-            Console.WriteLine($"Private view key: {Keys.viewKeys.privateKey.ToString()}");
+            Console.WriteLine($"Private spend key: {Keys.privateSpendKey.ToString()}");
+            Console.WriteLine($"Private view key: {Keys.privateViewKey.ToString()}");
 
             // Output address to console
             Console.WriteLine($"Public address: {Address}");

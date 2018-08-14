@@ -12,6 +12,11 @@ namespace Canti.Blockchain.Crypto
 {
     public class WalletKeys
     {
+        /* Default constructor for newtonsoft */
+        public WalletKeys()
+        {
+        }
+
         public WalletKeys(KeyPair spendKeys, KeyPair viewKeys)
         {
             publicSpendKey = spendKeys.publicKey;
@@ -159,7 +164,7 @@ namespace Canti.Blockchain.Crypto
             return Encoding.ByteArrayToHexString(data);
         }
 
-        public byte[] data { get; set; }
+        public byte[] data { get; }
     }
 
     public class EllipticCurvePoint : ThirtyTwoByteKey

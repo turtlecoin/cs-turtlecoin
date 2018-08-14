@@ -108,39 +108,25 @@ namespace Tests
 
                 foreach (ulong prefix in prefixes)
                 {
-                    string derivedAddress1 = Addresses.AddressFromKeys(w.spendKeys.privateKey, w.viewKeys.privateKey, prefix);
+                    string derivedAddress1 = Addresses.AddressFromKeys(w.privateSpendKey, w.privateViewKey, prefix);
 
-                    switch(Addresses.KeysFromAddress(derivedAddress1, prefix))
-                    {
-                        case ILeft<string> error:
-                        {
-                            Assert.Fail($"Failed to parse keys from address: {error.Value}");
-                            break;
+                    Addresses.KeysFromAddress(derivedAddress1, prefix).Do(
+                        error => Assert.Fail($"Failed to parse keys from address: {error}"),
+                        keys => {
+                            Assert.AreEqual<PublicKey>(keys.spendKey, w.publicSpendKey);
+                            Assert.AreEqual<PublicKey>(keys.viewKey, w.publicViewKey);
                         }
-                        case IRight<PublicKeys> keys:
-                        {
-                            Assert.AreEqual<PublicKey>(keys.Value.spendKey, w.spendKeys.publicKey);
-                            Assert.AreEqual<PublicKey>(keys.Value.viewKey, w.viewKeys.publicKey);
-                            break;
-                        }
-                    }
+                    );
 
-                    string derivedAddress2 = Addresses.AddressFromKeys(w.spendKeys.publicKey, w.viewKeys.publicKey, prefix);
+                    string derivedAddress2 = Addresses.AddressFromKeys(w.publicSpendKey, w.publicViewKey, prefix);
 
-                    switch(Addresses.KeysFromAddress(derivedAddress2, prefix))
-                    {
-                        case ILeft<string> error:
-                        {
-                            Assert.Fail($"Failed to parse keys from address: {error.Value}");
-                            break;
+                    Addresses.KeysFromAddress(derivedAddress2, prefix).Do(
+                        error => Assert.Fail($"Failed to parse keys from address: {error}"),
+                        keys => {
+                            Assert.AreEqual<PublicKey>(keys.spendKey, w.publicSpendKey);
+                            Assert.AreEqual<PublicKey>(keys.viewKey, w.publicViewKey);
                         }
-                        case IRight<PublicKeys> keys:
-                        {
-                            Assert.AreEqual<PublicKey>(keys.Value.spendKey, w.spendKeys.publicKey);
-                            Assert.AreEqual<PublicKey>(keys.Value.viewKey, w.viewKeys.publicKey);
-                            break;
-                        }
-                    }
+                    );
                 }
             }
         }

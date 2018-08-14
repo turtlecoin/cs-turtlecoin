@@ -70,6 +70,15 @@ namespace Canti.Errors
             );
         }
 
+        public static Error WalletCorrupted(string internalError)
+        {
+            return new Error(
+                "Failed to parse wallet file! It appears corrupted.\n" +
+               $"Internal error: {internalError}",
+                "WALLET_FILE_CORRUPTED"
+            );
+        }
+
         /* The wallet is a valid wallet file, but it failed to decode or
            had the incorrect magic bytes once decoded, so the password is
            wrong */
@@ -126,9 +135,11 @@ namespace Canti.Errors
            25 */
         public static Error MnemonicWrongLength(int actualLength)
         {
+            string word = actualLength == 1 ? "word" : "words";
+
             return new Error(
                 "Mnemonic seed is wrong length - It should be 25 words " +
-               $"long, but it is {actualLength} words long!",
+               $"long, but it is {actualLength} {word} long!",
                 "MNEMONIC_WRONG_LENGTH"
             );
         }
@@ -167,6 +178,28 @@ namespace Canti.Errors
             return new Error(
                 "Invalid mnemonic!",
                 "INVALID_MNEMONIC"
+            );
+        }
+
+        /* There is a concept where a 64 char, hex string, is not a valid
+           public key. I am not sure exactly what that reason is, I suspect
+           it may be to do with it not falling on the ED25519 curve. */
+        public static Error InvalidPublicKey()
+        {
+            return new Error(
+                "Public key is not a valid ED25519 public key!",
+                "INVALID_PUBLIC_KEY"
+            );
+        }
+
+        /* There is a concept where a 64 char, hex string, is not a valid
+           private key. I am not sure exactly what that reason is, I suspect
+           it may be to do with it not falling on the ED25519 curve. */
+        public static Error InvalidPrivateKey()
+        {
+            return new Error(
+                "Private key is not a valid ED25519 private key!",
+                "INVALID_PRIVATE_KEY"
             );
         }
     }

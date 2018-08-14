@@ -34,6 +34,8 @@ namespace Canti.Utilities
 
         IEither<TLeft, TReturn> Fmap<TReturn>(Func<TRight, IEither<TLeft, TReturn>> f);
 
+        bool IsLeft();
+
         /// <summary>
         ///     Provides the left value
         /// </summary>
@@ -79,6 +81,11 @@ namespace Canti.Utilities
                 return Either.Left<TLeft, TReturn>(Value);
             }
 
+            public bool IsLeft()
+            {
+                return true;
+            }
+
             public void Do(Action<TLeft> ofLeft, Action<TRight> ofRight)
             {
                 if (ofLeft == null)
@@ -111,6 +118,11 @@ namespace Canti.Utilities
             public IEither<TLeft, TReturn> Fmap<TReturn>(Func<TRight, IEither<TLeft, TReturn>> f)
             {
                 return f(Value);
+            }
+
+            public bool IsLeft()
+            {
+                return false;
             }
 
             public void Do(Action<TLeft> ofLeft, Action<TRight> ofRight)
