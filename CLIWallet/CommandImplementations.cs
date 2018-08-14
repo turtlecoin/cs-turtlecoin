@@ -42,7 +42,7 @@ namespace CLIWallet
                 }
                 case "help":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    Menu.PrintCommands(DefaultCommands.BasicCommands());
                     break;
                 }
                 case "transfer":
@@ -72,7 +72,7 @@ namespace CLIWallet
                 }
                 case "change_password":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ChangePassword(wallet);
                     break;
                 }
                 case "make_integrated_address":
@@ -138,33 +138,63 @@ namespace CLIWallet
             return false;
         }
 
-        public static bool Exit(WalletBackend wallet)
+        private static bool Exit(WalletBackend wallet)
         {
             YellowMsg.WriteLine("Saving wallet and shutting down...");
             wallet.Save();
             return true;
         }
 
-        public static void Save(WalletBackend wallet)
+        private static void Save(WalletBackend wallet)
         {
             YellowMsg.WriteLine("Saving...");
             wallet.Save();
             YellowMsg.WriteLine("Saved!");
         }
 
-        public static void ListAdvancedCommands()
+        private static void ChangePassword(WalletBackend wallet)
         {
-            int i = 1;
-
-            /* Print out each command name, description, and possible
-               number accessor */
-            foreach (var command in DefaultCommands.AdvancedCommands())
+            while (true)
             {
-                YellowMsg.Write($" {i}\t");
-                GreenMsg.Write(command.commandName.PadRight(25));
-                Console.WriteLine(command.description);
-                i++;
+                YellowMsg.Write("Enter your current password: ");
+
+                string currentPassword = Console.ReadLine();
+
+                if (currentPassword != wallet.password)
+                {
+                    RedMsg.WriteLine("Incorrect password! Try again.\n");
+                    continue;
+                }
+
+                break;
             }
+
+            string newPassword;
+
+            while (true)
+            {
+                YellowMsg.Write("Enter your new password: ");
+
+                newPassword = Console.ReadLine();
+
+                YellowMsg.Write("Confirm your new password: ");
+
+                string confirmedPassword = Console.ReadLine();
+
+                if (newPassword != confirmedPassword)
+                {
+                    RedMsg.WriteLine("Passwords do not match! Try again.\n");
+                    continue;
+                }
+
+                break;
+            }
+
+            wallet.password = newPassword;
+
+            wallet.Save();
+
+            GreenMsg.WriteLine("\nPassword successfully updated!");
         }
     }
 }
