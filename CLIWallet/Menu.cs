@@ -15,19 +15,40 @@ using Canti.Blockchain.WalletBackend;
 
 namespace CLIWallet
 {
-    class Menu
+    public static class Menu
     {
         public static void MainLoop(WalletBackend wallet)
         {
             /* Show the available commands */
-            PrintCommands(DefaultCommands.BasicCommands());
+            if (wallet.isViewWallet)
+            {
+                PrintCommands(DefaultCommands.BasicViewWalletCommands());
+            }
+            else
+            {
+                PrintCommands(DefaultCommands.BasicCommands());
+            }
 
             while (true)
             {
-                /* Get the inputted command */
-                string command = ParseCommand(DefaultCommands.BasicCommands(),
-                                              DefaultCommands.AllCommands(),
-                                              GetPrompt(wallet));
+                string command;
+
+                if (wallet.isViewWallet)
+                {
+                    command = ParseCommand(
+                        DefaultCommands.BasicViewWalletCommands(),
+                        DefaultCommands.AllViewWalletCommands(),
+                        GetPrompt(wallet)
+                    );
+                }
+                else
+                {
+                    command = ParseCommand(
+                        DefaultCommands.BasicCommands(),
+                        DefaultCommands.AllCommands(),
+                        GetPrompt(wallet)
+                    );
+                }
 
                 /* If exit command is given, quit */
                 if (CommandImplementations.HandleCommand(command, wallet))

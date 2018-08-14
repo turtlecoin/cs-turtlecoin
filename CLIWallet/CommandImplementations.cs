@@ -6,11 +6,13 @@
 using System;
 
 using Canti.Utilities;
+using Canti.Blockchain.Crypto;
 using Canti.Blockchain.WalletBackend;
+using Canti.Blockchain.Crypto.Mnemonics;
 
 namespace CLIWallet
 {
-    public class CommandImplementations
+    public static class CommandImplementations
     {
         public static bool HandleCommand(string command, WalletBackend wallet)
         {
@@ -18,7 +20,7 @@ namespace CLIWallet
             {
                 case "advanced":
                 {
-                    Menu.PrintCommands(DefaultCommands.AdvancedCommands());
+                    Advanced(wallet);
                     break;
                 }
                 case "address":
@@ -33,7 +35,7 @@ namespace CLIWallet
                 }
                 case "backup":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ExportKeys(wallet);
                     break;
                 }
                 case "exit":
@@ -42,7 +44,7 @@ namespace CLIWallet
                 }
                 case "help":
                 {
-                    Menu.PrintCommands(DefaultCommands.BasicCommands());
+                    Help(wallet);
                     break;
                 }
                 case "transfer":
@@ -154,20 +156,7 @@ namespace CLIWallet
 
         private static void ChangePassword(WalletBackend wallet)
         {
-            while (true)
-            {
-                YellowMsg.Write("Enter your current password: ");
-
-                string currentPassword = Console.ReadLine();
-
-                if (currentPassword != wallet.password)
-                {
-                    RedMsg.WriteLine("Incorrect password! Try again.\n");
-                    continue;
-                }
-
-                break;
-            }
+            Utilities.ConfirmPassword(wallet);
 
             string newPassword;
 
@@ -195,6 +184,69 @@ namespace CLIWallet
             wallet.Save();
 
             GreenMsg.WriteLine("\nPassword successfully updated!");
+        }
+
+        private static void ExportKeys(WalletBackend wallet)
+        {
+            Utilities.ConfirmPassword(wallet);
+
+            RedMsg.WriteLine("The below data is PRIVATE and should not be " +
+                             "given to anyone!");
+
+            RedMsg.WriteLine("If someone else gains access to these, they " +
+                             "can steal all your funds!");
+
+            Console.WriteLine();
+
+            if (wallet.isViewWallet)
+            {
+                GreenMsg.WriteLine("Private view key:");
+                GreenMsg.WriteLine(wallet.keys.privateViewKey.ToString());
+                return;
+            }
+
+            GreenMsg.WriteLine("Private spend key:");
+            GreenMsg.WriteLine(wallet.keys.privateSpendKey.ToString());
+
+            Console.WriteLine();
+
+            GreenMsg.WriteLine("Private view key:");
+            GreenMsg.WriteLine(wallet.keys.privateViewKey.ToString());
+
+            if (KeyOps.AreKeysDeterministic(wallet.keys.privateSpendKey,
+                                            wallet.keys.privateViewKey))
+            {
+                string mnemonic = Mnemonics.PrivateKeyToMnemonic(
+                    wallet.keys.privateSpendKey
+                );
+
+                GreenMsg.WriteLine("\nMnemonic seed:");
+                GreenMsg.WriteLine(mnemonic);
+            }
+        }
+
+        private static void Help(WalletBackend wallet)
+        {
+            if (wallet.isViewWallet)
+            {
+                Menu.PrintCommands(DefaultCommands.BasicViewWalletCommands());
+            }
+            else
+            {
+                Menu.PrintCommands(DefaultCommands.BasicCommands());
+            }
+        }
+
+        private static void Advanced(WalletBackend wallet)
+        {
+            if (wallet.isViewWallet)
+            {
+                Menu.PrintCommands(DefaultCommands.AdvancedViewWalletCommands());
+            }
+            else
+            {
+                Menu.PrintCommands(DefaultCommands.AdvancedCommands());
+            }
         }
     }
 }

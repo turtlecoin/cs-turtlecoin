@@ -20,48 +20,46 @@ namespace Canti.Blockchain.WalletBackend
         /* So it can't be called by end users */
         private WalletBackend() {}
 
-        /* Private constructor so we can validate a few prerequisites before
-           creating an instance, rather than throwing exceptions, e.g.
-           are we overwriting an old file */
+        /* Makes a new wallet with the given private keys */
         private WalletBackend(string filename, string password,
-                              PrivateKeys privateKeys)
+                              PrivateKeys privateKeys) : this(
+                filename, password, privateKeys.spendKey, privateKeys.viewKey,
+                KeyOps.PrivateKeyToPublicKey(privateKeys.spendKey),
+                KeyOps.PrivateKeyToPublicKey(privateKeys.viewKey), false
+            )
+        {}
+
+        /* Makes a new view wallet with the given private+pub keys */
+        private WalletBackend(string filename, string password,
+                              PrivateKey privateViewKey,
+                              PublicKeys publicKeys) : this(
+                filename, password, null, privateViewKey, publicKeys.spendKey,
+                publicKeys.viewKey, true
+            )
+        {}
+            
+        /* The main constructor */
+        private WalletBackend(string filename, string password,
+                              PrivateKey privateSpendKey,
+                              PrivateKey privateViewKey,
+                              PublicKey publicSpendKey,
+                              PublicKey publicViewKey,
+                              bool isViewWallet)
         {
-            PublicKey publicSpendKey = KeyOps.PrivateKeyToPublicKey(
-                privateKeys.spendKey
-            );
-
-            PublicKey publicViewKey = KeyOps.PrivateKeyToPublicKey(
-                privateKeys.viewKey
-            );
-
             this.filename = filename;
             this.password = password;
+            
+            this.isViewWallet = isViewWallet;
 
             this.keys = new WalletKeys(
-                publicSpendKey, privateKeys.spendKey,
-                publicViewKey, privateKeys.viewKey
+                publicSpendKey, privateSpendKey,
+                publicViewKey, privateViewKey
             );
 
             this.addresses = new List<string>
             {
                 Addresses.AddressFromKeys(publicSpendKey, publicViewKey)
             };
-        }
-
-        /* Makes a new view wallet */
-        private WalletBackend(string filename, string password,
-                              PrivateKey privateViewKey, PublicKeys publicKeys)
-        {
-            this.filename = filename;
-            this.password = password;
-
-            this.isViewWallet = true;
-
-            /* View wallets don't have a spend key */
-            this.keys = new WalletKeys(
-                publicKeys.spendKey, null,
-                publicKeys.viewKey, privateViewKey
-            );
         }
 
         /* Make a new wallet with the given filename and password, returning
@@ -193,7 +191,8 @@ namespace Canti.Blockchain.WalletBackend
         }
 
         /* NOTE: EVERYTHING BELOW MUST HAVE A SETTER OR BE PUBLIC, ELSE
-           THE JSON SERIALIZATION WILL NOT SET ITS VALUE
+           THE JSON SERIALIZATION WILL NOT SET ITS VALUE - THIS INCLUDES
+           THE INTERNAL VALUES THE CLASS ITSELF CONTAINS
            
            This can of course be used for internal fields we don't want to
            serialize. */

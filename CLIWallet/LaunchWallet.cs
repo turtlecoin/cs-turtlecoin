@@ -17,7 +17,7 @@ using Canti.Blockchain.WalletBackend;
 
 namespace CLIWallet
 {
-    class LaunchWallet 
+    public static class LaunchWallet 
     {
         /* Handle the inputted action, and either return a wallet backend, or
            an error */

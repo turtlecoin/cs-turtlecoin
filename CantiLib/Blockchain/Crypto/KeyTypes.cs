@@ -12,10 +12,7 @@ namespace Canti.Blockchain.Crypto
 {
     public class WalletKeys
     {
-        /* Default constructor for newtonsoft */
-        public WalletKeys()
-        {
-        }
+        public WalletKeys() {}
 
         public WalletKeys(KeyPair spendKeys, KeyPair viewKeys)
         {
@@ -54,14 +51,16 @@ namespace Canti.Blockchain.Crypto
             return new KeyPair(publicViewKey, privateViewKey);
         }
 
-        public PublicKey publicSpendKey { get; }
-        public PublicKey publicViewKey { get; }
-        public PrivateKey privateSpendKey { get; }
-        public PrivateKey privateViewKey { get; }
+        public PublicKey publicSpendKey { get; set; }
+        public PublicKey publicViewKey { get; set; }
+        public PrivateKey privateSpendKey { get; set; }
+        public PrivateKey privateViewKey { get; set; }
     }
 
     public class KeyPair
     {
+        public KeyPair() {}
+
         public KeyPair(PublicKey publicKey, PrivateKey privateKey)
         {
             this.privateKey = privateKey;
@@ -74,6 +73,8 @@ namespace Canti.Blockchain.Crypto
 
     public class PublicKeys
     {
+        public PublicKeys() {}
+
         public PublicKeys(PublicKey spendKey, PublicKey viewKey)
         {
             this.spendKey = spendKey;
@@ -86,6 +87,8 @@ namespace Canti.Blockchain.Crypto
 
     public class PrivateKeys
     {
+        public PrivateKeys() {}
+
         public PrivateKeys(PrivateKey spendKey, PrivateKey viewKey)
         {
             this.spendKey = spendKey;
@@ -164,29 +167,33 @@ namespace Canti.Blockchain.Crypto
             return Encoding.ByteArrayToHexString(data);
         }
 
-        public byte[] data { get; }
+        public byte[] data { get; set; }
     }
 
     public class EllipticCurvePoint : ThirtyTwoByteKey
     {
+        public EllipticCurvePoint() : base() {}
         public EllipticCurvePoint(byte[] data) : base(data) {}
         public EllipticCurvePoint(string data) : base(data) {}
     }
 
     public class EllipticCurveScalar : ThirtyTwoByteKey
     {
+        public EllipticCurveScalar() : base() {}
         public EllipticCurveScalar(byte[] data) : base(data) {}
         public EllipticCurveScalar(string data) : base(data) {}
     }
 
     public class PrivateKey : ThirtyTwoByteKey
     {
+        public PrivateKey() : base() {}
         public PrivateKey(byte[] data) : base(data) {}
         public PrivateKey(string data) : base(data) {}
     }
 
     public class PublicKey : ThirtyTwoByteKey
     {
+        public PublicKey() : base() {}
         public PublicKey(byte[] data) : base(data) {}
         public PublicKey(string data) : base(data) {}
     }
