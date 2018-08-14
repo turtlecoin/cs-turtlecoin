@@ -70,6 +70,15 @@ namespace Canti.Errors
             );
         }
 
+        public static Error WalletCorrupted(string internalError)
+        {
+            return new Error(
+                "Failed to parse wallet file! It appears corrupted.\n" +
+               $"Internal error: {internalError}",
+                "WALLET_FILE_CORRUPTED"
+            );
+        }
+
         /* The wallet is a valid wallet file, but it failed to decode or
            had the incorrect magic bytes once decoded, so the password is
            wrong */

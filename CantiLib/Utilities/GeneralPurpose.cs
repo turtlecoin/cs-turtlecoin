@@ -4,6 +4,7 @@
 // Please see the included LICENSE file for more information.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -57,38 +58,23 @@ namespace Canti.Utilities
             }
         }
 
-        public static bool IsHex(string str)
+        public static bool IsHex(this string str)
         {
             return str.All(c => IsHex(c));
         }
 
-        /* Must be 0..9, or A..F, or a..f - order of chars goes like so -
-           0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`
-           abcdefghijklmnopqrstuvwxyz */
-        /* TODO: Do this in a better way */
+        /* Must be 0..9, or A..F, or a..f */
         public static bool IsHex(char c)
         {
-            if (c < '0')
-            {
-                return false;
-            }
+            return ((c >= '0' && c <= '9') ||
+                    (c >= 'a' && c <= 'f') ||
+                    (c >= 'A' && c <= 'F'));
+        }
 
-            if (c > '9' && c < 'A')
-            {
-                return false;
-            }
-
-            if (c > 'F' && c < 'a')
-            {
-                return false;
-            }
-
-            if (c > 'f')
-            {
-                return false;
-            }
-
-            return true;
+        /* Is the filename being used by a file or directory already */
+        public static bool FilenameInUse(string filename)
+        {
+            return File.Exists(filename) || Directory.Exists(filename);
         }
     }
 }

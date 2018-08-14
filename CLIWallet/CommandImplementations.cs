@@ -18,12 +18,12 @@ namespace CLIWallet
             {
                 case "advanced":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    Menu.PrintCommands(DefaultCommands.AdvancedCommands());
                     break;
                 }
                 case "address":
                 {
-                    YellowMsg.WriteLine(wallet.addresses[0]);
+                    GreenMsg.WriteLine(wallet.addresses[0]);
                     break;
                 }
                 case "balance":
@@ -150,6 +150,21 @@ namespace CLIWallet
             YellowMsg.WriteLine("Saving...");
             wallet.Save();
             YellowMsg.WriteLine("Saved!");
+        }
+
+        public static void ListAdvancedCommands()
+        {
+            int i = 1;
+
+            /* Print out each command name, description, and possible
+               number accessor */
+            foreach (var command in DefaultCommands.AdvancedCommands())
+            {
+                YellowMsg.Write($" {i}\t");
+                GreenMsg.Write(command.commandName.PadRight(25));
+                Console.WriteLine(command.description);
+                i++;
+            }
         }
     }
 }

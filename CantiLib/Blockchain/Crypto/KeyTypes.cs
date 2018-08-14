@@ -12,6 +12,11 @@ namespace Canti.Blockchain.Crypto
 {
     public class WalletKeys
     {
+        /* Default constructor for newtonsoft */
+        public WalletKeys()
+        {
+        }
+
         public WalletKeys(KeyPair spendKeys, KeyPair viewKeys)
         {
             publicSpendKey = spendKeys.publicKey;

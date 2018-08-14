@@ -106,7 +106,7 @@ namespace CLIWallet
                     continue;
                 }
 
-                if (!GeneralUtilities.IsHex(input))
+                if (!input.IsHex())
                 {
                     RedMsg.WriteLine("Invalid private key, is not a valid "
                                    + "hexadecimal string!");
@@ -183,8 +183,8 @@ namespace CLIWallet
                     continue;
                 }
 
-                /* TODO: Check for folders as well */
-                if (File.Exists(filename) || File.Exists(appended))
+                if (GeneralUtilities.FilenameInUse(filename) ||
+                    GeneralUtilities.FilenameInUse(appended))
                 {
                     RedMsg.Write("A file with the name ");
                     YellowMsg.Write(filename);

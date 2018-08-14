@@ -211,7 +211,6 @@ namespace Canti.Blockchain.WalletBackend
         public List<string> addresses { get; set; }
 
         /* Is the wallet a view only wallet */
-        /* TODO: How do I do a getter here */
-        public bool isViewWallet = false;
+        public bool isViewWallet { get; set; } = false;
     }
 }

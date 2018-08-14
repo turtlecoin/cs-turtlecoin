@@ -131,10 +131,10 @@ namespace Canti.Blockchain.Crypto
                     )
                 );
             }
-            catch
+            catch (JsonSerializationException e)
             {
                 return Either.Left<Error, WalletBackend>(
-                    Error.WalletCorrupted()
+                    Error.WalletCorrupted(e.ToString())
                 );
             }
         }

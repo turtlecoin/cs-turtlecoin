@@ -139,6 +139,7 @@ namespace Canti.Blockchain.Crypto
                         Base58.Decode(string.Concat(chunk))
                     );
                 }
+                /* Contains non base58 characters */
                 catch (FormatException)
                 {
                     return Either.Left<Error, PublicKeys>(
