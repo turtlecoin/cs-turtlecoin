@@ -104,9 +104,14 @@ namespace CLIWallet
             }
         }
 
-        public static void PrintCommands(IEnumerable<Command> commands)
+        public static void PrintCommands(IEnumerable<Command> commands,
+                                         /* The offset to print the command
+                                            numbers at, e.g. command 1, 2, 3
+                                            we need an offset if we're
+                                            printing the advanced commands */
+                                         int offset = 0)
         {
-            int i = 1;
+            int i = 1 + offset;
 
             Console.WriteLine();
 

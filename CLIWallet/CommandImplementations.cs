@@ -4,6 +4,7 @@
 // Please see the included LICENSE file for more information.
 
 using System;
+using System.Linq;
 
 using Canti.Utilities;
 using Canti.Blockchain.Crypto;
@@ -241,11 +242,21 @@ namespace CLIWallet
         {
             if (wallet.isViewWallet)
             {
-                Menu.PrintCommands(DefaultCommands.AdvancedViewWalletCommands());
+                Menu.PrintCommands(
+                    DefaultCommands.AdvancedViewWalletCommands(),
+                    /* The offset to print the number from, e.g. help is
+                       command numbers 1-7 or whatever, advanced is command
+                       numbers 8-19 */
+                    DefaultCommands.BasicViewWalletCommands().Count()
+                );
             }
             else
             {
-                Menu.PrintCommands(DefaultCommands.AdvancedCommands());
+                Menu.PrintCommands(
+                    DefaultCommands.AdvancedCommands(),
+                    /* Offset */
+                    DefaultCommands.BasicCommands().Count()
+                );
             }
         }
     }
