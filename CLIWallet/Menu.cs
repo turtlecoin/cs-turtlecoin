@@ -15,19 +15,40 @@ using Canti.Blockchain.WalletBackend;
 
 namespace CLIWallet
 {
-    class Menu
+    public static class Menu
     {
         public static void MainLoop(WalletBackend wallet)
         {
             /* Show the available commands */
-            PrintCommands(DefaultCommands.BasicCommands());
+            if (wallet.isViewWallet)
+            {
+                PrintCommands(DefaultCommands.BasicViewWalletCommands());
+            }
+            else
+            {
+                PrintCommands(DefaultCommands.BasicCommands());
+            }
 
             while (true)
             {
-                /* Get the inputted command */
-                string command = ParseCommand(DefaultCommands.BasicCommands(),
-                                              DefaultCommands.AllCommands(),
-                                              GetPrompt(wallet));
+                string command;
+
+                if (wallet.isViewWallet)
+                {
+                    command = ParseCommand(
+                        DefaultCommands.BasicViewWalletCommands(),
+                        DefaultCommands.AllViewWalletCommands(),
+                        GetPrompt(wallet)
+                    );
+                }
+                else
+                {
+                    command = ParseCommand(
+                        DefaultCommands.BasicCommands(),
+                        DefaultCommands.AllCommands(),
+                        GetPrompt(wallet)
+                    );
+                }
 
                 /* If exit command is given, quit */
                 if (CommandImplementations.HandleCommand(command, wallet))
@@ -83,9 +104,14 @@ namespace CLIWallet
             }
         }
 
-        public static void PrintCommands(IEnumerable<Command> commands)
+        public static void PrintCommands(IEnumerable<Command> commands,
+                                         /* The offset to print the command
+                                            numbers at, e.g. command 1, 2, 3
+                                            we need an offset if we're
+                                            printing the advanced commands */
+                                         int offset = 0)
         {
-            int i = 1;
+            int i = 1 + offset;
 
             Console.WriteLine();
 

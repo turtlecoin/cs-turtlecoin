@@ -100,5 +100,20 @@ namespace CLIWallet
         {
             return AllCommands().Where(c => c.advanced);
         }
+
+        public static IEnumerable<AdvancedCommand> BasicViewWalletCommands()
+        {
+            return BasicCommands().Where(c => c.viewWalletSupport);
+        }
+
+        public static IEnumerable<AdvancedCommand> AdvancedViewWalletCommands()
+        {
+            return AdvancedCommands().Where(c => c.viewWalletSupport);
+        }
+
+        public static IEnumerable<AdvancedCommand> AllViewWalletCommands()
+        {
+            return AllCommands().Where(c => c.viewWalletSupport);
+        }
     }
 }

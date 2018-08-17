@@ -4,13 +4,16 @@
 // Please see the included LICENSE file for more information.
 
 using System;
+using System.Linq;
 
 using Canti.Utilities;
+using Canti.Blockchain.Crypto;
 using Canti.Blockchain.WalletBackend;
+using Canti.Blockchain.Crypto.Mnemonics;
 
 namespace CLIWallet
 {
-    public class CommandImplementations
+    public static class CommandImplementations
     {
         public static bool HandleCommand(string command, WalletBackend wallet)
         {
@@ -18,7 +21,7 @@ namespace CLIWallet
             {
                 case "advanced":
                 {
-                    Menu.PrintCommands(DefaultCommands.AdvancedCommands());
+                    Advanced(wallet);
                     break;
                 }
                 case "address":
@@ -33,7 +36,7 @@ namespace CLIWallet
                 }
                 case "backup":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ExportKeys(wallet);
                     break;
                 }
                 case "exit":
@@ -42,7 +45,7 @@ namespace CLIWallet
                 }
                 case "help":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    Help(wallet);
                     break;
                 }
                 case "transfer":
@@ -72,7 +75,7 @@ namespace CLIWallet
                 }
                 case "change_password":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ChangePassword(wallet);
                     break;
                 }
                 case "make_integrated_address":
@@ -138,32 +141,122 @@ namespace CLIWallet
             return false;
         }
 
-        public static bool Exit(WalletBackend wallet)
+        private static bool Exit(WalletBackend wallet)
         {
             YellowMsg.WriteLine("Saving wallet and shutting down...");
             wallet.Save();
             return true;
         }
 
-        public static void Save(WalletBackend wallet)
+        private static void Save(WalletBackend wallet)
         {
             YellowMsg.WriteLine("Saving...");
             wallet.Save();
             YellowMsg.WriteLine("Saved!");
         }
 
-        public static void ListAdvancedCommands()
+        private static void ChangePassword(WalletBackend wallet)
         {
-            int i = 1;
+            Utilities.ConfirmPassword(wallet);
 
-            /* Print out each command name, description, and possible
-               number accessor */
-            foreach (var command in DefaultCommands.AdvancedCommands())
+            string newPassword;
+
+            while (true)
             {
-                YellowMsg.Write($" {i}\t");
-                GreenMsg.Write(command.commandName.PadRight(25));
-                Console.WriteLine(command.description);
-                i++;
+                YellowMsg.Write("Enter your new password: ");
+
+                newPassword = Console.ReadLine();
+
+                YellowMsg.Write("Confirm your new password: ");
+
+                string confirmedPassword = Console.ReadLine();
+
+                if (newPassword != confirmedPassword)
+                {
+                    RedMsg.WriteLine("Passwords do not match! Try again.\n");
+                    continue;
+                }
+
+                break;
+            }
+
+            wallet.password = newPassword;
+
+            wallet.Save();
+
+            GreenMsg.WriteLine("\nPassword successfully updated!");
+        }
+
+        private static void ExportKeys(WalletBackend wallet)
+        {
+            Utilities.ConfirmPassword(wallet);
+
+            RedMsg.WriteLine("The below data is PRIVATE and should not be " +
+                             "given to anyone!");
+
+            RedMsg.WriteLine("If someone else gains access to these, they " +
+                             "can steal all your funds!");
+
+            Console.WriteLine();
+
+            if (wallet.isViewWallet)
+            {
+                GreenMsg.WriteLine("Private view key:");
+                GreenMsg.WriteLine(wallet.keys.privateViewKey.ToString());
+                return;
+            }
+
+            GreenMsg.WriteLine("Private spend key:");
+            GreenMsg.WriteLine(wallet.keys.privateSpendKey.ToString());
+
+            Console.WriteLine();
+
+            GreenMsg.WriteLine("Private view key:");
+            GreenMsg.WriteLine(wallet.keys.privateViewKey.ToString());
+
+            if (KeyOps.AreKeysDeterministic(wallet.keys.privateSpendKey,
+                                            wallet.keys.privateViewKey))
+            {
+                string mnemonic = Mnemonics.PrivateKeyToMnemonic(
+                    wallet.keys.privateSpendKey
+                );
+
+                GreenMsg.WriteLine("\nMnemonic seed:");
+                GreenMsg.WriteLine(mnemonic);
+            }
+        }
+
+        private static void Help(WalletBackend wallet)
+        {
+            if (wallet.isViewWallet)
+            {
+                Menu.PrintCommands(DefaultCommands.BasicViewWalletCommands());
+            }
+            else
+            {
+                Menu.PrintCommands(DefaultCommands.BasicCommands());
+            }
+        }
+
+        private static void Advanced(WalletBackend wallet)
+        {
+            if (wallet.isViewWallet)
+            {
+                Menu.PrintCommands(
+                    DefaultCommands.AdvancedViewWalletCommands(),
+                    /* The offset to print the number from, e.g. help is
+                       command numbers 1-7 or whatever, advanced is command
+                       numbers 8-19 */
+                    DefaultCommands.BasicViewWalletCommands().Count()
+                );
+            }
+            else
+            {
+                Menu.PrintCommands(
+                    DefaultCommands.AdvancedCommands(),
+                    /* Offset */
+                    DefaultCommands.BasicCommands().Count()
+                );
             }
         }
     }
