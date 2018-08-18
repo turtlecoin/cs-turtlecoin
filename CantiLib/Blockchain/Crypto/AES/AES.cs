@@ -92,15 +92,15 @@ namespace Canti.Blockchain.Crypto.AES
 
             /* Manually unrolling for MOARR SPEEEEED */
             Round(b1, b0, keysAsUint, 0);
-            Round(b0, b1, keysAsUint, 1);
-            Round(b1, b0, keysAsUint, 2);
-            Round(b0, b1, keysAsUint, 3);
-            Round(b1, b0, keysAsUint, 4);
-            Round(b0, b1, keysAsUint, 5);
-            Round(b1, b0, keysAsUint, 6);
-            Round(b0, b1, keysAsUint, 7);
+            Round(b0, b1, keysAsUint, 4);
             Round(b1, b0, keysAsUint, 8);
-            Round(b0, b1, keysAsUint, 9);
+            Round(b0, b1, keysAsUint, 12);
+            Round(b1, b0, keysAsUint, 16);
+            Round(b0, b1, keysAsUint, 20);
+            Round(b1, b0, keysAsUint, 24);
+            Round(b0, b1, keysAsUint, 28);
+            Round(b1, b0, keysAsUint, 32);
+            Round(b0, b1, keysAsUint, 36);
 
             /* Copy 16 bytes from b0 to input[inputOffset] (4 uints) */
             Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
