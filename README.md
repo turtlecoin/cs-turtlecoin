@@ -104,5 +104,6 @@ Thank you to all the awesome developers who have made their software open source
 * Hongjun Wu (For his C version of JH, which we ported)
 * Adrian Herridge (For his swift version of AES file encryption)
 * CodIsAFish (For his C# modification of Adrian Herridge's AES file encryption, which we modified)
+* Brian Gladman (For his C version of AESB which we ported)
 
 If we have used your software and incorrectly attributed you, or not attributed you, please let us know!

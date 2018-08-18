@@ -96,8 +96,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 {
                     /* Need to pass the array with an offset because we manip
                        it in place */
-                    AES.AES.PseudoEncryptECB(expandedKeys, text,
-                                             j * AES.Constants.BlockSize);
+                    AES.AES.AESBPseudoRound(expandedKeys, text,
+                                            j * AES.Constants.BlockSize);
                 }
 
                 /* Write text to the scratchpad, at the offset
@@ -198,7 +198,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
         private static void MixScratchpadIterationOne(MixScratchpadState
                                                       mixingState)
         {
-            AES.AES.EncryptionRound(mixingState.a, mixingState.c);
+            AES.AES.AESBSingleRound(mixingState.a, mixingState.c, 0);
 
             XORBlocks(mixingState.b, mixingState.c);
 
@@ -245,7 +245,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
                     /* Need to pass the array with an offset because we manip
                        it in place */
-                    AES.AES.PseudoEncryptECB(expandedKeys, text, offsetA);
+                    AES.AES.AESBPseudoRound(expandedKeys, text, offsetA);
                 }
             }
 
