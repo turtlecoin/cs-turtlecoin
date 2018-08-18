@@ -90,36 +90,72 @@ namespace Canti.Blockchain.Crypto.AES
             /* Possibly do this with a pointer instead for speed? */
             Buffer.BlockCopy(keys, 0, keysAsUint, 0, keys.Length);
 
-            for (int i = 0; i < 10; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    Round(b1, b0, keysAsUint, i * 4);
-                }
-                else
-                {
-                    Round(b0, b1, keysAsUint, i * 4);
-                }
-            }
+            /* Manually unrolling for MOARR SPEEEEED */
+            Round(b1, b0, keysAsUint, 0);
+            Round(b0, b1, keysAsUint, 1);
+            Round(b1, b0, keysAsUint, 2);
+            Round(b0, b1, keysAsUint, 3);
+            Round(b1, b0, keysAsUint, 4);
+            Round(b0, b1, keysAsUint, 5);
+            Round(b1, b0, keysAsUint, 6);
+            Round(b0, b1, keysAsUint, 7);
+            Round(b1, b0, keysAsUint, 8);
+            Round(b0, b1, keysAsUint, 9);
 
             /* Copy 16 bytes from b0 to input[inputOffset] (4 uints) */
             Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
         }
 
+        /* This can of course be done with a loop and utilizing FourTables()
+         * below, but we need all the speed we can get, so are manually
+         * unrolling it. */
         private static void Round(uint[] y, uint[] x, uint[] key, int keyOffset)
         {
-            for (uint i = 0; i < 4; i++)
-            {
-                y[i] = key[i + keyOffset] ^ FourTables(x, i);
-            }
+            y[0] = key[keyOffset] ^ FourTablesA(x);
+            y[1] = key[keyOffset + 1] ^ FourTablesB(x);
+            y[2] = key[keyOffset + 2] ^ FourTablesC(x);
+            y[3] = key[keyOffset + 3] ^ FourTablesD(x);
         }
 
+        /* FourTablesA, B, C, D, are just this with the i variable prefilled in
+         * for a tad more speed.
+         * 
         private static uint FourTables(uint[] x, uint i)
         {
-            return Constants.SbData[0][BVal(ForwardVar(x, 0, i), 0)] ^
-                   Constants.SbData[1][BVal(ForwardVar(x, 1, i), 1)] ^
-                   Constants.SbData[2][BVal(ForwardVar(x, 2, i), 2)] ^
-                   Constants.SbData[3][BVal(ForwardVar(x, 3, i), 3)];
+            return Constants.SbData[0][BVal(x[(0 + i) % 4], 0)] ^
+            Constants.SbData[1][BVal(x[(1 + i) % 4], 1)] ^
+            Constants.SbData[2][BVal(x[(2 + i) % 4], 2)] ^
+            Constants.SbData[3][BVal(x[(3 + i) % 4], 3)];
+        }
+        */
+
+        private static uint FourTablesA(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[0], 0)] ^
+            Constants.SbData[1][BVal(x[1], 1)] ^
+            Constants.SbData[2][BVal(x[2], 2)] ^
+            Constants.SbData[3][BVal(x[3], 3)];
+        }
+        private static uint FourTablesB(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[1], 0)] ^
+            Constants.SbData[1][BVal(x[2], 1)] ^
+            Constants.SbData[2][BVal(x[3], 2)] ^
+            Constants.SbData[3][BVal(x[0], 3)];
+        }
+        private static uint FourTablesC(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[2], 0)] ^
+            Constants.SbData[1][BVal(x[3], 1)] ^
+            Constants.SbData[2][BVal(x[0], 2)] ^
+            Constants.SbData[3][BVal(x[1], 3)];
+        }
+        private static uint FourTablesD(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[3], 0)] ^
+            Constants.SbData[1][BVal(x[0], 1)] ^
+            Constants.SbData[2][BVal(x[1], 2)] ^
+            Constants.SbData[3][BVal(x[2], 3)];
         }
 
         private static uint ForwardVar(uint[] x, uint r, uint i)
