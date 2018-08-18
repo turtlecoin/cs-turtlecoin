@@ -6,6 +6,9 @@ All but powerless
 
 ## CantiLib
 
+[![Build status](https://travis-ci.org/ZedPea/cs-turtlecoin.svg?branch=master)](https://travis-ci.org/ZedPea/cs-turtlecoin)
+[![Build status](https://ci.appveyor.com/api/projects/status/qjo482textxd8gga?svg=true)](https://ci.appveyor.com/project/ZedPea/cs-turtlecoin)
+
 ### Prerequisites
 
 You need the `dotnet` command line tools.
