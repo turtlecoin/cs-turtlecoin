@@ -29,124 +29,143 @@
  * ---------------------------------------------------------------------------
  */
 
+/*
+ * ---------------------------------------------------------------------------
+ * Copyright (c) 1998-2013, Brian Gladman, Worcester, UK. All rights reserved.
+ * Copyright (c) 2018, The TurtleCoin Developers. All rights reserved.
+ * 
+ * The redistribution and use of this software (with or without changes)
+ * is allowed without the payment of fees or royalties provided that:
+ * 
+ *   source code distributions include the above copyright notice, this
+ *   list of conditions and the following disclaimer;
+ * 
+ *   binary distributions include the above copyright notice, this list
+ *   of conditions and the following disclaimer in their documentation.
+ * 
+ * This software is provided 'as is' with no explicit or implied warranties
+ * in respect of its operation, including, but not limited to, correctness
+ * and fitness for purpose.
+ * ---------------------------------------------------------------------------
+ * Issue Date: 20/12/2007
+ */
+
 using System;
 
 namespace Canti.Blockchain.Crypto.AES
 {
     public static class AES
     {
-        /* Offset = offset of input array to access */
-        public static void PseudoEncryptECB(byte[] keys, byte[] input, int offset)
+        public static void AESBSingleRound(byte[] keys, byte[] input,
+                                           int inputOffset)
         {
-            for (int i = 0; i < 10; i++)
-            {
-                EncryptionRound(keys, input, offset, Constants.BlockSize * i);
-            }
+            uint[] b0 = new uint[4];
+            uint[] b1 = new uint[4];
+
+            /* Copy 16 bytes from input[inputOffset] to b0 (4 uints) */
+            Buffer.BlockCopy(input, inputOffset, b0, 0, 16);
+
+            uint[] keysAsUint = new uint[keys.Length / 4];
+
+            /* Possibly do this with a pointer instead for speed? */
+            Buffer.BlockCopy(keys, 0, keysAsUint, 0, keys.Length);
+
+            Round(b1, b0, keysAsUint, 0);
+
+            /* Copy 16 bytes from b1 to input[inputOffset] (4 uints) */
+            Buffer.BlockCopy(b1, 0, input, inputOffset, 16);
         }
 
-        public static void EncryptionRound(byte[] keys, byte[] data, int offset = 0, int keyOffset = 0)
+        public static void AESBPseudoRound(byte[] keys, byte[] input,
+                                          int inputOffset)
         {
-            for (int i = 0; i < Constants.BlockSize; i++)
-            {
-                data[i + offset] = SubByte(data[i + offset]);
-            }
+            uint[] b0 = new uint[4];
+            uint[] b1 = new uint[4];
 
-            ShiftRows(data, offset);
+            /* Copy 16 bytes from input[inputOffset] to b0 (4 uints) */
+            Buffer.BlockCopy(input, inputOffset, b0, 0, 16);
 
-            MixColumns(data, offset);
+            uint[] keysAsUint = new uint[keys.Length / 4];
 
-            for (int i = 0; i < Constants.BlockSize; i++)
-            {
-                /* Select the appropriate key to use via the offset */
-                data[i + offset] ^= keys[i + keyOffset];
-            }
+            /* Possibly do this with a pointer instead for speed? */
+            Buffer.BlockCopy(keys, 0, keysAsUint, 0, keys.Length);
+
+            /* Manually unrolling for MOARR SPEEEEED */
+            Round(b1, b0, keysAsUint, 0);
+            Round(b0, b1, keysAsUint, 1);
+            Round(b1, b0, keysAsUint, 2);
+            Round(b0, b1, keysAsUint, 3);
+            Round(b1, b0, keysAsUint, 4);
+            Round(b0, b1, keysAsUint, 5);
+            Round(b1, b0, keysAsUint, 6);
+            Round(b0, b1, keysAsUint, 7);
+            Round(b1, b0, keysAsUint, 8);
+            Round(b0, b1, keysAsUint, 9);
+
+            /* Copy 16 bytes from b0 to input[inputOffset] (4 uints) */
+            Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
         }
 
-        private static void ShiftRows(byte[] input, int offset)
+        /* This can of course be done with a loop and utilizing FourTables()
+         * below, but we need all the speed we can get, so are manually
+         * unrolling it. */
+        private static void Round(uint[] y, uint[] x, uint[] key, int keyOffset)
         {
-            byte[] tmp = new byte[Constants.BlockSize];
-
-            for (int i = 0; i < Constants.BlockSize; i++)
-            {
-                int index = (i * 5) % Constants.BlockSize;
-                tmp[i] = input[offset + index];
-            }
-
-            /* Copy tmp array to output */
-            Buffer.BlockCopy(tmp, 0, input, offset, tmp.Length);
+            y[0] = key[keyOffset] ^ FourTablesA(x);
+            y[1] = key[keyOffset + 1] ^ FourTablesB(x);
+            y[2] = key[keyOffset + 2] ^ FourTablesC(x);
+            y[3] = key[keyOffset + 3] ^ FourTablesD(x);
         }
 
-        private static void MixColumns(byte[] input, int offset)
+        /* FourTablesA, B, C, D, are just this with the i variable prefilled in
+         * for a tad more speed.
+         * 
+        private static uint FourTables(uint[] x, uint i)
         {
-            byte[] tmp = new byte[Constants.BlockSize];
+            return Constants.SbData[0][BVal(x[(0 + i) % 4], 0)] ^
+            Constants.SbData[1][BVal(x[(1 + i) % 4], 1)] ^
+            Constants.SbData[2][BVal(x[(2 + i) % 4], 2)] ^
+            Constants.SbData[3][BVal(x[(3 + i) % 4], 3)];
+        }
+        */
 
-            for (int i = 0; i < Constants.BlockSize; i += Constants.ColumnLength)
-            {
-                tmp[i] = (byte)(GfMul(input[i + offset], 2)
-                              ^ GfMul(input[i + 1 + offset], 3)
-                              ^ input[i + 2 + offset]
-                              ^ input[i + 3 + offset]);
-                
-                tmp[i+1] = (byte)(input[i + offset]
-                                ^ GfMul(input[i + 1 + offset], 2)
-                                ^ GfMul(input[i + 2 + offset], 3)
-                                ^ input[i + 3 + offset]);
-
-                tmp[i+2] = (byte)(input[i + offset]
-                                ^ input[i + 1 + offset]
-                                ^ GfMul(input[i + 2 + offset], 2)
-                                ^ GfMul(input[i + 3 + offset], 3));
-
-                tmp[i+3] = (byte)(GfMul(input[i + offset], 3)
-                                ^ input[i + 1 + offset]
-                                ^ input[i + 2 + offset]
-                                ^ GfMul(input[i + 3 + offset], 2));
-            }
-
-            Buffer.BlockCopy(tmp, 0, input, offset, tmp.Length);
+        private static uint FourTablesA(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[0], 0)] ^
+            Constants.SbData[1][BVal(x[1], 1)] ^
+            Constants.SbData[2][BVal(x[2], 2)] ^
+            Constants.SbData[3][BVal(x[3], 3)];
+        }
+        private static uint FourTablesB(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[1], 0)] ^
+            Constants.SbData[1][BVal(x[2], 1)] ^
+            Constants.SbData[2][BVal(x[3], 2)] ^
+            Constants.SbData[3][BVal(x[0], 3)];
+        }
+        private static uint FourTablesC(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[2], 0)] ^
+            Constants.SbData[1][BVal(x[3], 1)] ^
+            Constants.SbData[2][BVal(x[0], 2)] ^
+            Constants.SbData[3][BVal(x[1], 3)];
+        }
+        private static uint FourTablesD(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[3], 0)] ^
+            Constants.SbData[1][BVal(x[0], 1)] ^
+            Constants.SbData[2][BVal(x[1], 2)] ^
+            Constants.SbData[3][BVal(x[2], 3)];
         }
 
-        private static byte GfMul(byte left, byte right)
+        private static uint ForwardVar(uint[] x, uint r, uint i)
         {
-            byte x = left;
-            byte y = left;
+            return x[(r + i) % 4];
+        }
 
-            x &= 0x0f;
-            y &= 0xf0;
-
-            y >>= 4;
-
-            switch(right)
-            {
-                case 0x02:
-                {
-                    return Constants.GfMul2[y,x];
-                }
-                case 0x03:
-                {
-                    return Constants.GfMul3[y,x];
-                }
-                case 0x09:
-                {
-                    return Constants.GfMul9[y,x];
-                }
-                case 0x0b:
-                {
-                    return Constants.GfMulb[y,x];
-                }
-                case 0x0d:
-                {
-                    return Constants.GfMuld[y,x];
-                }
-                case 0x0e:
-                {
-                    return Constants.GfMule[y,x];
-                }
-                default:
-                {
-                    return left;
-                }
-            }
+        private static uint BVal(uint x, uint n)
+        {
+            return (uint)(((ulong)x >> (int)(8 * n)) & 0xff);
         }
 
         private static byte SubByte(byte input)
@@ -159,7 +178,7 @@ namespace Canti.Blockchain.Crypto.AES
 
             y >>= 4;
 
-            return Constants.SubByteValue[y,x];
+            return Constants.SubByteValue[y, x];
         }
 
         /* Rotate array one step left, e.g. [1, 2, 3, 4] becomes [2, 3, 4, 1]

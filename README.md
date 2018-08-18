@@ -58,28 +58,9 @@ Yep, it's a special snowflake edition
 
 ### Benchmarking
 
-We want our benchmark to be running at max speed, so we have a bit more of
-an involved setup here.
-
 * Enter the `Benchmark` directory
 
 * Run `dotnet run --configuration Release`
-
-You'll get an output something like this:
-
-```
-  CantiLib -> /home/zach/Code/turtlecoin/cs-turtlecoin/CantiLib/bin/Release/netstandard2.0/CantiLib.dll
-  Benchmark -> /home/zach/Code/turtlecoin/cs-turtlecoin/Benchmark/bin/Release/netcoreapp2.1/Benchmark.dll
-  Benchmark -> /home/zach/Code/turtlecoin/cs-turtlecoin/Benchmark/bin/Release/netcoreapp2.1/publish/
-```
-
-The second line gives us the location of the dll to run. Since we're already in the `Benchmark` directory, we need to run:
-
-* `dotnet bin/Release/netcoreapp2.1/Benchmark.dll`
-
-* This will launch the benchmark program.
-
-Fun fact - this .dll is cross platform. You can copy it to another operating system and run it with dotnet in the same way.
 
 ### Experimenting
 
@@ -123,5 +104,6 @@ Thank you to all the awesome developers who have made their software open source
 * Hongjun Wu (For his C version of JH, which we ported)
 * Adrian Herridge (For his swift version of AES file encryption)
 * CodIsAFish (For his C# modification of Adrian Herridge's AES file encryption, which we modified)
+* Brian Gladman (For his C version of AESB which we ported)
 
 If we have used your software and incorrectly attributed you, or not attributed you, please let us know!
