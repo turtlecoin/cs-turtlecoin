@@ -7,7 +7,7 @@ All but powerless
 ## CantiLib
 
 [![Build Status](https://travis-ci.org/turtlecoin/cs-turtlecoin.svg?branch=master)](https://travis-ci.org/turtlecoin/cs-turtlecoin)
-[![Build status](https://ci.appveyor.com/api/projects/status/qjo482textxd8gga?svg=true)](https://ci.appveyor.com/project/ZedPea/cs-turtlecoin)
+[![Build status](https://ci.appveyor.com/api/projects/status/nxfp3iplp4fclfla?svg=true)](https://ci.appveyor.com/project/RocksteadyTC/cs-turtlecoin)
 
 ### Prerequisites
 
