@@ -114,7 +114,7 @@ namespace Canti.Blockchain.Crypto.Mnemonics
             byte[] data = privateKey.data;
 
             /* Take chunks 4 at a time */
-            for (int i = 0; i < privateKey.data.Length - 1; i += 4)
+            for (int i = 0; i < data.Length - 1; i += 4)
             {
                 /* Read 4 bytes from the byte[] as an integer */
                 uint val = Encoding.ByteArrayToInteger<uint>(data, i, 4);
