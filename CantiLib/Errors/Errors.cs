@@ -176,8 +176,8 @@ namespace Canti.Errors
         public static Error InvalidMnemonic()
         {
             return new Error(
-                "Invalid mnemonic!",
-                "INVALID_MNEMONIC"
+                "Mnemonic seed is invalid!",
+                "MNEMONIC_INVALID"
             );
         }
 
