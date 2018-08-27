@@ -182,17 +182,17 @@ namespace Canti.Blockchain.Crypto.AES
         }
 
         /* Rotate array one step left, e.g. [1, 2, 3, 4] becomes [2, 3, 4, 1]
-           Assumes input is Constants.ColumnLength long */
+           Assumes input is Constants.ColumnLength long 
+
+           I strongly suspect this won't work well with arrays that aren't 4 bytes long..
+                    
+           Old routine took 00:01:09 for 100000000 iterations
+           New routine took 00:00:85 for 100000000 iterations
+         */
         private static byte[] RotLeft(byte[] input)
         {
-            byte[] output = new byte[Constants.ColumnLength];
-
-            for (int i = 0; i < Constants.ColumnLength; i++)
-            {
-                output[i] = input[(i + 1) % Constants.ColumnLength];
-            }
-
-            return output;
+            // Constants.ColumnLength = 4
+            return new byte[] { input[1], input[2], input[3], input[0] };
         }
 
         public static byte[] ExpandKey(byte[] key)
