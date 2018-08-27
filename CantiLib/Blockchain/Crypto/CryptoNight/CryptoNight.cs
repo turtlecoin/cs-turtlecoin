@@ -421,18 +421,17 @@ namespace Canti.Blockchain.Crypto.CryptoNight
          */
         private static void SwapBlocks(ref byte[] a, ref byte[] b)
         {
-            byte[] tmp = a;
-            b = a;
-            a = tmp;
+            byte[] tmpAESBuffer = a;
+            a = b;
+            b = tmpAESBuffer;
         }
         
-
-        /* Replaced division from routine
+        /* 
            Used the info in the following link to replace the division.          
            https://www.codeproject.com/Articles/17480/Optimizing-integer-divisions-with-Multiply-Shift-i
 
-          Old routine took 00:00:41 for 100000000 iterations
-          New routine took 00:00:26 for 100000000 iterations
+           Old routine took 00:00:41 for 100000000 iterations
+           New routine took 00:00:26 for 100000000 iterations
          */
         private static int E2I(byte[] input, int memorySize)
         {
