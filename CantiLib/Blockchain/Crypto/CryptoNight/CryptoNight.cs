@@ -143,7 +143,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     /* Write c back to the scratchpad */
                     CopyBlockToScratchpad(scratchpad, mixingState.c, j);
 
-                    SwapBlocks(mixingState.a, mixingState.b);
+                    SwapBlocks(ref mixingState.a, ref mixingState.b);
                 }
             }
         }
@@ -184,7 +184,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     /* Write c back to the scratchpad */
                     CopyBlockToScratchpad(scratchpad, mixingState.c, j);
 
-                    SwapBlocks(mixingState.a, mixingState.b);
+                    SwapBlocks(ref mixingState.a, ref mixingState.b);
 
                     /* Perform the variant one tweak, first iteration */
                     if (iteration == 1)
@@ -202,7 +202,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             XORBlocks(mixingState.b, mixingState.c);
 
-            SwapBlocks(mixingState.b, mixingState.c);
+            SwapBlocks(ref mixingState.b, ref mixingState.c);
         }
 
         private static void MixScratchpadIterationTwo(MixScratchpadState
@@ -215,7 +215,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             SumHalfBlocks(mixingState.b, mixingState.d);
 
-            SwapBlocks(mixingState.b, mixingState.c);
+            SwapBlocks(ref mixingState.b, ref mixingState.c);
 
             XORBlocks(mixingState.b, mixingState.c);
         }
@@ -411,28 +411,37 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             }
         }
 
-        /* Swap the values of a and b */
-        private static void SwapBlocks(byte[] a, byte[] b)
+        /* 
+          Swap the values of a and b 
+          
+          Dropped the loop.
+          
+          Old routine took 00:02:26 for 100000000 iterations
+          New routine took 00:00:08 for 100000000 iterations
+         */
+        private static void SwapBlocks(ref byte[] a, ref byte[] b)
         {
-            for (int i = 0; i < AES.Constants.BlockSize; i++)
-            {
-                byte tmp = a[i];
-                a[i] = b[i];
-                b[i] = tmp;
-            }
+            byte[] tmpAESBuffer = a;
+            a = b;
+            b = tmpAESBuffer;
         }
+        
+        /* 
+           Used the info in the following link to replace the division.          
+           https://www.codeproject.com/Articles/17480/Optimizing-integer-divisions-with-Multiply-Shift-i
 
-        /* Get a memory address to work with in our scratchpad */
+           Old routine took 00:00:41 for 100000000 iterations
+           New routine took 00:00:26 for 100000000 iterations
+         */
         private static int E2I(byte[] input, int memorySize)
         {
             /* Read 8 bytes as a ulong */
             ulong j = Encoding.UnsafeByteArrayToUlong(input);
 
-            /* Divide by aes block size */
-            j /= AES.Constants.BlockSize;
+            j = j * 1 >> 4;
 
             /* Bitwise AND with (memorySize / blocksize) - 1*/
-            return (int)(j & (ulong)(memorySize / AES.Constants.BlockSize - 1));
+            return (int)(j & (ulong)((memorySize * 1 >> 4) - 1));
         }
     }
 }
