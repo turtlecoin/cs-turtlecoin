@@ -77,7 +77,7 @@ namespace Canti.Blockchain.Crypto.AES
         }
 
         public static void AESBPseudoRound(byte[] keys, byte[] input,
-                                          int inputOffset)
+                                           int inputOffset)
         {
             uint[] b0 = new uint[4];
             uint[] b1 = new uint[4];

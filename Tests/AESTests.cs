@@ -12,6 +12,43 @@ namespace Tests
         [TestMethod]
         public void TestAESBSingleRound()
         {
+            byte[] expandedKeys1 = Encoding.HexStringToByteArray(
+                "4d54c79ab1e27ae04bfe734df26877d7bab89ecbffe598f87d23bbf5ceddc04d97e893355e4d537c4066085159a5515fcfdc9a3a3fe840b61175a446ea75dfb5d7bc2a7a66a268e5e96607e813b8666b443acaff24742a3bed7feaafd78854e170c10468125e99855850588dada7a7f7baf193b754136d748fca760b20628180ece674cfbd44d22168f105d320909d933336f4ffd5afc27eaf8f02b3b289b4e5c8584b928e0ce9b62871f9feae271d4183237e03b88a53c92c549c62366c141599a9995681d612d1206a26eb1559d61f29998383cffce1178c9d1a2c1ba4e8be22b081a7802960dfa6811fe45cf77741"
+            );
+
+            byte[] input1 = Encoding.HexStringToByteArray(
+                "f77f10a5fb1a52a2b466751c3a858dc3"
+            );
+
+            AES.AESBSingleRound(expandedKeys1, input1, 0);
+
+            Assert.AreEqual<string>("d3f15e41a16af6931839a8e818cb9abd", Encoding.ByteArrayToHexString(input1));
+
+
+            byte[] expandedKeys2 = Encoding.HexStringToByteArray(
+                "af7a7e743ead40cfbc04e390d359ed70f9bd891c25d72aa78f27dba3d0b2922689550342cc1c5616e234a7478551c31c12716645e5b2d4e6dadd251413f3348a221a71868bfb3f18f79cf62b154374c7d8b1ef504288b360652b8fe8a4ee8017397c38b73121778bafc7e24368dedf0c0048789395d40d1d04595bccac8d48b188e0192f7dcb2eb9a0132d2d7eb748a882b53685414cea08de50d83fdf52eba61c5cbe4b9d03e4b0aa674850b485dec2ca8bb8787f90fa9f254292a11d65825ff30d417a56d898721d507d6b1e6b66aa009cc3082ed1c451215b9e9992abba51d4f6a3655a69e43b4e65b99a415c0a75"
+            );
+
+            byte[] input2 = Encoding.HexStringToByteArray(
+                "f6ab72cec832b4070711b7e3b8700d6a"
+            );
+
+            AES.AESBSingleRound(expandedKeys2, input2, 0);
+
+            Assert.AreEqual<string>("e59c503c34b319b45b66a344316cd109", Encoding.ByteArrayToHexString(input2));
+
+
+            byte[] expandedKeys3 = Encoding.HexStringToByteArray(
+                "6a8fd2a6c65c036133649dab4eb09b54148512fc83f1ea9f61aaa0e260848e6320adb182e16bcae13422161f5ca9e600132aaca1be8873dbe5e641eb18412072d41bcbe74c174b4d557acf6e2aeff71f5ec94249f0e781bfd4f9b0d54172d188a17db5c4e69fa309f53a474ebb9640790296d1006f0bfaa223176e74cf4d51116e476b58e8f801e2ddc458e38abeb46ce49f19a9cb1740be0e021b691d59a221d8cd4ff700a1e301f3c8f3edd94956ff1dbacfc925b57a32ea90575548d2a0d6d8dfb8fcfa2130751f7882b984a0d1fa0e6383d1522f9dba6e84365d3236e9564f088cb6fe7b16236fbe65ef61b61eeb"
+            );
+
+            byte[] input3 = Encoding.HexStringToByteArray(
+                "ac2432e2f84f5f244ef7e5d977c9f19e"
+            );
+
+            AES.AESBSingleRound(expandedKeys3, input3, 0);
+
+            Assert.AreEqual<string>("16767345c5adc04004b973481f5682c3", Encoding.ByteArrayToHexString(input3));
         }
 
         [TestMethod]
