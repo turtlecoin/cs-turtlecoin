@@ -106,95 +106,6 @@ namespace Canti.Blockchain.Crypto.AES
             Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
         }
 
-        /* This can of course be done with a loop and utilizing FourTables()
-         * below, but we need all the speed we can get, so are manually
-         * unrolling it. */
-        private static void Round(uint[] y, uint[] x, uint[] key, int keyOffset)
-        {
-            y[0] = key[keyOffset] ^ FourTablesA(x);
-            y[1] = key[keyOffset + 1] ^ FourTablesB(x);
-            y[2] = key[keyOffset + 2] ^ FourTablesC(x);
-            y[3] = key[keyOffset + 3] ^ FourTablesD(x);
-        }
-
-        /* FourTablesA, B, C, D, are just this with the i variable prefilled in
-         * for a tad more speed.
-         * 
-        private static uint FourTables(uint[] x, uint i)
-        {
-            return Constants.SbData[0][BVal(x[(0 + i) % 4], 0)] ^
-            Constants.SbData[1][BVal(x[(1 + i) % 4], 1)] ^
-            Constants.SbData[2][BVal(x[(2 + i) % 4], 2)] ^
-            Constants.SbData[3][BVal(x[(3 + i) % 4], 3)];
-        }
-        */
-
-        private static uint FourTablesA(uint[] x)
-        {
-            return Constants.SbData[0][BVal(x[0], 0)] ^
-            Constants.SbData[1][BVal(x[1], 1)] ^
-            Constants.SbData[2][BVal(x[2], 2)] ^
-            Constants.SbData[3][BVal(x[3], 3)];
-        }
-        private static uint FourTablesB(uint[] x)
-        {
-            return Constants.SbData[0][BVal(x[1], 0)] ^
-            Constants.SbData[1][BVal(x[2], 1)] ^
-            Constants.SbData[2][BVal(x[3], 2)] ^
-            Constants.SbData[3][BVal(x[0], 3)];
-        }
-        private static uint FourTablesC(uint[] x)
-        {
-            return Constants.SbData[0][BVal(x[2], 0)] ^
-            Constants.SbData[1][BVal(x[3], 1)] ^
-            Constants.SbData[2][BVal(x[0], 2)] ^
-            Constants.SbData[3][BVal(x[1], 3)];
-        }
-        private static uint FourTablesD(uint[] x)
-        {
-            return Constants.SbData[0][BVal(x[3], 0)] ^
-            Constants.SbData[1][BVal(x[0], 1)] ^
-            Constants.SbData[2][BVal(x[1], 2)] ^
-            Constants.SbData[3][BVal(x[2], 3)];
-        }
-
-        private static uint ForwardVar(uint[] x, uint r, uint i)
-        {
-            return x[(r + i) % 4];
-        }
-
-        private static uint BVal(uint x, uint n)
-        {
-            return (uint)(((ulong)x >> (int)(8 * n)) & 0xff);
-        }
-
-        private static byte SubByte(byte input)
-        {
-            byte x = input;
-            byte y = input;
-
-            x &= 0x0f;
-            y &= 0xf0;
-
-            y >>= 4;
-
-            return Constants.SubByteValue[y, x];
-        }
-
-        /* Rotate array one step left, e.g. [1, 2, 3, 4] becomes [2, 3, 4, 1]
-           Assumes input is Constants.ColumnLength long 
-
-           I strongly suspect this won't work well with arrays that aren't 4 bytes long..
-                    
-           Old routine took 00:01:09 for 100000000 iterations
-           New routine took 00:00:85 for 100000000 iterations
-         */
-        private static byte[] RotLeft(byte[] input)
-        {
-            // Constants.ColumnLength = 4
-            return new byte[] { input[1], input[2], input[3], input[0] };
-        }
-
         public static byte[] ExpandKey(byte[] key)
         {
             int keyBase = key.Length / Constants.RoundKeyLength;
@@ -247,6 +158,98 @@ namespace Canti.Blockchain.Crypto.AES
             }
 
             return expanded;
+        }
+
+        /* This can of course be done with a loop and utilizing FourTables()
+         * below, but we need all the speed we can get, so are manually
+         * unrolling it. */
+        private static void Round(uint[] y, uint[] x, uint[] key, int keyOffset)
+        {
+            y[0] = key[keyOffset] ^ FourTablesA(x);
+            y[1] = key[keyOffset + 1] ^ FourTablesB(x);
+            y[2] = key[keyOffset + 2] ^ FourTablesC(x);
+            y[3] = key[keyOffset + 3] ^ FourTablesD(x);
+        }
+
+        /* FourTablesA, B, C, D, are just this with the i variable prefilled in
+         * for a tad more speed.
+         * 
+        private static uint FourTables(uint[] x, uint i)
+        {
+            return Constants.SbData[0][BVal(x[(0 + i) % 4], 0)] ^
+            Constants.SbData[1][BVal(x[(1 + i) % 4], 1)] ^
+            Constants.SbData[2][BVal(x[(2 + i) % 4], 2)] ^
+            Constants.SbData[3][BVal(x[(3 + i) % 4], 3)];
+        }
+        */
+
+        private static uint FourTablesA(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[0], 0)] ^
+            Constants.SbData[1][BVal(x[1], 1)] ^
+            Constants.SbData[2][BVal(x[2], 2)] ^
+            Constants.SbData[3][BVal(x[3], 3)];
+        }
+
+        private static uint FourTablesB(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[1], 0)] ^
+            Constants.SbData[1][BVal(x[2], 1)] ^
+            Constants.SbData[2][BVal(x[3], 2)] ^
+            Constants.SbData[3][BVal(x[0], 3)];
+        }
+
+        private static uint FourTablesC(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[2], 0)] ^
+            Constants.SbData[1][BVal(x[3], 1)] ^
+            Constants.SbData[2][BVal(x[0], 2)] ^
+            Constants.SbData[3][BVal(x[1], 3)];
+        }
+
+        private static uint FourTablesD(uint[] x)
+        {
+            return Constants.SbData[0][BVal(x[3], 0)] ^
+            Constants.SbData[1][BVal(x[0], 1)] ^
+            Constants.SbData[2][BVal(x[1], 2)] ^
+            Constants.SbData[3][BVal(x[2], 3)];
+        }
+
+        private static uint ForwardVar(uint[] x, uint r, uint i)
+        {
+            return x[(r + i) % 4];
+        }
+
+        private static uint BVal(uint x, uint n)
+        {
+            return (uint)(((ulong)x >> (int)(8 * n)) & 0xff);
+        }
+
+        private static byte SubByte(byte input)
+        {
+            byte x = input;
+            byte y = input;
+
+            x &= 0x0f;
+            y &= 0xf0;
+
+            y >>= 4;
+
+            return Constants.SubByteValue[y, x];
+        }
+
+        /* Rotate array one step left, e.g. [1, 2, 3, 4] becomes [2, 3, 4, 1]
+           Assumes input is Constants.ColumnLength long 
+
+           I strongly suspect this won't work well with arrays that aren't 4 bytes long..
+                    
+           Old routine took 00:01:09 for 100000000 iterations
+           New routine took 00:00:85 for 100000000 iterations
+         */
+        private static byte[] RotLeft(byte[] input)
+        {
+            // Constants.ColumnLength = 4
+            return new byte[] { input[1], input[2], input[3], input[0] };
         }
     }
 }
