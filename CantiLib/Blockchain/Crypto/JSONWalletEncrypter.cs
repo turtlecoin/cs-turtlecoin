@@ -26,17 +26,12 @@ SOFTWARE.
 
 using System;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Security.Cryptography;
 
 using Newtonsoft.Json;
 
-/* Clashes with System.Text Encoding namespace */
-using Data = Canti.Data;
 using Canti.Errors;
 using Canti.Utilities;
-using Canti.Blockchain.WalletBackend;
 
 namespace Canti.Blockchain.Crypto
 {
@@ -46,6 +41,10 @@ namespace Canti.Blockchain.Crypto
 
     public class JSONWalletEncrypter : FileEncrypter<WalletBackend>
     {
+        /* The number of iterations to use when hashing the password with
+           PBKDF2 - intended to take roughly 1 second */
+        private const int PBKDF2Iterations = 500_000;
+
         /* Returns either an error message, or the unencrypted file */
         public override IEither<Error, WalletBackend> Load(string filePath,
                                                            string password)
@@ -70,36 +69,32 @@ namespace Canti.Blockchain.Crypto
             jsonFileData = AddMagicIdentifier(jsonFileData,
                                               isCorrectPasswordIdentifier);
 
-            using (Aes aes = Aes.Create())
-            using (SHA256 sha256 = SHA256.Create())
+            using (var aes = Aes.Create())
             {
-                aes.KeySize = 256;
+                byte[] salt = SecureRandom.Bytes(16);
 
-                /* Hash the password with sha256 to get the AES key */
-                aes.Key = sha256.ComputeHash(Encoding.UTF8.GetBytes(password))
-                                .ToArray();
+                /* Use pbkdf2 to generate the AES key */
+                var pbkdf2 = new Rfc2898DeriveBytes(password, salt,
+                                                    PBKDF2Iterations);
+
+                /* 16 byte / 256 bit key */
+                aes.KeySize = 256;
+                aes.Key = pbkdf2.GetBytes(16);
 
                 aes.BlockSize = 128;
 
-                byte[] IV = SecureRandom.Bytes(16);
+                aes.IV = salt;
 
-                aes.IV = IV;
-
-                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key,
-                                                                 aes.IV);
+                var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
 
                 /* Open the output file, overwriting any previous files with
                    the same name */
-                using (FileStream fileStream = File.Open(
-                    filePath, FileMode.Create
-                ))
+                using (var fileStream = File.Open(filePath, FileMode.Create))
                 /* Initialize the crypto stream using the AES encrypter */
-                using (CryptoStream cryptoStream = new CryptoStream(
+                using (var cryptoStream = new CryptoStream(
                     fileStream, encryptor, CryptoStreamMode.Write
                 ))
-                using (StreamWriter streamWriter = new StreamWriter(
-                    cryptoStream
-                ))
+                using (var streamWriter = new StreamWriter(cryptoStream))
                 {
                     /* Write the isAWalletIdentifier to the file, UNENCRYPTED!
                        This is used when opening a file to verify that it is
@@ -111,7 +106,7 @@ namespace Canti.Blockchain.Crypto
                     /* Write the IV to the file, UNENCRYPTED! We will use this
                        to unencrypt the file when we reopen it. We need the
                        IV to be different on each creation of the file. */
-                    fileStream.Write(IV, 0, IV.Length);
+                    fileStream.Write(salt, 0, salt.Length);
 
                     /* Write the wallet file data to the file, encrypted. */
                     streamWriter.Write(jsonFileData);
@@ -144,34 +139,37 @@ namespace Canti.Blockchain.Crypto
         private static IEither<Error, byte[]>
                        DecryptBytesOrError(byte[] input, string password)
         {
-            byte[] IV = new byte[16];
+            byte[] salt = new byte[16];
 
-            if (input.Length < IV.Length)
+            if (input.Length < salt.Length)
             {
                 return Either.Left<Error, byte[]>(Error.WalletCorrupted());
             }
 
-            /* Extract IV from input */
-            Buffer.BlockCopy(input, 0, IV, 0, IV.Length);
+            /* Extract salt from input */
+            Buffer.BlockCopy(input, 0, salt, 0, salt.Length);
 
-            /* Remove the IV from the inputted bytes, we don't need it any
+            /* Remove the salt from the inputted bytes, we don't need it any
                more */
-            input = RemoveMagicIdentifier(input, IV);
+            input = RemoveMagicIdentifier(input, salt);
 
             byte[] decryptedBytes;
 
-            using (Aes aes = Aes.Create())
-            using (SHA256 sha256 = SHA256.Create())
+            using (var aes = Aes.Create())
             {
-                aes.KeySize = 256;
+                /* Use pbkdf2 to generate the AES key, using the extracted
+                   salt */
+                var pbkdf2 = new Rfc2898DeriveBytes(password, salt,
+                                                    PBKDF2Iterations);
 
-                /* Hash the password with sha256 to get the AES key */
-                aes.Key = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                /* 16 byte / 256 bit key */
+                aes.KeySize = 256;
+                aes.Key = pbkdf2.GetBytes(16);
 
                 aes.BlockSize = 128;
 
-                /* Use the random IV we extracted earlier */
-                aes.IV = IV;
+                /* Use the extracted salt as the IV */
+                aes.IV = salt;
 
                 /* Initialize our aes decrypter, using the given Key and IV */
                 ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key,
@@ -181,15 +179,13 @@ namespace Canti.Blockchain.Crypto
 
                 try
                 {
-                    using (MemoryStream memoryStream = new MemoryStream(input))
+                    using (var memoryStream = new MemoryStream(input))
                     /* Decode the AES encrypted file in a stream */
-                    using (CryptoStream cryptoStream = new CryptoStream(
+                    using (var cryptoStream = new CryptoStream(
                         memoryStream, decryptor, CryptoStreamMode.Read
                     ))
                     /* Write the decoded data into the string */
-                    using (StreamReader streamReader = new StreamReader(
-                        cryptoStream
-                    ))
+                    using (var streamReader = new StreamReader(cryptoStream))
                     {
                         decryptedData = streamReader.ReadToEnd();
                     }
