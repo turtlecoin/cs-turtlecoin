@@ -35,11 +35,11 @@ namespace Canti.Blockchain.Crypto.Mnemonics
 
             foreach (char c in input)
             {
-                uint byte_index = ((c ^ crc) >> 0) & 0xff;
-                crc = ((crc >> 8) ^ table[byte_index]) >> 0;
+                uint byte_index = (c ^ crc) & 0xff;
+                crc = (crc >> 8) ^ table[byte_index];
             }
 
-            return ((crc ^ 0xFFFFFFFF) >> 0);
+            return crc ^ 0xFFFFFFFF;
         }
 
         /* oof */
