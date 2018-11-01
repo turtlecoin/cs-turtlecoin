@@ -16,13 +16,13 @@ namespace CLIWallet
         {
             while(true)
             {
-                YellowMsg.Write("Confirm your current password: ");
+                ConsoleMessage.Write(ConsoleColor.Yellow, "Confirm your current password: ");
 
                 string password = Console.ReadLine();
 
                 if (password != wallet.password)
                 {
-                    RedMsg.WriteLine("Incorrect password! Try again.\n");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Incorrect password! Try again.\n");
                     continue;
                 }
 

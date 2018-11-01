@@ -8,6 +8,10 @@ using System;
 using Canti.Utilities;
 using Canti.Blockchain;
 using Canti.Blockchain.WalletBackend;
+using log4net;
+using System.Reflection;
+using log4net.Config;
+using System.IO;
 
 namespace CLIWallet
 {
@@ -15,23 +19,34 @@ namespace CLIWallet
     {
         public static void Main(string[] args)
         {
-            StartupMsg();
+            var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+            XmlConfigurator.Configure(logRepository, new FileInfo("Logger.config"));
 
-            (bool exit, WalletBackend wallet) = Menu.SelectionScreen();
+            Logger.Log(LogLevel.DEBUG, "CLIWallet.Main", "Starting daemon...");
 
-            if (!exit)
+            try
             {
-                Menu.MainLoop(wallet);
+                StartupMsg();
+
+                (bool exit, WalletBackend wallet) = Menu.SelectionScreen();
+
+                if (!exit)
+                {
+                    Menu.MainLoop(wallet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException("CLIWallet.Main", ex);
             }
 
-            Console.WriteLine("Bye.");
+            Logger.Log(LogLevel.DEBUG, "CLIWallet.Main", "Exiting daemon...");
         }
 
         /* Writes out the coin name, version, and wallet name */
         private static void StartupMsg()
         {
-            YellowMsg.WriteLine($"{Globals.coinName} {Globals.version} "
-                              + $"{Globals.CLIWalletName}");
+            ConsoleMessage.WriteLine(ConsoleColor.Yellow, $"{Globals.coinName} {Globals.version} {Globals.CLIWalletName}");
         }
     }
 }

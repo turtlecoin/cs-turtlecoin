@@ -6,6 +6,7 @@
 using Canti.Utilities;
 using log4net;
 using log4net.Config;
+using System;
 using System.IO;
 using System.Reflection;
 
@@ -19,17 +20,25 @@ namespace Daemon
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("Logger.config"));
 
-            Logger.Log(Level.DEBUG, "Starting daemon...");
+            Logger.Log(LogLevel.DEBUG, "Daemon.Main", "Starting daemon...");
 
+            try
+            {               
+                // Parse commandline arguments
+                if (args.Length >= 1) Port = int.Parse(args[0]);
 
-            // Parse commandline arguments
-            if (args.Length >= 1) Port = int.Parse(args[0]);
+                // Create a daemon connection
+                Daemon Daemon = new Daemon(Port);
 
-            // Create a daemon connection
-            Daemon Daemon = new Daemon(Port);
+                // Start daemon
+                Daemon.Start();              
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException("Daemon.Main", ex);
+            }
 
-            // Start daemon
-            Daemon.Start();
+            Logger.Log(LogLevel.DEBUG, "Daemon.Main", "Exiting daemon...");
         }
     }
 }

@@ -105,17 +105,17 @@ namespace Canti.Blockchain.Commands
                 Request Request = Request.Deserialize(Command.Data);
 
                 // debug
-                Logger.Log(Level.DEBUG, "[IN] Received \"Handshake\" Request:");
-                Logger.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Logger.Log(Level.DEBUG, "- Node Data:");
-                Logger.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Request.NodeData.NetworkId));
-                Logger.Log(Level.DEBUG, "  - Peer ID: {0}", Request.NodeData.PeerId);
-                Logger.Log(Level.DEBUG, "  - Version: {0}", Request.NodeData.Version);
-                Logger.Log(Level.DEBUG, "  - Local Time: {0}", Request.NodeData.LocalTime);
-                Logger.Log(Level.DEBUG, "  - Port: {0}", Request.NodeData.Port);
-                Logger.Log(Level.DEBUG, "- Core Sync Data:");
-                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Request.PayloadData.CurrentHeight);
-                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Request.PayloadData.TopId));
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[IN] Received \"Handshake\" Request:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Response Requested: " + !Command.IsNotification, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Node Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Network ID: " + Encoding.StringToHexString(Request.NodeData.NetworkId), LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Peer ID: " + Request.NodeData.PeerId, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Version: " + Request.NodeData.Version, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Local Time: " + Request.NodeData.LocalTime, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Port: " + Request.NodeData.Port, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Core Sync Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Current Height: " + Request.PayloadData.CurrentHeight, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Top ID: " + Encoding.StringToHexString(Request.PayloadData.TopId), LogLevel.DEBUG);
 
                 // TODO: Do something with request data
 
@@ -142,18 +142,18 @@ namespace Canti.Blockchain.Commands
                 };
 
                 // debug
-                Logger.Log(Level.DEBUG, "[OUT] Sending \"Handshake\" Response:");
-                Logger.Log(Level.DEBUG, "- Node Data:");
-                Logger.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Response.NodeData.NetworkId));
-                Logger.Log(Level.DEBUG, "  - Peer ID: {0}", Response.NodeData.PeerId);
-                Logger.Log(Level.DEBUG, "  - Version: {0}", Response.NodeData.Version);
-                Logger.Log(Level.DEBUG, "  - Local Time: {0}", Response.NodeData.LocalTime);
-                Logger.Log(Level.DEBUG, "  - Port: {0}", Response.NodeData.Port);
-                Logger.Log(Level.DEBUG, "- Core Sync Data:");
-                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Response.PayloadData.CurrentHeight);
-                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Response.PayloadData.TopId));
-                Logger.Log(Level.DEBUG, "- Local Peerlist:");
-                Logger.Log(Level.DEBUG, "  - Entries: {0}", Response.LocalPeerlist.Length);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[OUT] Sending \"Handshake\" Response:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Node Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Network ID: " + Encoding.StringToHexString(Response.NodeData.NetworkId), LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Peer ID: " + Response.NodeData.PeerId, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Version: " + Response.NodeData.Version, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Local Time: " + Response.NodeData.LocalTime, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Port: " + Response.NodeData.Port, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Core Sync Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Current Height: " + Response.PayloadData.CurrentHeight, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Top ID: " + Encoding.StringToHexString(Response.PayloadData.TopId), LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Local Peerlist:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Entries: " + Response.LocalPeerlist.Length, LogLevel.DEBUG);
 
                 // Reply with response
                 Context.Reply(Peer, Id, Response.Serialize(), true);
@@ -166,19 +166,19 @@ namespace Canti.Blockchain.Commands
                 Response Response = Response.Deserialize(Command.Data);
 
                 // debug
-                Logger.Log(Level.DEBUG, "[IN] Received \"Handshake\" Response:");
-                Logger.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Logger.Log(Level.DEBUG, "- Node Data:");
-                Logger.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Response.NodeData.NetworkId));
-                Logger.Log(Level.DEBUG, "  - Peer ID: {0}", Response.NodeData.PeerId);
-                Logger.Log(Level.DEBUG, "  - Version: {0}", Response.NodeData.Version);
-                Logger.Log(Level.DEBUG, "  - Local Time: {0}", Response.NodeData.LocalTime);
-                Logger.Log(Level.DEBUG, "  - Port: {0}", Response.NodeData.Port);
-                Logger.Log(Level.DEBUG, "- Core Sync Data:");
-                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Response.PayloadData.CurrentHeight);
-                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Response.PayloadData.TopId));
-                Logger.Log(Level.DEBUG, "- Local Peerlist:");
-                Logger.Log(Level.DEBUG, "  - Entries: {0}", Response.LocalPeerlist.Length);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[IN] Received \"Handshake\" Response:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Response Requested: " + !Command.IsNotification, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Node Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Network ID: " + Encoding.StringToHexString(Response.NodeData.NetworkId), LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Peer ID: " + Response.NodeData.PeerId, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Version: " + Response.NodeData.Version, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Local Time: " + Response.NodeData.LocalTime, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Port: " + Response.NodeData.Port, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Core Sync Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Current Height: " + Response.PayloadData.CurrentHeight, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Top ID: " + Encoding.StringToHexString(Response.PayloadData.TopId), LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Local Peerlist:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Entries: " + Response.LocalPeerlist.Length, LogLevel.DEBUG);
 
                 // TODO: Do something with response data
             }

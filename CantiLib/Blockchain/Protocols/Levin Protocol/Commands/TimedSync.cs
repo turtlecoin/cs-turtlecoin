@@ -98,11 +98,11 @@ namespace Canti.Blockchain.Commands
                 Request Request = Request.Deserialize(Command.Data);
 
                 // debug
-                Logger.Log(Level.DEBUG, "[IN] Received \"Timed Sync\" Request:");
-                Logger.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Logger.Log(Level.DEBUG, "- Core Sync Data:");
-                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Request.PayloadData.CurrentHeight);
-                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Request.PayloadData.TopId));
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[IN] Received \"Timed Sync\" Request:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Response Requested: " + !Command.IsNotification, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Core Sync Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Current Height: " + Request.PayloadData.CurrentHeight, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Top ID: " + Encoding.StringToHexString(Request.PayloadData.TopId), LogLevel.DEBUG);
 
                 // TODO: Do something with request data
 
@@ -122,13 +122,13 @@ namespace Canti.Blockchain.Commands
                 };
 
                 // debug
-                Logger.Log(Level.DEBUG, "[OUT] Sending \"Timed Sync\" Response:");
-                Logger.Log(Level.DEBUG, "- Local Time: {0}", Response.LocalTime);
-                Logger.Log(Level.DEBUG, "- Core Sync Data:");
-                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Response.PayloadData.CurrentHeight);
-                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Response.PayloadData.TopId));
-                Logger.Log(Level.DEBUG, "- Local Peerlist:");
-                Logger.Log(Level.DEBUG, "  - Entries: {0}", Response.LocalPeerlist.Length);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[OUT] Sending \"Timed Sync\" Response:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Local Time: " + Response.LocalTime, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Core Sync Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Current Height: " + Response.PayloadData.CurrentHeight, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Top ID: " + Encoding.StringToHexString(Response.PayloadData.TopId), LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Local Peerlist:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Entries: " + Response.LocalPeerlist.Length, LogLevel.DEBUG);
 
                 // Reply with response
                 Context.Reply(Peer, Id, Response.Serialize(), true);
@@ -141,14 +141,14 @@ namespace Canti.Blockchain.Commands
                 Response Response = Response.Deserialize(Command.Data);
 
                 // debug
-                Logger.Log(Level.DEBUG, "[IN] Received \"Timed Sync\" Response:");
-                Logger.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Logger.Log(Level.DEBUG, "- Local Time: {0}", Response.LocalTime);
-                Logger.Log(Level.DEBUG, "- Core Sync Data:");
-                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Response.PayloadData.CurrentHeight);
-                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Response.PayloadData.TopId));
-                Logger.Log(Level.DEBUG, "- Local Peerlist:");
-                Logger.Log(Level.DEBUG, "  - Entries: {0}", Response.LocalPeerlist.Length);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[IN] Received \"Timed Sync\" Response:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Response Requested: " + !Command.IsNotification, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Local Time: " + Response.LocalTime, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Core Sync Data:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Current Height: " + Response.PayloadData.CurrentHeight, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Top ID: " + Encoding.StringToHexString(Response.PayloadData.TopId), LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Local Peerlist:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Entries: " + Response.LocalPeerlist.Length, LogLevel.DEBUG);
 
                 // TODO: Do something with response data
             }

@@ -48,7 +48,7 @@ namespace Daemon
         // An error was received
         private static void ServerError(object sender, EventArgs e)
         {
-            Logger.Log(Level.ERROR, "Server error: {0}", (string)sender);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Server error: " + sender, LogLevel.ERROR);
         }
 
         // Custom peer connected handling
@@ -69,21 +69,20 @@ namespace Daemon
         private static void ServerStarted(object sender, EventArgs e)
         {
             Server Server = (Server)sender;
-            Logger.Log(Level.INFO, "Server started on port {0}, peer ID of {1}", Server.Port, Server.PeerId);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Server started on port " + Server.Port + ", peer ID of " + Server.PeerId + "\n", LogLevel.INFO);
         }
 
         // Custom server stopped handling
         private static void ServerStopped(object sender, EventArgs e)
         {
             Server Server = (Server)sender;
-            Logger.Log(Level.INFO, "Server stopped", Server.Port, Server.PeerId);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Server stopped", LogLevel.INFO);
         }
         #endregion
 
         // Entry point
         public Daemon(int Port = 0)
-        {
-
+        {            
             // Create server
             Server = new Server();
 
@@ -104,6 +103,8 @@ namespace Daemon
 
             // Set as running
             Running = true;
+
+            Logger.Log(LogLevel.DEBUG, "Daemon.Construct", "Daemon started. Running? " + Running);
         }
 
         // Run daemon
@@ -125,9 +126,9 @@ namespace Daemon
                 // Manually connect to a peer
                 if (MenuSelection == 1)
                 {
-                    Logger.Log(Level.INFO, "Enter a URL:");
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Enter a URL:", LogLevel.INFO);
                     string Url = Console.ReadLine();
-                    Logger.Log(Level.INFO, "Enter a port:");
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Enter a port:", LogLevel.INFO);
                     int Port = int.Parse(Console.ReadLine());
                     Server.Connect(new Connection(Url, Port, ""));
 
@@ -169,16 +170,16 @@ namespace Daemon
                         ReturnCode = LevinProtocol.LEVIN_RETCODE_SUCCESS
                     };
 
-                    Logger.Log(Level.DEBUG, "[OUT] Sending Handshake Request:");
-                    Logger.Log(Level.DEBUG, "- Node Data:");
-                    Logger.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Request.NodeData.NetworkId));
-                    Logger.Log(Level.DEBUG, "  - Peer ID: {0}", Request.NodeData.PeerId);
-                    Logger.Log(Level.DEBUG, "  - Version: {0}", Request.NodeData.Version);
-                    Logger.Log(Level.DEBUG, "  - Local Time: {0}", Request.NodeData.LocalTime);
-                    Logger.Log(Level.DEBUG, "  - Port: {0}", Request.NodeData.Port);
-                    Logger.Log(Level.DEBUG, "- Core Sync Data:");
-                    Logger.Log(Level.DEBUG, "  - Current Height: {0}", Request.PayloadData.CurrentHeight);
-                    Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Request.PayloadData.TopId));
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[OUT] Sending Handshake Request:", LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Node Data:", LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Network ID: " + Encoding.StringToHexString(Request.NodeData.NetworkId), LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Peer ID: " + Request.NodeData.PeerId, LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Version: " + Request.NodeData.Version, LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Local Time: " + Request.NodeData.LocalTime, LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Port: " + Request.NodeData.Port, LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Core Sync Data:", LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Current Height: " + Request.PayloadData.CurrentHeight, LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - Top ID: " + Encoding.StringToHexString(Request.PayloadData.TopId), LogLevel.DEBUG);
 
                     // Send notification
                     Server.Broadcast(Encoding.AppendToByteArray(BodyBytes, Header.Serialize()));
@@ -191,17 +192,17 @@ namespace Daemon
                     string Peers = "";
                     List<PeerConnection> PeerList = Server.GetPeerList();
                     foreach (PeerConnection Peer in PeerList) Peers += Peer.Address + " ";
-                    Logger.Log(Level.DEBUG, "Peers:");
-                    Logger.Log(Level.DEBUG, Peers);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Peers:", LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, Peers, LogLevel.DEBUG);
                 }
 
                 // Write menu
-                Logger.Log(Level.INFO, "Menu:");
-                Logger.Log(Level.INFO, " 1\tConnect to a Server");
-                Logger.Log(Level.INFO, " 2\tTest Packet");
-                Logger.Log(Level.INFO, " 3\tShow Peer List");
-                Logger.Log(Level.INFO, " 4\tExit");
-                Logger.Log(Level.INFO, "Enter Selection:");
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Menu:", LogLevel.INFO);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " 1\tConnect to a Server", LogLevel.INFO);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " 2\tTest Packet", LogLevel.INFO);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " 3\tShow Peer List", LogLevel.INFO);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " 4\tExit\n", LogLevel.INFO);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Enter Selection:", LogLevel.INFO);
 
                 // Get menu selection
                 MenuSelection = int.Parse(Console.ReadLine());

@@ -70,7 +70,7 @@ namespace CLIWallet
         {
             while (true)
             {
-                YellowMsg.Write($"Public {Globals.ticker} address: ");
+                ConsoleMessage.Write(ConsoleColor.Yellow, $"Public {Globals.ticker} address: ");
 
                 string input = Console.ReadLine();
 
@@ -80,7 +80,7 @@ namespace CLIWallet
                 {
                     case ILeft<Error> error:
                     {
-                        RedMsg.WriteLine(error.Value.errorMessage + "\n");
+                        ConsoleMessage.WriteLine(ConsoleColor.Red, error.Value.errorMessage + "\n");
                         continue;
                     }
                     default:
@@ -95,21 +95,19 @@ namespace CLIWallet
         {
             while (true)
             {
-                YellowMsg.Write(msg);
+                ConsoleMessage.Write(ConsoleColor.Yellow, msg);
                 string input = Console.ReadLine();
 
                 if (input.Length != 64)
                 {
-                    RedMsg.WriteLine("Invalid private key, should be 64 "
-                                   + "characters long! Try again.\n");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Invalid private key, should be 64 characters long! Try again.\n");
 
                     continue;
                 }
 
                 if (!input.IsHex())
                 {
-                    RedMsg.WriteLine("Invalid private key, is not a valid "
-                                   + "hexadecimal string!");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Invalid private key, is not a valid hexadecimal string!");
 
                     continue;
                 }
@@ -118,8 +116,7 @@ namespace CLIWallet
 
                 if (!KeyOps.IsValidKey(p))
                 {
-                    RedMsg.WriteLine("Invalid private key, is not a valid "
-                                   + "ED25519 key!");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Invalid private key, is not a valid ED25519 key!");
                 }
 
                 return p;
@@ -136,15 +133,15 @@ namespace CLIWallet
         {
             while (true)
             {
-                YellowMsg.Write("Mnemonic seed (25 words): ");
+                ConsoleMessage.Write(ConsoleColor.Yellow, "Mnemonic seed (25 words): ");
                 string input = Console.ReadLine();
 
                 switch (Mnemonics.MnemonicToPrivateKey(input))
                 {
                     case ILeft<Error> error:
                     {
-                        RedMsg.WriteLine(error.Value.errorMessage);
-                        Console.WriteLine("Try again.\n");
+                        ConsoleMessage.WriteLine(ConsoleColor.Red, error.Value.errorMessage);
+                        ConsoleMessage.WriteLine("Try again.\n");
                         continue;
                     }
                     case IRight<PrivateKey> key:
@@ -166,9 +163,7 @@ namespace CLIWallet
         {
             while (true)
             {
-                YellowMsg.Write(
-                    "What filename would you like to give your new wallet?: "
-                );
+                ConsoleMessage.Write(ConsoleColor.Yellow, "What filename would you like to give your new wallet?: ");
 
                 string filename = Console.ReadLine();
 
@@ -176,9 +171,7 @@ namespace CLIWallet
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    RedMsg.WriteLine(
-                        "Wallet name cannot be empty! Try again.\n"
-                    );
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Wallet name cannot be empty! Try again.\n");
 
                     continue;
                 }
@@ -186,11 +179,11 @@ namespace CLIWallet
                 if (GeneralUtilities.FilenameInUse(filename) ||
                     GeneralUtilities.FilenameInUse(appended))
                 {
-                    RedMsg.Write("A file with the name ");
-                    YellowMsg.Write(filename);
-                    RedMsg.Write(" or ");
-                    YellowMsg.Write(appended);
-                    RedMsg.WriteLine(" already exists! Try again.\n");
+                    ConsoleMessage.Write(ConsoleColor.Red, "A file with the name ");
+                    ConsoleMessage.Write(ConsoleColor.Yellow, filename);
+                    ConsoleMessage.Write(ConsoleColor.Red, " or ");
+                    ConsoleMessage.Write(ConsoleColor.Yellow, appended);
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, " already exists! Try again.\n");
                 }
                 /* If the file already ends with .wallet, return it. */
                 else if (filename.EndsWith(".wallet"))
@@ -208,7 +201,7 @@ namespace CLIWallet
         /* Get the password for an already existing wallet (no confirmation) */
         private static string GetWalletPassword()
         {
-            YellowMsg.Write("Enter your wallet password: ");
+            ConsoleMessage.Write(ConsoleColor.Yellow, "Enter your wallet password: ");
             return Console.ReadLine();
         }
 
@@ -217,17 +210,17 @@ namespace CLIWallet
         {
             while (true)
             {
-                YellowMsg.Write("Give your new wallet a password: ");
+                ConsoleMessage.Write(ConsoleColor.Yellow, "Give your new wallet a password: ");
 
                 string firstPassword = Console.ReadLine();
 
-                YellowMsg.Write("Confirm your new password: ");
+                ConsoleMessage.Write(ConsoleColor.Yellow, "Confirm your new password: ");
 
                 string secondPassword = Console.ReadLine();
 
                 if (firstPassword != secondPassword)
                 {
-                    RedMsg.WriteLine("Passwords do not match! Try again.\n");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Passwords do not match! Try again.\n");
                 }
                 else
                 {
@@ -241,9 +234,7 @@ namespace CLIWallet
         {
             while (true)
             {
-                YellowMsg.Write(
-                    "What wallet filename would you like to open?: "
-                );
+                ConsoleMessage.Write(ConsoleColor.Yellow, "What wallet filename would you like to open?: ");
 
                 string filename = Console.ReadLine();
 
@@ -251,7 +242,7 @@ namespace CLIWallet
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    RedMsg.WriteLine("Wallet name cannot be empty! Try again.");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Wallet name cannot be empty! Try again.");
                     continue;
                 }
 
@@ -266,14 +257,12 @@ namespace CLIWallet
                 }
                 else
                 {
-                    RedMsg.Write("A file with the name ");
-                    YellowMsg.Write(filename);
-                    RedMsg.Write(" or ");
-                    YellowMsg.Write(appended);
-                    RedMsg.WriteLine(" doesn't exist!");
-                    Console.WriteLine(
-                        "Ensure you entered your wallet name correctly.\n"
-                    );
+                    ConsoleMessage.Write(ConsoleColor.Red, "A file with the name ");
+                    ConsoleMessage.Write(ConsoleColor.Yellow, filename);
+                    ConsoleMessage.Write(ConsoleColor.Red, " or ");
+                    ConsoleMessage.Write(ConsoleColor.Yellow, appended);
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, " doesn't exist!");
+                    ConsoleMessage.WriteLine("Ensure you entered your wallet name correctly.\n");
                 }
             }
         }
@@ -300,7 +289,7 @@ namespace CLIWallet
                        the error. */
                     if (err.errorName == "INCORRECT_PASSWORD")
                     {
-                        RedMsg.WriteLine(err.errorMessage + "\n");
+                        ConsoleMessage.WriteLine(ConsoleColor.Red, err.errorMessage + "\n");
                         continue;
                     }
                 }

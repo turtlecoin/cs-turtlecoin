@@ -8,7 +8,7 @@ namespace Canti.Utilities
     using System;
     using log4net;
 
-    public enum Level : int
+    public enum LogLevel : int
     {
         FATAL,
         ERROR,
@@ -21,34 +21,70 @@ namespace Canti.Utilities
     {
         private static readonly ILog log4Net = LogManager.GetLogger(typeof(Logger));
 
-        public static void Log(Level level, string content, params object[] parameters)
+        public static void Log(LogLevel level, string origin, string content, params object[] parameters)
         {
             try
             {
                 string message = string.Format("{0} [{1}] {2}", DateTime.Now.ToUniversalTime(), level, string.Format(content, parameters));
 
-                //TODO: Move this elsewhere
-                Console.WriteLine(message);
+                Log(level, origin, message);
+            }
+            catch (Exception ex)
+            {
+                // Logging failed.  Not much we can do.  Just try to continue.
+                ex.Data.Clear();
+            }
+        }
 
+        public static void Log(LogLevel level, string origin, string message)
+        {
+            try
+            {
                 switch (level)
                 {
-                    case Level.DEBUG:
-                        log4Net.Debug(message);
+                    case LogLevel.DEBUG:
+                        log4Net.Debug("[" + origin + "] " + message);
                         break;
-                    case Level.WARNING:
-                        log4Net.Warn(message);
+                    case LogLevel.WARNING:
+                        log4Net.Warn("[" + origin + "] " + message);
                         break;
-                    case Level.FATAL:
-                        log4Net.Fatal(message);
+                    case LogLevel.FATAL:
+                        log4Net.Fatal("[" + origin + "] " + message);
                         break;
-                    case Level.ERROR:
-                        log4Net.Error(message);
+                    case LogLevel.ERROR:
+                        log4Net.Error("[" + origin + "] " + message);
                         break;
-                    case Level.INFO:
+                    case LogLevel.INFO:
                     default:
-                        log4Net.Info(message);
+                        log4Net.Info("[" + origin + "] " + message);
                         break;
                 }
+            }
+            catch (Exception ex)
+            {
+                // Logging failed.  Not much we can do.  Just try to continue.
+                ex.Data.Clear();
+            }
+        }
+
+        
+        public static void LogException(string origin, Exception exception)
+        {
+            LogException(origin, "", exception);
+        }
+
+        public static void LogException(string origin, string message, Exception exception)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(message))
+                {
+                    log4Net.Error("[" + origin + "] ", exception);
+                }
+                else
+                {
+                    log4Net.Error("[" + origin + "] " + message, exception);
+                }                
             }
             catch (Exception ex)
             {

@@ -62,7 +62,7 @@ namespace Canti.Blockchain.P2P
             catch
             {
                 // Failed to start the server for some reason or another
-                Logger.Log(Level.FATAL, "Failed to start P2P server on port {0}, port may be in use", Port);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Failed to start P2P server on port {0}, port may be in use" + Port, LogLevel.FATAL);
                 OnError?.Invoke("Failed to start P2P server", EventArgs.Empty);
             }
 
@@ -96,7 +96,7 @@ namespace Canti.Blockchain.P2P
                     Peers.Add(Peer);
 
                     // Log connection to console
-                    Logger.Log(Level.DEBUG, "Peer connection formed with {0}", Peer.Address);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Peer connection formed with " + Peer.Address, LogLevel.DEBUG);
 
                     // Invoke connection event handler
                     OnPeerConnected?.Invoke(Peer, EventArgs.Empty);
@@ -163,7 +163,7 @@ namespace Canti.Blockchain.P2P
                 Peers.Add(Peer);
 
                 // Log connection to console
-                Logger.Log(Level.DEBUG, "Peer connection formed with {0}", Peer.Address);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Peer connection formed with " + Peer.Address, LogLevel.DEBUG);
 
                 // Invoke connection event handler
                 OnPeerConnected?.Invoke(Peer, EventArgs.Empty);
@@ -173,7 +173,7 @@ namespace Canti.Blockchain.P2P
             catch
             {
                 // Log error to console
-                Logger.Log(Level.ERROR, "Peer connection could not be formed with {0}:{1}", Connection.Host, Connection.Port);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Peer connection could not be formed with " + Connection.Host + ": " + Connection.Port, LogLevel.ERROR);
 
                 // Raise error event
                 OnError?.Invoke("Unable to connect to peer " + Connection.Host + ":" + Connection.Port, EventArgs.Empty);

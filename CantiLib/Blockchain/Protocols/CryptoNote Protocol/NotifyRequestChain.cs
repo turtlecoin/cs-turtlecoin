@@ -57,11 +57,13 @@ namespace Canti.Blockchain.Commands
                 Request Request = Request.Deserialize(Command.Data);
 
                 // debug
-                Logger.Log(Level.DEBUG, "[IN] Received \"Notify Request Chain\" Request:");
-                Logger.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Logger.Log(Level.DEBUG, "- TXs:");
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[IN] Received \"Notify Request Chain\" Request:", LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- Response Requested: " + !Command.IsNotification, LogLevel.DEBUG);
+                ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "- TXs:", LogLevel.DEBUG);
                 for (int i = 0; i < Request.BlockIds.Length; i++)
-                    Logger.Log(Level.DEBUG, "  - [{0}]: {1}", i, Request.BlockIds[i]);
+                {
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "  - [" + i + "]: " + Request.BlockIds[i], LogLevel.DEBUG);
+                }                    
 
                 // TODO: Do something with request data
             }

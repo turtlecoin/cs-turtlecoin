@@ -45,7 +45,7 @@ namespace Canti.Blockchain
                 try { Peer.Header = BucketHead2.Deserialize(Packet.Data); }
                 catch
                 {
-                    Logger.Log(Level.DEBUG, "Could not deserialize incoming packet header, incorrect format");
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Could not deserialize incoming packet header, incorrect format", LogLevel.DEBUG);
                     return;
                 }
 
@@ -65,14 +65,14 @@ namespace Canti.Blockchain
                 // Check that signature matches
                 if (Peer.Header.Signature != GlobalsConfig.LEVIN_SIGNATURE)
                 {
-                    Logger.Log(Level.DEBUG, "Incoming packet signature mismatch, expected {0}, received {1}", GlobalsConfig.LEVIN_SIGNATURE, Peers[Packet.Peer].Header.Signature);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Incoming packet signature mismatch, expected " + GlobalsConfig.LEVIN_SIGNATURE + ", received " + Peers[Packet.Peer].Header.Signature, LogLevel.DEBUG);
                     return;
                 }
 
                 // Check packet size
                 if (Peer.Header.PayloadSize > GlobalsConfig.LEVIN_MAX_PACKET_SIZE)
                 {
-                    Logger.Log(Level.DEBUG, "Incoming packet size is too big, max size is {0}, received {1}", GlobalsConfig.LEVIN_MAX_PACKET_SIZE, Packet.Data.Length);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Incoming packet size is too big, max size is " + GlobalsConfig.LEVIN_MAX_PACKET_SIZE + ", received " + Packet.Data.Length, LogLevel.DEBUG);
                     return;
                 }
 
@@ -119,12 +119,12 @@ namespace Canti.Blockchain
                 // Debug
                 else if (Peer.State == PeerState.Unverified)
                 {
-                    Logger.Log(Level.DEBUG, "[IN] Received command:");
-                    Logger.Log(Level.DEBUG, " - Command Code: {0}", Command.CommandCode);
-                    Logger.Log(Level.DEBUG, " - Is Notification: {0}", Command.IsNotification);
-                    Logger.Log(Level.DEBUG, " - Is Response: {0}", Command.IsResponse);
-                    Logger.Log(Level.DEBUG, " - Data: {0} Bytes", Command.Data.Length);
-                    Logger.Log(Level.DEBUG, Encoding.ByteArrayToHexString(Command.Data));
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "[IN] Received command:", LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Command Code: " + Command.CommandCode, LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Is Notification: " + Command.IsNotification, LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Is Response: " + Command.IsResponse, LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Data: " + Command.Data.Length + " Bytes", LogLevel.DEBUG);
+                    ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, Encoding.ByteArrayToHexString(Command.Data), LogLevel.DEBUG);
                 }
 
                 // Set new read status and clear previous request
@@ -213,14 +213,14 @@ namespace Canti.Blockchain
             };
 
             // Debug
-            Logger.Log(Level.DEBUG, "Sending header:");
-            Logger.Log(Level.DEBUG, " - Signature: {0}", Header.Signature);
-            Logger.Log(Level.DEBUG, " - Payload Size: {0}", Header.PayloadSize);
-            Logger.Log(Level.DEBUG, " - Response Required: {0}", Header.ResponseRequired);
-            Logger.Log(Level.DEBUG, " - Command Code: {0}", Header.CommandCode);
-            Logger.Log(Level.DEBUG, " - Return Code: {0}", Header.ReturnCode);
-            Logger.Log(Level.DEBUG, " - Flags: {0}", Header.Flags);
-            Logger.Log(Level.DEBUG, " - Protocol Version: {0}", Header.ProtocolVersion);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, "Sending header:", LogLevel.DEBUG);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Signature: " + Header.Signature, LogLevel.DEBUG);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Payload Size: " + Header.PayloadSize, LogLevel.DEBUG);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Response Required: " + Header.ResponseRequired, LogLevel.DEBUG);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Command Code: " + Header.CommandCode, LogLevel.DEBUG);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Return Code: " + Header.ReturnCode, LogLevel.DEBUG);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Flags: " + Header.Flags, LogLevel.DEBUG);
+            ConsoleMessage.WriteLine(ConsoleMessage.DefaultColor, " - Protocol Version: " + Header.ProtocolVersion, LogLevel.DEBUG);
 
             // Send header packet
             if (Server.SendMessage(Peer.Connection, Header.Serialize()))

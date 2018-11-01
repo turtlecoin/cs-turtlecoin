@@ -88,11 +88,9 @@ namespace CLIWallet
                 {
                     case ILeft<Error> error:
                     {
-                        RedMsg.WriteLine(
-                            error.Value.errorMessage
-                        );
+                        ConsoleMessage.WriteLine(ConsoleColor.Red, error.Value.errorMessage);
 
-                        YellowMsg.WriteLine("Returning to selection screen.\n");
+                        ConsoleMessage.WriteLine(ConsoleColor.Yellow, "Returning to selection screen.\n");
 
                         continue;
                     }
@@ -113,19 +111,19 @@ namespace CLIWallet
         {
             int i = 1 + offset;
 
-            Console.WriteLine();
+            ConsoleMessage.WriteLine("");
 
             /* Print out each command name, description, and possible
                number accessor */
             foreach (var command in commands)
             {
-                YellowMsg.Write($" {i}\t");
-                GreenMsg.Write(command.commandName.PadRight(25));
-                Console.WriteLine(command.description);
+                ConsoleMessage.Write(ConsoleColor.Yellow, $" {i}\t");
+                ConsoleMessage.Write(ConsoleColor.DarkGreen, command.commandName.PadRight(25));
+                ConsoleMessage.WriteLine(command.description);
                 i++;
             }
 
-            Console.WriteLine();
+            ConsoleMessage.WriteLine("");
         }
 
         /* printableCommands = the commands to print on bad input.
@@ -144,7 +142,7 @@ namespace CLIWallet
             while (true)
             {
                 /* Write the prompt message */
-                YellowMsg.Write(prompt);
+                ConsoleMessage.Write(ConsoleColor.Yellow, prompt);
 
                 selection = Console.ReadLine().ToLower();
 
@@ -164,11 +162,10 @@ namespace CLIWallet
                     if (selectionNum < 0 ||
                         selectionNum >= availableCommands.Count())
                     {
-                        RedMsg.Write("Bad input, expected a command " +
-                                     "name, or number from ");
-                        YellowMsg.Write("1 ");
-                        RedMsg.Write("to ");
-                        YellowMsg.WriteLine(availableCommands.Count().ToString());
+                        ConsoleMessage.Write(ConsoleColor.Red, "Bad input, expected a command name, or number from ");
+                        ConsoleMessage.Write(ConsoleColor.Yellow, "1 ");
+                        ConsoleMessage.Write(ConsoleColor.Red, "to ");
+                        ConsoleMessage.WriteLine(ConsoleColor.Yellow, availableCommands.Count().ToString());
 
                         PrintCommands(printableCommands);
 
@@ -185,8 +182,8 @@ namespace CLIWallet
                     /* Does the inputted command exist? */
                     if (!availableCommands.Any(c => c.commandName == selection))
                     {
-                        Console.Write("Unknown command: ");
-                        RedMsg.Write($"{selection}\n");
+                        ConsoleMessage.Write("Unknown command: ");
+                        ConsoleMessage.Write(ConsoleColor.Red, $"{selection}\n");
 
                         PrintCommands(printableCommands);
 

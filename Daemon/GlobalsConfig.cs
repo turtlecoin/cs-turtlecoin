@@ -17,7 +17,7 @@ namespace Daemon
         public static int RpcPort = 8092;
 
         // Default log level
-        public static Level LogLevel = Level.INFO;
+        public static LogLevel LogLevel = LogLevel.INFO;
 
         // Default log file (null = no log file)
         public static string LogFile = null;

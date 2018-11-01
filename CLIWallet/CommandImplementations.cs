@@ -26,12 +26,12 @@ namespace CLIWallet
                 }
                 case "address":
                 {
-                    GreenMsg.WriteLine(wallet.addresses[0]);
+                    ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, wallet.addresses[0]);
                     break;
                 }
                 case "balance":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "backup":
@@ -50,27 +50,27 @@ namespace CLIWallet
                 }
                 case "transfer":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "ab_add":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "ab_delete":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "ab_list":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "ab_send":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "change_password":
@@ -80,32 +80,32 @@ namespace CLIWallet
                 }
                 case "make_integrated_address":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "incoming_transfers":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "list_transfers":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "optimize":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "outgoing_transfers":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "reset":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
                     break;
                 }
                 case "save":
@@ -115,18 +115,18 @@ namespace CLIWallet
                 }
                 case "save_csv":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
-                    break;
+                        ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
+                        break;
                 }
                 case "send_all":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
-                    break;
+                        ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
+                        break;
                 }
                 case "status":
                 {
-                    RedMsg.WriteLine("Command not implemented yet...");
-                    break;
+                        ConsoleMessage.WriteLine(ConsoleColor.Red, "Command not implemented yet...");
+                        break;
                 }
                 /* This should never happen */
                 default:
@@ -143,16 +143,16 @@ namespace CLIWallet
 
         private static bool Exit(WalletBackend wallet)
         {
-            YellowMsg.WriteLine("Saving wallet and shutting down...");
+            ConsoleMessage.WriteLine(ConsoleColor.Yellow, "Saving wallet and shutting down...");
             wallet.Save();
             return true;
         }
 
         private static void Save(WalletBackend wallet)
         {
-            YellowMsg.WriteLine("Saving...");
+            ConsoleMessage.WriteLine(ConsoleColor.Yellow, "Saving...");
             wallet.Save();
-            YellowMsg.WriteLine("Saved!");
+            ConsoleMessage.WriteLine(ConsoleColor.Yellow, "Saved!");
         }
 
         private static void ChangePassword(WalletBackend wallet)
@@ -163,17 +163,17 @@ namespace CLIWallet
 
             while (true)
             {
-                YellowMsg.Write("Enter your new password: ");
+                ConsoleMessage.Write(ConsoleColor.Yellow, "Enter your new password: ");
 
                 newPassword = Console.ReadLine();
 
-                YellowMsg.Write("Confirm your new password: ");
+                ConsoleMessage.Write(ConsoleColor.Yellow, "Confirm your new password: ");
 
                 string confirmedPassword = Console.ReadLine();
 
                 if (newPassword != confirmedPassword)
                 {
-                    RedMsg.WriteLine("Passwords do not match! Try again.\n");
+                    ConsoleMessage.WriteLine(ConsoleColor.Red, "Passwords do not match! Try again.\n");
                     continue;
                 }
 
@@ -184,35 +184,33 @@ namespace CLIWallet
 
             wallet.Save();
 
-            GreenMsg.WriteLine("\nPassword successfully updated!");
+            ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, "\nPassword successfully updated!");
         }
 
         private static void ExportKeys(WalletBackend wallet)
         {
             Utilities.ConfirmPassword(wallet);
 
-            RedMsg.WriteLine("The below data is PRIVATE and should not be " +
-                             "given to anyone!");
+            ConsoleMessage.WriteLine(ConsoleColor.Red, "The below data is PRIVATE and should not be given to anyone!");
 
-            RedMsg.WriteLine("If someone else gains access to these, they " +
-                             "can steal all your funds!");
+            ConsoleMessage.WriteLine(ConsoleColor.Red, "If someone else gains access to these, they can steal all your funds!");
 
-            Console.WriteLine();
+            ConsoleMessage.WriteLine("");
 
             if (wallet.isViewWallet)
             {
-                GreenMsg.WriteLine("Private view key:");
-                GreenMsg.WriteLine(wallet.keys.privateViewKey.ToString());
+                ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, "Private view key:");
+                ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, wallet.keys.privateViewKey.ToString());
                 return;
             }
 
-            GreenMsg.WriteLine("Private spend key:");
-            GreenMsg.WriteLine(wallet.keys.privateSpendKey.ToString());
+            ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, "Private spend key:");
+            ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, wallet.keys.privateSpendKey.ToString());
 
-            Console.WriteLine();
+            ConsoleMessage.WriteLine("");
 
-            GreenMsg.WriteLine("Private view key:");
-            GreenMsg.WriteLine(wallet.keys.privateViewKey.ToString());
+            ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, "Private view key:");
+            ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, wallet.keys.privateViewKey.ToString());
 
             if (KeyOps.AreKeysDeterministic(wallet.keys.privateSpendKey,
                                             wallet.keys.privateViewKey))
@@ -221,8 +219,8 @@ namespace CLIWallet
                     wallet.keys.privateSpendKey
                 );
 
-                GreenMsg.WriteLine("\nMnemonic seed:");
-                GreenMsg.WriteLine(mnemonic);
+                ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, "\nMnemonic seed:");
+                ConsoleMessage.WriteLine(ConsoleColor.DarkGreen, mnemonic);
             }
         }
 
