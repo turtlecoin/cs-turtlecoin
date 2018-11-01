@@ -20,9 +20,6 @@ namespace Daemon
         // P2p server
         private static Server Server;
 
-        // Console logger
-        private static Logger Logger;
-
         // Protocol handler
         private static IProtocol Protocol;
 
@@ -86,14 +83,9 @@ namespace Daemon
         // Entry point
         public Daemon(int Port = 0)
         {
-            // Create logger
-            Logger = new Logger(LogFile);
-            Logger.LogLevel = Level.DEBUG;
-            Logger.Start();
 
             // Create server
             Server = new Server();
-            Server.Logger = Logger;
 
             // Bind event handlers
             Server.OnStart = ServerStarted;
@@ -177,16 +169,16 @@ namespace Daemon
                         ReturnCode = LevinProtocol.LEVIN_RETCODE_SUCCESS
                     };
 
-                    Logger?.Log(Level.DEBUG, "[OUT] Sending Handshake Request:");
-                    Logger?.Log(Level.DEBUG, "- Node Data:");
-                    Logger?.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Request.NodeData.NetworkId));
-                    Logger?.Log(Level.DEBUG, "  - Peer ID: {0}", Request.NodeData.PeerId);
-                    Logger?.Log(Level.DEBUG, "  - Version: {0}", Request.NodeData.Version);
-                    Logger?.Log(Level.DEBUG, "  - Local Time: {0}", Request.NodeData.LocalTime);
-                    Logger?.Log(Level.DEBUG, "  - Port: {0}", Request.NodeData.Port);
-                    Logger?.Log(Level.DEBUG, "- Core Sync Data:");
-                    Logger?.Log(Level.DEBUG, "  - Current Height: {0}", Request.PayloadData.CurrentHeight);
-                    Logger?.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Request.PayloadData.TopId));
+                    Logger.Log(Level.DEBUG, "[OUT] Sending Handshake Request:");
+                    Logger.Log(Level.DEBUG, "- Node Data:");
+                    Logger.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Request.NodeData.NetworkId));
+                    Logger.Log(Level.DEBUG, "  - Peer ID: {0}", Request.NodeData.PeerId);
+                    Logger.Log(Level.DEBUG, "  - Version: {0}", Request.NodeData.Version);
+                    Logger.Log(Level.DEBUG, "  - Local Time: {0}", Request.NodeData.LocalTime);
+                    Logger.Log(Level.DEBUG, "  - Port: {0}", Request.NodeData.Port);
+                    Logger.Log(Level.DEBUG, "- Core Sync Data:");
+                    Logger.Log(Level.DEBUG, "  - Current Height: {0}", Request.PayloadData.CurrentHeight);
+                    Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Request.PayloadData.TopId));
 
                     // Send notification
                     Server.Broadcast(Encoding.AppendToByteArray(BodyBytes, Header.Serialize()));
@@ -226,9 +218,6 @@ namespace Daemon
 
             // Close all connections
             Server?.Close();
-
-            // Close logger
-            Logger?.Stop();
         }
     }
 }

@@ -3,80 +3,58 @@
 // 
 // Please see the included LICENSE file for more information.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-
 namespace Canti.Utilities
 {
+    using System;
+    using log4net;
+
     public enum Level : int
     {
-        FATAL, ERROR, WARNING, INFO, DEBUG
+        FATAL,
+        ERROR,
+        WARNING,
+        INFO,
+        DEBUG
     }
 
-    public struct Entry
+    public static class Logger
     {
-        public DateTime Timestamp { get; set; }
-        public Level Level { get; set; }
-        public string Content { get; set; }
-        public Entry(DateTime Timestamp, Level Level, string Content)
-        {
-            this.Timestamp = Timestamp;
-            this.Level = Level;
-            this.Content = Content;
-        }
-    }
+        private static readonly ILog log4Net = LogManager.GetLogger(typeof(Logger));
 
-    public class Logger
-    {
-        public string LogFile { get; private set; }
-        public Level LogLevel { get; set; }
-        private Queue<Entry> Entries { get; set; }
-        private bool Running { get; set; }
-
-        public Logger(string LogFile = null)
+        public static void Log(Level level, string content, params object[] parameters)
         {
-            this.LogFile = LogFile;
-            LogLevel = 0;
-            Entries = new Queue<Entry>();
-            Running = true;
-        }
-
-        public void Start()
-        {
-            Thread Thread = new Thread(delegate ()
+            try
             {
-                while (true)
+                string message = string.Format("{0} [{1}] {2}", DateTime.Now.ToUniversalTime(), level, string.Format(content, parameters));
+
+                //TODO: Move this elsewhere
+                Console.WriteLine(message);
+
+                switch (level)
                 {
-                    if (Entries.Count == 0)
-                    {
-                        if (!Running) break;
-                    }
-                    else
-                    {
-                        Entry Entry = Entries.Dequeue();
-                        if (LogLevel >= Entry.Level)
-                        {
-                            string Output = string.Format("{0} [{1}] {2}", Entry.Timestamp.ToShortTimeString(), Entry.Level, Entry.Content);
-                            Console.WriteLine(Output);
-                            if (LogFile != null) File.AppendAllText(LogFile, Output + Environment.NewLine);
-                        }
-                    }
-                    Thread.Sleep(10);
+                    case Level.DEBUG:
+                        log4Net.Debug(message);
+                        break;
+                    case Level.WARNING:
+                        log4Net.Warn(message);
+                        break;
+                    case Level.FATAL:
+                        log4Net.Fatal(message);
+                        break;
+                    case Level.ERROR:
+                        log4Net.Error(message);
+                        break;
+                    case Level.INFO:
+                    default:
+                        log4Net.Info(message);
+                        break;
                 }
-            });
-            Thread.Start();
-        }
-
-        public void Stop()
-        {
-            Running = false;
-        }
-
-        public void Log(Level Level, string Content, params object[] Params)
-        {
-            Entries.Enqueue(new Entry(DateTime.Now.ToUniversalTime(), Level, string.Format(Content, Params)));
+            }
+            catch (Exception ex)
+            {
+                // Logging failed.  Not much we can do.  Just try to continue.
+                ex.Data.Clear();
+            }
         }
     }
 }

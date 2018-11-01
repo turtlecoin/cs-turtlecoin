@@ -60,11 +60,11 @@ namespace Canti.Blockchain.Commands
                 Request Request = Request.Deserialize(Command.Data);
 
                 // debug
-                Context.Logger?.Log(Level.DEBUG, "[IN] Received \"Request TX Pool\" Request:");
-                Context.Logger?.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Context.Logger?.Log(Level.DEBUG, "- TXs:");
+                Logger.Log(Level.DEBUG, "[IN] Received \"Request TX Pool\" Request:");
+                Logger.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
+                Logger.Log(Level.DEBUG, "- TXs:");
                 for (int i = 0; i < Request.Txs.Length; i++)
-                    Context.Logger?.Log(Level.DEBUG, "  - [{0}]: {1}", i, Request.Txs[i]);
+                    Logger.Log(Level.DEBUG, "  - [{0}]: {1}", i, Request.Txs[i]);
 
                 // TODO: Do something with request data
             }

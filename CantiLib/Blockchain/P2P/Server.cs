@@ -28,7 +28,6 @@ namespace Canti.Blockchain.P2P
         private Thread PeerConnectionThread;
 
         // public variables
-        public Logger Logger;
         public bool Running = false;
         public int Port = 0;
         public ulong PeerId = 0;
@@ -97,7 +96,7 @@ namespace Canti.Blockchain.P2P
                     Peers.Add(Peer);
 
                     // Log connection to console
-                    Logger?.Log(Level.DEBUG, "Peer connection formed with {0}", Peer.Address);
+                    Logger.Log(Level.DEBUG, "Peer connection formed with {0}", Peer.Address);
 
                     // Invoke connection event handler
                     OnPeerConnected?.Invoke(Peer, EventArgs.Empty);
@@ -164,7 +163,7 @@ namespace Canti.Blockchain.P2P
                 Peers.Add(Peer);
 
                 // Log connection to console
-                Logger?.Log(Level.DEBUG, "Peer connection formed with {0}", Peer.Address);
+                Logger.Log(Level.DEBUG, "Peer connection formed with {0}", Peer.Address);
 
                 // Invoke connection event handler
                 OnPeerConnected?.Invoke(Peer, EventArgs.Empty);
@@ -174,7 +173,7 @@ namespace Canti.Blockchain.P2P
             catch
             {
                 // Log error to console
-                Logger?.Log(Level.ERROR, "Peer connection could not be formed with {0}:{1}", Connection.Host, Connection.Port);
+                Logger.Log(Level.ERROR, "Peer connection could not be formed with {0}:{1}", Connection.Host, Connection.Port);
 
                 // Raise error event
                 OnError?.Invoke("Unable to connect to peer " + Connection.Host + ":" + Connection.Port, EventArgs.Empty);

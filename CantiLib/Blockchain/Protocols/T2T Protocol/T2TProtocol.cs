@@ -15,9 +15,6 @@ namespace Canti.Blockchain
         // Server connection
         public Server Server;
 
-        // Logger
-        public Logger Logger;
-
         // Peer read status (0 = head, 1 = body)
         private Dictionary<PeerConnection, LevinPeer> Peers = new Dictionary<PeerConnection, LevinPeer>();
 
@@ -26,9 +23,6 @@ namespace Canti.Blockchain
         {
             // Set connection
             Server = Connection;
-
-            // Set logger
-            Logger = Connection.Logger;
 
             // Bind event handlers
             Server.OnDataReceived += OnDataReceived;

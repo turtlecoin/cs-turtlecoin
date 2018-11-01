@@ -18,18 +18,8 @@ namespace Canti.Blockchain
     [Serializable]
     public partial class PortableStorage
     {
-        // Logger
-        private Logger Logger;
-
         // Dictionary of entries
         private Dictionary<string, object> Entries = new Dictionary<string, object>();
-
-        // Entry point
-        public PortableStorage(Logger Logger = null)
-        {
-            // Set logger
-            if (Logger != null) this.Logger = Logger;
-        }
 
         // Add an entry
         public bool AddEntry(string Name, object Value)

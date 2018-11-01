@@ -105,17 +105,17 @@ namespace Canti.Blockchain.Commands
                 Request Request = Request.Deserialize(Command.Data);
 
                 // debug
-                Context.Logger?.Log(Level.DEBUG, "[IN] Received \"Handshake\" Request:");
-                Context.Logger?.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Context.Logger?.Log(Level.DEBUG, "- Node Data:");
-                Context.Logger?.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Request.NodeData.NetworkId));
-                Context.Logger?.Log(Level.DEBUG, "  - Peer ID: {0}", Request.NodeData.PeerId);
-                Context.Logger?.Log(Level.DEBUG, "  - Version: {0}", Request.NodeData.Version);
-                Context.Logger?.Log(Level.DEBUG, "  - Local Time: {0}", Request.NodeData.LocalTime);
-                Context.Logger?.Log(Level.DEBUG, "  - Port: {0}", Request.NodeData.Port);
-                Context.Logger?.Log(Level.DEBUG, "- Core Sync Data:");
-                Context.Logger?.Log(Level.DEBUG, "  - Current Height: {0}", Request.PayloadData.CurrentHeight);
-                Context.Logger?.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Request.PayloadData.TopId));
+                Logger.Log(Level.DEBUG, "[IN] Received \"Handshake\" Request:");
+                Logger.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
+                Logger.Log(Level.DEBUG, "- Node Data:");
+                Logger.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Request.NodeData.NetworkId));
+                Logger.Log(Level.DEBUG, "  - Peer ID: {0}", Request.NodeData.PeerId);
+                Logger.Log(Level.DEBUG, "  - Version: {0}", Request.NodeData.Version);
+                Logger.Log(Level.DEBUG, "  - Local Time: {0}", Request.NodeData.LocalTime);
+                Logger.Log(Level.DEBUG, "  - Port: {0}", Request.NodeData.Port);
+                Logger.Log(Level.DEBUG, "- Core Sync Data:");
+                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Request.PayloadData.CurrentHeight);
+                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Request.PayloadData.TopId));
 
                 // TODO: Do something with request data
 
@@ -142,18 +142,18 @@ namespace Canti.Blockchain.Commands
                 };
 
                 // debug
-                Context.Logger?.Log(Level.DEBUG, "[OUT] Sending \"Handshake\" Response:");
-                Context.Logger?.Log(Level.DEBUG, "- Node Data:");
-                Context.Logger?.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Response.NodeData.NetworkId));
-                Context.Logger?.Log(Level.DEBUG, "  - Peer ID: {0}", Response.NodeData.PeerId);
-                Context.Logger?.Log(Level.DEBUG, "  - Version: {0}", Response.NodeData.Version);
-                Context.Logger?.Log(Level.DEBUG, "  - Local Time: {0}", Response.NodeData.LocalTime);
-                Context.Logger?.Log(Level.DEBUG, "  - Port: {0}", Response.NodeData.Port);
-                Context.Logger?.Log(Level.DEBUG, "- Core Sync Data:");
-                Context.Logger?.Log(Level.DEBUG, "  - Current Height: {0}", Response.PayloadData.CurrentHeight);
-                Context.Logger?.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Response.PayloadData.TopId));
-                Context.Logger?.Log(Level.DEBUG, "- Local Peerlist:");
-                Context.Logger?.Log(Level.DEBUG, "  - Entries: {0}", Response.LocalPeerlist.Length);
+                Logger.Log(Level.DEBUG, "[OUT] Sending \"Handshake\" Response:");
+                Logger.Log(Level.DEBUG, "- Node Data:");
+                Logger.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Response.NodeData.NetworkId));
+                Logger.Log(Level.DEBUG, "  - Peer ID: {0}", Response.NodeData.PeerId);
+                Logger.Log(Level.DEBUG, "  - Version: {0}", Response.NodeData.Version);
+                Logger.Log(Level.DEBUG, "  - Local Time: {0}", Response.NodeData.LocalTime);
+                Logger.Log(Level.DEBUG, "  - Port: {0}", Response.NodeData.Port);
+                Logger.Log(Level.DEBUG, "- Core Sync Data:");
+                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Response.PayloadData.CurrentHeight);
+                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Response.PayloadData.TopId));
+                Logger.Log(Level.DEBUG, "- Local Peerlist:");
+                Logger.Log(Level.DEBUG, "  - Entries: {0}", Response.LocalPeerlist.Length);
 
                 // Reply with response
                 Context.Reply(Peer, Id, Response.Serialize(), true);
@@ -166,19 +166,19 @@ namespace Canti.Blockchain.Commands
                 Response Response = Response.Deserialize(Command.Data);
 
                 // debug
-                Context.Logger?.Log(Level.DEBUG, "[IN] Received \"Handshake\" Response:");
-                Context.Logger?.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Context.Logger?.Log(Level.DEBUG, "- Node Data:");
-                Context.Logger?.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Response.NodeData.NetworkId));
-                Context.Logger?.Log(Level.DEBUG, "  - Peer ID: {0}", Response.NodeData.PeerId);
-                Context.Logger?.Log(Level.DEBUG, "  - Version: {0}", Response.NodeData.Version);
-                Context.Logger?.Log(Level.DEBUG, "  - Local Time: {0}", Response.NodeData.LocalTime);
-                Context.Logger?.Log(Level.DEBUG, "  - Port: {0}", Response.NodeData.Port);
-                Context.Logger?.Log(Level.DEBUG, "- Core Sync Data:");
-                Context.Logger?.Log(Level.DEBUG, "  - Current Height: {0}", Response.PayloadData.CurrentHeight);
-                Context.Logger?.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Response.PayloadData.TopId));
-                Context.Logger?.Log(Level.DEBUG, "- Local Peerlist:");
-                Context.Logger?.Log(Level.DEBUG, "  - Entries: {0}", Response.LocalPeerlist.Length);
+                Logger.Log(Level.DEBUG, "[IN] Received \"Handshake\" Response:");
+                Logger.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
+                Logger.Log(Level.DEBUG, "- Node Data:");
+                Logger.Log(Level.DEBUG, "  - Network ID: {0}", Encoding.StringToHexString(Response.NodeData.NetworkId));
+                Logger.Log(Level.DEBUG, "  - Peer ID: {0}", Response.NodeData.PeerId);
+                Logger.Log(Level.DEBUG, "  - Version: {0}", Response.NodeData.Version);
+                Logger.Log(Level.DEBUG, "  - Local Time: {0}", Response.NodeData.LocalTime);
+                Logger.Log(Level.DEBUG, "  - Port: {0}", Response.NodeData.Port);
+                Logger.Log(Level.DEBUG, "- Core Sync Data:");
+                Logger.Log(Level.DEBUG, "  - Current Height: {0}", Response.PayloadData.CurrentHeight);
+                Logger.Log(Level.DEBUG, "  - Top ID: {0}", Encoding.StringToHexString(Response.PayloadData.TopId));
+                Logger.Log(Level.DEBUG, "- Local Peerlist:");
+                Logger.Log(Level.DEBUG, "  - Entries: {0}", Response.LocalPeerlist.Length);
 
                 // TODO: Do something with response data
             }

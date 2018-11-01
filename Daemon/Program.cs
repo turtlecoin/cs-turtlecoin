@@ -4,12 +4,10 @@
 // Please see the included LICENSE file for more information.
 
 using Canti.Utilities;
-using Canti.Data;
-using Canti.Blockchain.P2P;
-using System;
-using System.Collections.Generic;
-using Canti.Blockchain;
-using Canti.Blockchain.Commands;
+using log4net;
+using log4net.Config;
+using System.IO;
+using System.Reflection;
 
 namespace Daemon
 {
@@ -18,6 +16,12 @@ namespace Daemon
         static int Port = Daemon.P2pPort;
         static void Main(string[] args)
         {
+            var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+            XmlConfigurator.Configure(logRepository, new FileInfo("Logger.config"));
+
+            Logger.Log(Level.DEBUG, "Starting daemon...");
+
+
             // Parse commandline arguments
             if (args.Length >= 1) Port = int.Parse(args[0]);
 
