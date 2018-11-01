@@ -9,7 +9,7 @@ namespace Canti.Utilities
 {
     public static class ConsoleMessage
     {
-        public static readonly ConsoleColor DefaultColor = ConsoleColor.White;        
+        public static readonly ConsoleColor DefaultColor = ConsoleColor.Gray;        
         
 
         public static void Write(string msg)
