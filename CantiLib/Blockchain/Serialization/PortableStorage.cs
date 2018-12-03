@@ -169,7 +169,7 @@ namespace Canti.Blockchain
                 Output = Encoding.ByteArrayToString(Encoding.SplitByteArray(Buffer, Offset, Length));
 
                 // Resize buffer
-                Offset = 1 + (Output as string).Length;
+                Offset =+ (Output as string).Length;
                 if (Buffer.Length - Offset > 0) Buffer = Encoding.SplitByteArray(Buffer, Offset, Buffer.Length - Offset);
             }
 
