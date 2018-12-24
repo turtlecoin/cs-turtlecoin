@@ -113,8 +113,8 @@ namespace Tests
                     Addresses.KeysFromAddress(derivedAddress1, prefix).Do(
                         error => Assert.Fail($"Failed to parse keys from address: {error}"),
                         keys => {
-                            Assert.AreEqual<PublicKey>(keys.spendKey, w.publicSpendKey);
-                            Assert.AreEqual<PublicKey>(keys.viewKey, w.publicViewKey);
+                            Assert.AreEqual<PublicKey>(w.publicSpendKey, keys.spendKey);
+                            Assert.AreEqual<PublicKey>(w.publicViewKey, keys.viewKey);
                         }
                     );
 
@@ -123,8 +123,8 @@ namespace Tests
                     Addresses.KeysFromAddress(derivedAddress2, prefix).Do(
                         error => Assert.Fail($"Failed to parse keys from address: {error}"),
                         keys => {
-                            Assert.AreEqual<PublicKey>(keys.spendKey, w.publicSpendKey);
-                            Assert.AreEqual<PublicKey>(keys.viewKey, w.publicViewKey);
+                            Assert.AreEqual<PublicKey>(w.publicSpendKey, keys.spendKey);
+                            Assert.AreEqual<PublicKey>(w.publicViewKey, keys.viewKey);
                         }
                     );
                 }
