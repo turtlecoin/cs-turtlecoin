@@ -35,15 +35,6 @@ namespace Canti.Utilities
                   .ToList();
         }
 
-        /* Thanks to - https://stackoverflow.com/a/38596841/8737306
-
-           Takes the last N elements from an IEnumerable/List */
-        public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source,
-                                                 int numElements)
-        {
-            return source.Skip(Math.Max(0, source.Count() - numElements));
-        }
-
         /* Thanks to - https://stackoverflow.com/a/50552122/8737306
         
            Deconstructs a dictionary into a tuple as you go, which is helpful
