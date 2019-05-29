@@ -51,6 +51,8 @@
  */
 
 using System;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace Canti.Blockchain.Crypto.AES
 {
@@ -106,8 +108,113 @@ namespace Canti.Blockchain.Crypto.AES
             Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
         }
 
+        private static void AssignVectorToArray<T>(Vector128<T> vec, ref T[] arr, int offset = 0) where T : struct
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                arr[i + offset] = vec.GetElement(i);
+            }
+        }
+
+        private static void Aes256Assist1(ref Vector128<byte> t1, ref Vector128<byte> t2)
+        {
+            Vector128<byte> t4;
+            t2 = Sse2.Shuffle(t2.AsInt32(), 0xff).AsByte();
+            
+            /* This operation corresponds to _mm_bslli_si128, not _mm_slli_si128
+               which is used in the original slow hash code. However, the
+               two descriptions in the intel manual appear to be exactly the
+               same: https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_slli_si128&expand=5236,3954,5288,5315,5315&techs=SSE2
+                     https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_bslli_si128&expand=5236,3954,5288,5315,5315,586&techs=SSE2 */
+            t4 = Sse2.ShiftLeftLogical128BitLane(t1, 0x04);
+            t1 = Sse2.Xor(t1, t4);
+            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
+            t1 = Sse2.Xor(t1, t4);
+            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
+            t1 = Sse2.Xor(t1, t4);
+            t1 = Sse2.Xor(t1, t2);
+        }
+
+        private static void Aes256Assist2(ref Vector128<byte> t1, ref Vector128<byte> t3)
+        {
+            Vector128<byte> t2, t4;
+
+            t4 = Aes.KeygenAssist(t1, 0x00);
+            t2 = Sse2.Shuffle(t4.AsInt32(), 0xaa).AsByte();
+            t4 = Sse2.ShiftLeftLogical128BitLane(t3, 0x04);
+            t3 = Sse2.Xor(t3, t4);
+            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
+            t3 = Sse2.Xor(t3, t4);
+            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
+            t3 = Sse2.Xor(t3, t4);
+            t3 = Sse2.Xor(t3, t2);
+        }
+
+        /* https://github.com/turtlecoin/turtlecoin/blob/60f1dd1360503d606636185edf8dbf4eb1b2ace8/src/crypto/slow-hash-x86.c#L252 */
+        private static byte[] ExpandKeyNative(byte[] key)
+        {
+            int keyBase = key.Length / Constants.RoundKeyLength;
+            int numKeys = keyBase + Constants.RoundBase;
+
+            int expandedKeyLength = numKeys * Constants.RoundKeyLength
+                                            * Constants.ColumnLength;
+
+            byte[] expandedKey = new byte[240];
+
+            Vector128<byte> t1;
+            Vector128<byte> t2;
+            Vector128<byte> t3;
+
+            unsafe
+            {
+                fixed(byte* keyPtr = key)
+                {
+                    t1 = Sse2.LoadVector128(keyPtr);
+                    t3 = Sse2.LoadVector128(keyPtr + 16);
+                }
+            }
+
+            AssignVectorToArray(t1, ref expandedKey, 0);
+            AssignVectorToArray(t3, ref expandedKey, 16);
+
+            t2 = Aes.KeygenAssist(t3, 0x01);
+            Aes256Assist1(ref t1, ref t2);
+            AssignVectorToArray(t1, ref expandedKey, 32);
+            Aes256Assist2(ref t1, ref t3);
+            AssignVectorToArray(t3, ref expandedKey, 48);
+
+            t2 = Aes.KeygenAssist(t3, 0x02);
+            Aes256Assist1(ref t1, ref t2);
+            AssignVectorToArray(t1, ref expandedKey, 64);
+            Aes256Assist2(ref t1, ref t3);
+            AssignVectorToArray(t3, ref expandedKey, 80);
+
+            t2 = Aes.KeygenAssist(t3, 0x04);
+            Aes256Assist1(ref t1, ref t2);
+            AssignVectorToArray(t1, ref expandedKey, 96);
+            Aes256Assist2(ref t1, ref t3);
+            AssignVectorToArray(t3, ref expandedKey, 112);
+
+            t2 = Aes.KeygenAssist(t3, 0x08);
+            Aes256Assist1(ref t1, ref t2);
+            AssignVectorToArray(t1, ref expandedKey, 128);
+            Aes256Assist2(ref t1, ref t3);
+            AssignVectorToArray(t3, ref expandedKey, 144);
+
+            t2 = Aes.KeygenAssist(t3, 0x10);
+            Aes256Assist1(ref t1, ref t2);
+            AssignVectorToArray(t1, ref expandedKey, 160);
+
+            return expandedKey;
+        }
+
         public static byte[] ExpandKey(byte[] key)
         {
+            if (Sse2.IsSupported && Aes.IsSupported)
+            {
+                return ExpandKeyNative(key);
+            }
+
             int keyBase = key.Length / Constants.RoundKeyLength;
             int numKeys = keyBase + Constants.RoundBase;
 

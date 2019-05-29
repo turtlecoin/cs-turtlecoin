@@ -6,6 +6,7 @@
 // Please see the included LICENSE file for more information.
 
 using System;
+using System.Runtime.Intrinsics.X86;
 
 using Canti.Data;
 
