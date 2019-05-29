@@ -83,7 +83,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                                              ICryptoNight cnParams)
         {
             /* Expand our initial key into many for each round of pseudo aes */
-            byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey());
+            byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey(), cnParams.Intrinsics());
 
             /* Our large scratchpad, 2MB in default CN */
             byte[] scratchpad = new byte[cnParams.Memory()];
