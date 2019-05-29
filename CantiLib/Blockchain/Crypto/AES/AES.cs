@@ -58,14 +58,64 @@ namespace Canti.Blockchain.Crypto.AES
 {
     public static class AES
     {
-        public static void AESBSingleRound(byte[] keys, byte[] input,
-                                           int inputOffset)
+        public static void AESBSingleRoundNative(byte[] keys, byte[] input)
         {
+            Vector128<byte> roundKey = Vector128.Create(
+                keys[0],
+                keys[1],
+                keys[2],
+                keys[3],
+                keys[4],
+                keys[5],
+                keys[6],
+                keys[7],
+                keys[8],
+                keys[9],
+                keys[10],
+                keys[11],
+                keys[12],
+                keys[13],
+                keys[14],
+                keys[15]
+            );
+
+            Vector128<byte> val = Vector128.Create(
+                input[0],
+                input[1],
+                input[2],
+                input[3],
+                input[4],
+                input[5],
+                input[6],
+                input[7],
+                input[8],
+                input[9],
+                input[10],
+                input[11],
+                input[12],
+                input[13],
+                input[14],
+                input[15]
+            );
+
+            Vector128<byte> result = Aes.Encrypt(val, roundKey);
+
+            AssignVectorToArray(result, input);
+        }
+
+        public static void AESBSingleRound(byte[] keys, byte[] input, bool enableIntrinsics = true)
+        {
+            if (Aes.IsSupported && enableIntrinsics)
+            {
+                AESBSingleRoundNative(keys, input);
+                return;
+            }
+
             uint[] b0 = new uint[4];
             uint[] b1 = new uint[4];
 
             /* Copy 16 bytes from input[inputOffset] to b0 (4 uints) */
-            Buffer.BlockCopy(input, inputOffset, b0, 0, 16);
+            Buffer.BlockCopy(input, 0, b0, 0, 16);
 
             uint[] keysAsUint = new uint[keys.Length / 4];
 
@@ -74,8 +124,8 @@ namespace Canti.Blockchain.Crypto.AES
 
             Round(b1, b0, keysAsUint, 0);
 
-            /* Copy 16 bytes from b1 to input[inputOffset] (4 uints) */
-            Buffer.BlockCopy(b1, 0, input, inputOffset, 16);
+            /* Copy 16 bytes from b1 to input (4 uints) */
+            Buffer.BlockCopy(b1, 0, input, 0, 16);
         }
 
         private static void AESPseudoRoundNative(byte[] keys, byte[] input)

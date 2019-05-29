@@ -21,7 +21,19 @@ namespace Tests
                 "f77f10a5fb1a52a2b466751c3a858dc3"
             );
 
-            AES.AESBSingleRound(expandedKeys1, input1, 0);
+            if (Aes.IsSupported)
+            {
+                AES.AESBSingleRound(expandedKeys1, input1);
+
+                Assert.AreEqual<string>("d3f15e41a16af6931839a8e818cb9abd", Encoding.ByteArrayToHexString(input1));
+            }
+
+            input1 = Encoding.HexStringToByteArray(
+                "f77f10a5fb1a52a2b466751c3a858dc3"
+            );
+
+            /* Test the non intrinsics version */
+            AES.AESBSingleRound(expandedKeys1, input1, false);
 
             Assert.AreEqual<string>("d3f15e41a16af6931839a8e818cb9abd", Encoding.ByteArrayToHexString(input1));
 
@@ -34,7 +46,18 @@ namespace Tests
                 "f6ab72cec832b4070711b7e3b8700d6a"
             );
 
-            AES.AESBSingleRound(expandedKeys2, input2, 0);
+            if (Aes.IsSupported)
+            {
+                AES.AESBSingleRound(expandedKeys2, input2);
+
+                Assert.AreEqual<string>("e59c503c34b319b45b66a344316cd109", Encoding.ByteArrayToHexString(input2));
+            }
+
+            input2 = Encoding.HexStringToByteArray(
+                "f6ab72cec832b4070711b7e3b8700d6a"
+            );
+
+            AES.AESBSingleRound(expandedKeys2, input2, false);
 
             Assert.AreEqual<string>("e59c503c34b319b45b66a344316cd109", Encoding.ByteArrayToHexString(input2));
 
@@ -47,7 +70,18 @@ namespace Tests
                 "ac2432e2f84f5f244ef7e5d977c9f19e"
             );
 
-            AES.AESBSingleRound(expandedKeys3, input3, 0);
+            if (Aes.IsSupported)
+            {
+                AES.AESBSingleRound(expandedKeys3, input3);
+
+                Assert.AreEqual<string>("16767345c5adc04004b973481f5682c3", Encoding.ByteArrayToHexString(input3));
+            }
+
+            input3 = Encoding.HexStringToByteArray(
+                "ac2432e2f84f5f244ef7e5d977c9f19e"
+            );
+
+            AES.AESBSingleRound(expandedKeys3, input3, false);
 
             Assert.AreEqual<string>("16767345c5adc04004b973481f5682c3", Encoding.ByteArrayToHexString(input3));
         }

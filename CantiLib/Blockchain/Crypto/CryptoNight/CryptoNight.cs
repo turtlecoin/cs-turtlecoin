@@ -128,7 +128,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     /* Perform the mixing function */
                     if (iteration == 1)
                     {
-                        MixScratchpadIterationOne(mixingState);
+                        MixScratchpadIterationOne(mixingState, cnParams);
                     }
                     else
                     {
@@ -167,7 +167,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     /* Perform the mixing function */
                     if (iteration == 1)
                     {
-                        MixScratchpadIterationOne(mixingState);
+                        MixScratchpadIterationOne(mixingState, cnParams);
                     }
                     else
                     {
@@ -190,10 +190,11 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             }
         }
 
-        private static void MixScratchpadIterationOne(MixScratchpadState
-                                                      mixingState)
+        private static void MixScratchpadIterationOne(
+            MixScratchpadState mixingState,
+            ICryptoNight cnParams)
         {
-            AES.AES.AESBSingleRound(mixingState.a, mixingState.c, 0);
+            AES.AES.AESBSingleRound(mixingState.a, mixingState.c, cnParams.Intrinsics());
 
             XORBlocks(mixingState.b, mixingState.c);
 
