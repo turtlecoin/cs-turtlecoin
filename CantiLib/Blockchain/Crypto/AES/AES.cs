@@ -208,9 +208,9 @@ namespace Canti.Blockchain.Crypto.AES
             return expandedKey;
         }
 
-        public static byte[] ExpandKey(byte[] key)
+        public static byte[] ExpandKey(byte[] key, bool enableIntrinsics = true)
         {
-            if (Sse2.IsSupported && Aes.IsSupported)
+            if (Sse2.IsSupported && Aes.IsSupported && enableIntrinsics)
             {
                 return ExpandKeyNative(key);
             }
