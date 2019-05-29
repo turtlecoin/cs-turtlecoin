@@ -93,13 +93,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             /* Fill the scratchpad with AES encryption of text */
             for (int i = 0; i < cnParams.Memory() / Constants.InitSizeByte; i++)
             {
-                for (int j = 0; j < Constants.InitSizeBlock; j++)
-                {
-                    /* Need to pass the array with an offset because we manip
-                       it in place */
-                    AES.AES.AESBPseudoRound(expandedKeys, text,
-                                            j * AES.Constants.BlockSize);
-                }
+                AES.AES.AESPseudoRound(expandedKeys, text, cnParams.Intrinsics());
 
                 /* Write text to the scratchpad, at the offset
                    i * InitSizeByte */

@@ -78,6 +78,76 @@ namespace Canti.Blockchain.Crypto.AES
             Buffer.BlockCopy(b1, 0, input, inputOffset, 16);
         }
 
+        private static void AESPseudoRoundNative(byte[] keys, byte[] input)
+        {
+            Vector128<byte> d;
+
+            Vector128<byte>[] roundKeys = new Vector128<byte>[10];
+
+            for (int i = 0; i < 10; i++)
+            {
+                roundKeys[i] = Vector128.Create(
+                    keys[i * 16 + 0],
+                    keys[i * 16 + 1],
+                    keys[i * 16 + 2],
+                    keys[i * 16 + 3],
+                    keys[i * 16 + 4],
+                    keys[i * 16 + 5],
+                    keys[i * 16 + 6],
+                    keys[i * 16 + 7],
+                    keys[i * 16 + 8],
+                    keys[i * 16 + 9],
+                    keys[i * 16 + 10],
+                    keys[i * 16 + 11],
+                    keys[i * 16 + 12],
+                    keys[i * 16 + 13],
+                    keys[i * 16 + 14],
+                    keys[i * 16 + 15]
+                );
+            }
+
+            unsafe
+            {
+                fixed(byte* keyPtr = input)
+                {
+                    for (int i = 0; i < CryptoNight.Constants.InitSizeBlock; i++)
+                    {
+                        d = Sse2.LoadVector128(keyPtr + (i * Constants.BlockSize));
+
+                        d = Aes.Encrypt(d, roundKeys[0]);
+                        d = Aes.Encrypt(d, roundKeys[1]);
+                        d = Aes.Encrypt(d, roundKeys[2]);
+                        d = Aes.Encrypt(d, roundKeys[3]);
+                        d = Aes.Encrypt(d, roundKeys[4]);
+                        d = Aes.Encrypt(d, roundKeys[5]);
+                        d = Aes.Encrypt(d, roundKeys[6]);
+                        d = Aes.Encrypt(d, roundKeys[7]);
+                        d = Aes.Encrypt(d, roundKeys[8]);
+                        d = Aes.Encrypt(d, roundKeys[9]);
+
+                        Sse2.Store(keyPtr + (i * Constants.BlockSize), d);
+                    }
+                }
+            }
+        }
+
+        public static void AESPseudoRound(byte[] keys, byte[] input, bool enableIntrinsics = true)
+        {
+            if (Sse2.IsSupported && Aes.IsSupported && enableIntrinsics)
+            {
+                AESPseudoRoundNative(keys, input);
+            }
+            else
+            {
+                for (int i = 0; i < CryptoNight.Constants.InitSizeBlock; i++)
+                {
+                    /* Need to pass the array with an offset because we manip
+                       it in place */
+                    AESBPseudoRound(keys, input, i * Constants.BlockSize);
+                }
+            }
+        }
+
         public static void AESBPseudoRound(byte[] keys, byte[] input,
                                            int inputOffset)
         {
@@ -108,7 +178,7 @@ namespace Canti.Blockchain.Crypto.AES
             Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
         }
 
-        private static void AssignVectorToArray<T>(Vector128<T> vec, ref T[] arr, int offset = 0) where T : struct
+        private static void AssignVectorToArray<T>(Vector128<T> vec, T[] arr, int offset = 0) where T : struct
         {
             for (int i = 0; i < 16; i++)
             {
@@ -174,36 +244,36 @@ namespace Canti.Blockchain.Crypto.AES
                 }
             }
 
-            AssignVectorToArray(t1, ref expandedKey, 0);
-            AssignVectorToArray(t3, ref expandedKey, 16);
+            AssignVectorToArray(t1, expandedKey, 0);
+            AssignVectorToArray(t3, expandedKey, 16);
 
             t2 = Aes.KeygenAssist(t3, 0x01);
             Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, ref expandedKey, 32);
+            AssignVectorToArray(t1, expandedKey, 32);
             Aes256Assist2(ref t1, ref t3);
-            AssignVectorToArray(t3, ref expandedKey, 48);
+            AssignVectorToArray(t3, expandedKey, 48);
 
             t2 = Aes.KeygenAssist(t3, 0x02);
             Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, ref expandedKey, 64);
+            AssignVectorToArray(t1, expandedKey, 64);
             Aes256Assist2(ref t1, ref t3);
-            AssignVectorToArray(t3, ref expandedKey, 80);
+            AssignVectorToArray(t3, expandedKey, 80);
 
             t2 = Aes.KeygenAssist(t3, 0x04);
             Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, ref expandedKey, 96);
+            AssignVectorToArray(t1, expandedKey, 96);
             Aes256Assist2(ref t1, ref t3);
-            AssignVectorToArray(t3, ref expandedKey, 112);
+            AssignVectorToArray(t3, expandedKey, 112);
 
             t2 = Aes.KeygenAssist(t3, 0x08);
             Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, ref expandedKey, 128);
+            AssignVectorToArray(t1, expandedKey, 128);
             Aes256Assist2(ref t1, ref t3);
-            AssignVectorToArray(t3, ref expandedKey, 144);
+            AssignVectorToArray(t3, expandedKey, 144);
 
             t2 = Aes.KeygenAssist(t3, 0x10);
             Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, ref expandedKey, 160);
+            AssignVectorToArray(t1, expandedKey, 160);
 
             return expandedKey;
         }
