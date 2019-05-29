@@ -19,13 +19,13 @@ namespace Benchmark
             var hashes = new List<HashFunction>
             {
                 new HashFunction("Blake",                           new Blake(),            500000),
-                new HashFunction("CNV0",                            new CNV0(),             10),
+                new HashFunction("CNV0",                            new CNV0(),             20),
                 new HashFunction("CNV0 (Platform Independent)",     new CNV0(false),        10),
-                new HashFunction("CNV1",                            new CNV1(),             10),
+                new HashFunction("CNV1",                            new CNV1(),             20),
                 new HashFunction("CNV1 (Platform Independent)",     new CNV1(false),        10),
-                new HashFunction("CNLiteV0",                        new CNLiteV0(),         20),
+                new HashFunction("CNLiteV0",                        new CNLiteV0(),         40),
                 new HashFunction("CNLiteV0 (Platform Independent)", new CNLiteV0(false),    20),
-                new HashFunction("CNLiteV1",                        new CNLiteV1(),         20),
+                new HashFunction("CNLiteV1",                        new CNLiteV1(),         40),
                 new HashFunction("CNLiteV1 (Platform Independent)", new CNLiteV1(false),    20),
                 new HashFunction("Groestl",                         new Groestl(),          50000),
                 new HashFunction("JH",                              new JH(),               10000),

@@ -3,7 +3,7 @@
  * OpenAES License
  * ---------------------------------------------------------------------------
  * Copyright (c) 2012, Nabil S. Al Ramli, www.nalramli.com
- * Copyright (c) 2018, The TurtleCoin Developers
+ * Copyright (c) 2018-2019, The TurtleCoin Developers
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 /*
  * ---------------------------------------------------------------------------
  * Copyright (c) 1998-2013, Brian Gladman, Worcester, UK. All rights reserved.
- * Copyright (c) 2018, The TurtleCoin Developers. All rights reserved.
+ * Copyright (c) 2018-2019, The TurtleCoin Developers. All rights reserved.
  * 
  * The redistribution and use of this software (with or without changes)
  * is allowed without the payment of fees or royalties provided that:
@@ -58,6 +58,62 @@ namespace Canti.Blockchain.Crypto.AES
 {
     public static class AES
     {
+        public static void AESPseudoRoundXOR(
+            byte[] keys,
+            byte[] input,
+            byte[] xor,
+            int offset)
+        {
+            unsafe
+            {
+                Vector128<byte>[] roundKeys = new Vector128<byte>[10];
+
+                fixed(byte* roundKeyPtr = keys)
+                {
+                    roundKeys[0] = Sse2.LoadVector128(roundKeyPtr + 0);
+                    roundKeys[1] = Sse2.LoadVector128(roundKeyPtr + 16);
+                    roundKeys[2] = Sse2.LoadVector128(roundKeyPtr + 32);
+                    roundKeys[3] = Sse2.LoadVector128(roundKeyPtr + 48);
+                    roundKeys[4] = Sse2.LoadVector128(roundKeyPtr + 64);
+                    roundKeys[5] = Sse2.LoadVector128(roundKeyPtr + 80);
+                    roundKeys[6] = Sse2.LoadVector128(roundKeyPtr + 96);
+                    roundKeys[7] = Sse2.LoadVector128(roundKeyPtr + 112);
+                    roundKeys[8] = Sse2.LoadVector128(roundKeyPtr + 128);
+                    roundKeys[9] = Sse2.LoadVector128(roundKeyPtr + 144);
+                }
+
+                fixed(byte* keyPtr = input, xorPtr = xor)
+                {
+                    Vector128<byte> d;
+
+                    int xorOffset = offset;
+
+                    for (int i = 0; i < CryptoNight.Constants.InitSizeBlock; i++)
+                    {
+                        d = Sse2.LoadVector128(keyPtr + (i * Constants.BlockSize));
+
+                        d = Sse2.Xor(d, Sse2.LoadVector128(xorPtr + xorOffset));
+
+                        /* Increase offset by 128 bits (16 bytes) */
+                        xorOffset += 16;
+
+                        d = Aes.Encrypt(d, roundKeys[0]);
+                        d = Aes.Encrypt(d, roundKeys[1]);
+                        d = Aes.Encrypt(d, roundKeys[2]);
+                        d = Aes.Encrypt(d, roundKeys[3]);
+                        d = Aes.Encrypt(d, roundKeys[4]);
+                        d = Aes.Encrypt(d, roundKeys[5]);
+                        d = Aes.Encrypt(d, roundKeys[6]);
+                        d = Aes.Encrypt(d, roundKeys[7]);
+                        d = Aes.Encrypt(d, roundKeys[8]);
+                        d = Aes.Encrypt(d, roundKeys[9]);
+
+                        Sse2.Store(keyPtr + (i * Constants.BlockSize), d);
+                    }
+                }
+            }
+        }
+
         public static void AESBSingleRoundNative(byte[] keys, byte[] input)
         {
             Vector128<byte> roundKey = Vector128.Create(
@@ -130,36 +186,28 @@ namespace Canti.Blockchain.Crypto.AES
 
         private static void AESPseudoRoundNative(byte[] keys, byte[] input)
         {
-            Vector128<byte> d;
-
-            Vector128<byte>[] roundKeys = new Vector128<byte>[10];
-
-            for (int i = 0; i < 10; i++)
-            {
-                roundKeys[i] = Vector128.Create(
-                    keys[i * 16 + 0],
-                    keys[i * 16 + 1],
-                    keys[i * 16 + 2],
-                    keys[i * 16 + 3],
-                    keys[i * 16 + 4],
-                    keys[i * 16 + 5],
-                    keys[i * 16 + 6],
-                    keys[i * 16 + 7],
-                    keys[i * 16 + 8],
-                    keys[i * 16 + 9],
-                    keys[i * 16 + 10],
-                    keys[i * 16 + 11],
-                    keys[i * 16 + 12],
-                    keys[i * 16 + 13],
-                    keys[i * 16 + 14],
-                    keys[i * 16 + 15]
-                );
-            }
-
             unsafe
             {
+                Vector128<byte>[] roundKeys = new Vector128<byte>[10];
+
+                fixed(byte* roundKeyPtr = keys)
+                {
+                    roundKeys[0] = Sse2.LoadVector128(roundKeyPtr + 0);
+                    roundKeys[1] = Sse2.LoadVector128(roundKeyPtr + 16);
+                    roundKeys[2] = Sse2.LoadVector128(roundKeyPtr + 32);
+                    roundKeys[3] = Sse2.LoadVector128(roundKeyPtr + 48);
+                    roundKeys[4] = Sse2.LoadVector128(roundKeyPtr + 64);
+                    roundKeys[5] = Sse2.LoadVector128(roundKeyPtr + 80);
+                    roundKeys[6] = Sse2.LoadVector128(roundKeyPtr + 96);
+                    roundKeys[7] = Sse2.LoadVector128(roundKeyPtr + 112);
+                    roundKeys[8] = Sse2.LoadVector128(roundKeyPtr + 128);
+                    roundKeys[9] = Sse2.LoadVector128(roundKeyPtr + 144);
+                }
+
                 fixed(byte* keyPtr = input)
                 {
+                    Vector128<byte> d;
+
                     for (int i = 0; i < CryptoNight.Constants.InitSizeBlock; i++)
                     {
                         d = Sse2.LoadVector128(keyPtr + (i * Constants.BlockSize));
@@ -228,6 +276,7 @@ namespace Canti.Blockchain.Crypto.AES
             Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
         }
 
+        /* TODO: Replace with Store and a fixed array */
         private static void AssignVectorToArray<T>(Vector128<T> vec, T[] arr, int offset = 0) where T : struct
         {
             for (int i = 0; i < 16; i++)

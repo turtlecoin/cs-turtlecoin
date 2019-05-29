@@ -228,20 +228,32 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             byte[] text = cnState.GetText();
 
             /* Expand our initial key into many for each round of pseudo aes */
-            byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey2());
+            byte[] expandedKeys = AES.AES.ExpandKey(cnState.GetAESKey2(), cnParams.Intrinsics());
             
             for (int i = 0; i < cnParams.Memory() / Constants.InitSizeByte; i++)
             {
-                for (int j = 0; j < Constants.InitSizeBlock; j++)
+                if (Aes.IsSupported && cnParams.Intrinsics())
                 {
-                    int offsetA = j * AES.Constants.BlockSize;
-                    int offsetB = (i * Constants.InitSizeByte) + offsetA;
+                    AES.AES.AESPseudoRoundXOR(
+                        expandedKeys,
+                        text,
+                        scratchpad,
+                        i * Constants.InitSizeByte
+                    );
+                }
+                else
+                {
+                    for (int j = 0; j < Constants.InitSizeBlock; j++)
+                    {
+                        int offsetA = j * AES.Constants.BlockSize;
+                        int offsetB = (i * Constants.InitSizeByte) + offsetA;
 
-                    XORBlocks(text, scratchpad, offsetA, offsetB);
+                        XORBlocks(text, scratchpad, offsetA, offsetB);
 
-                    /* Need to pass the array with an offset because we manip
-                       it in place */
-                    AES.AES.AESBPseudoRound(expandedKeys, text, offsetA);
+                        /* Need to pass the array with an offset because we manip
+                           it in place */
+                        AES.AES.AESBPseudoRound(expandedKeys, text, offsetA);
+                    }
                 }
             }
 
