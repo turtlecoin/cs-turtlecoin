@@ -116,74 +116,17 @@ namespace Canti.Blockchain.Crypto.AES
 
         public static void AESBSingleRoundNative(byte[] keys, byte[] input)
         {
-            Vector128<byte> roundKey = Vector128.Create(
-                keys[0],
-                keys[1],
-                keys[2],
-                keys[3],
-                keys[4],
-                keys[5],
-                keys[6],
-                keys[7],
-                keys[8],
-                keys[9],
-                keys[10],
-                keys[11],
-                keys[12],
-                keys[13],
-                keys[14],
-                keys[15]
-            );
-
-            Vector128<byte> val = Vector128.Create(
-                input[0],
-                input[1],
-                input[2],
-                input[3],
-                input[4],
-                input[5],
-                input[6],
-                input[7],
-                input[8],
-                input[9],
-                input[10],
-                input[11],
-                input[12],
-                input[13],
-                input[14],
-                input[15]
-            );
-
-            Vector128<byte> result = Aes.Encrypt(val, roundKey);
-
-            AssignVectorToArray(result, input);
-        }
-
-        public static void AESBSingleRound(byte[] keys, byte[] input, bool enableIntrinsics = true)
-        {
-            if (Aes.IsSupported && enableIntrinsics)
+            unsafe
             {
-                AESBSingleRoundNative(keys, input);
-                return;
+                fixed(byte* roundKeyPtr = keys, valPtr = input)
+                {
+                    Vector128<byte> roundKey = Sse2.LoadVector128(roundKeyPtr);
+                    Vector128<byte> val = Sse2.LoadVector128(valPtr);
+                    Sse2.Store(valPtr, Aes.Encrypt(val, roundKey));
+                }
             }
-
-            uint[] b0 = new uint[4];
-            uint[] b1 = new uint[4];
-
-            /* Copy 16 bytes from input[inputOffset] to b0 (4 uints) */
-            Buffer.BlockCopy(input, 0, b0, 0, 16);
-
-            uint[] keysAsUint = new uint[keys.Length / 4];
-
-            /* Possibly do this with a pointer instead for speed? */
-            Buffer.BlockCopy(keys, 0, keysAsUint, 0, keys.Length);
-
-            Round(b1, b0, keysAsUint, 0);
-
-            /* Copy 16 bytes from b1 to input (4 uints) */
-            Buffer.BlockCopy(b1, 0, input, 0, 16);
         }
-
+        
         private static void AESPseudoRoundNative(byte[] keys, byte[] input)
         {
             unsafe
@@ -225,6 +168,86 @@ namespace Canti.Blockchain.Crypto.AES
 
                         Sse2.Store(keyPtr + (i * Constants.BlockSize), d);
                     }
+                }
+            }
+        }
+
+        private static void Aes256Assist1(ref Vector128<byte> t1, ref Vector128<byte> t2)
+        {
+            Vector128<byte> t4;
+
+            t2 = Sse2.Shuffle(t2.AsInt32(), 0xff).AsByte();
+            t4 = Sse2.ShiftLeftLogical128BitLane(t1, 0x04);
+            t1 = Sse2.Xor(t1, t4);
+            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
+            t1 = Sse2.Xor(t1, t4);
+            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
+            t1 = Sse2.Xor(t1, t4);
+            t1 = Sse2.Xor(t1, t2);
+        }
+
+        private static void Aes256Assist2(ref Vector128<byte> t1, ref Vector128<byte> t3)
+        {
+            Vector128<byte> t2, t4;
+
+            t4 = Aes.KeygenAssist(t1, 0x00);
+            t2 = Sse2.Shuffle(t4.AsInt32(), 0xaa).AsByte();
+            t4 = Sse2.ShiftLeftLogical128BitLane(t3, 0x04);
+            t3 = Sse2.Xor(t3, t4);
+            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
+            t3 = Sse2.Xor(t3, t4);
+            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
+            t3 = Sse2.Xor(t3, t4);
+            t3 = Sse2.Xor(t3, t2);
+        }
+
+        private static byte[] ExpandKeyNative(byte[] key)
+        {
+            unsafe
+            {
+                byte[] expandedKey = new byte[240];
+
+                fixed(byte* keyPtr = key, expandedKeyPtr = expandedKey)
+                {
+                    Vector128<byte> t1;
+                    Vector128<byte> t2;
+                    Vector128<byte> t3;
+
+                    t1 = Sse2.LoadVector128(keyPtr);
+                    t3 = Sse2.LoadVector128(keyPtr + 16);
+
+                    Sse2.Store(expandedKeyPtr, t1);
+                    Sse2.Store(expandedKeyPtr + 16, t3);
+
+                    t2 = Aes.KeygenAssist(t3, 0x01);
+                    Aes256Assist1(ref t1, ref t2);
+                    Sse2.Store(expandedKeyPtr + 32, t1);
+                    Aes256Assist2(ref t1, ref t3);
+                    Sse2.Store(expandedKeyPtr + 48, t3);
+
+                    t2 = Aes.KeygenAssist(t3, 0x02);
+                    Aes256Assist1(ref t1, ref t2);
+                    Sse2.Store(expandedKeyPtr + 64, t1);
+                    Aes256Assist2(ref t1, ref t3);
+                    Sse2.Store(expandedKeyPtr + 80, t3);
+
+                    t2 = Aes.KeygenAssist(t3, 0x04);
+                    Aes256Assist1(ref t1, ref t2);
+                    Sse2.Store(expandedKeyPtr + 96, t1);
+                    Aes256Assist2(ref t1, ref t3);
+                    Sse2.Store(expandedKeyPtr + 112, t3);
+
+                    t2 = Aes.KeygenAssist(t3, 0x08);
+                    Aes256Assist1(ref t1, ref t2);
+                    Sse2.Store(expandedKeyPtr + 128, t1);
+                    Aes256Assist2(ref t1, ref t3);
+                    Sse2.Store(expandedKeyPtr + 144, t3);
+
+                    t2 = Aes.KeygenAssist(t3, 0x10);
+                    Aes256Assist1(ref t1, ref t2);
+                    Sse2.Store(expandedKeyPtr + 160, t1);
+
+                    return expandedKey;
                 }
             }
         }
@@ -276,105 +299,29 @@ namespace Canti.Blockchain.Crypto.AES
             Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
         }
 
-        /* TODO: Replace with Store and a fixed array */
-        private static void AssignVectorToArray<T>(Vector128<T> vec, T[] arr, int offset = 0) where T : struct
+        public static void AESBSingleRound(byte[] keys, byte[] input, bool enableIntrinsics = true)
         {
-            for (int i = 0; i < 16; i++)
+            if (Aes.IsSupported && enableIntrinsics)
             {
-                arr[i + offset] = vec.GetElement(i);
-            }
-        }
-
-        private static void Aes256Assist1(ref Vector128<byte> t1, ref Vector128<byte> t2)
-        {
-            Vector128<byte> t4;
-            t2 = Sse2.Shuffle(t2.AsInt32(), 0xff).AsByte();
-            
-            /* This operation corresponds to _mm_bslli_si128, not _mm_slli_si128
-               which is used in the original slow hash code. However, the
-               two descriptions in the intel manual appear to be exactly the
-               same: https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_slli_si128&expand=5236,3954,5288,5315,5315&techs=SSE2
-                     https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_bslli_si128&expand=5236,3954,5288,5315,5315,586&techs=SSE2 */
-            t4 = Sse2.ShiftLeftLogical128BitLane(t1, 0x04);
-            t1 = Sse2.Xor(t1, t4);
-            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
-            t1 = Sse2.Xor(t1, t4);
-            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
-            t1 = Sse2.Xor(t1, t4);
-            t1 = Sse2.Xor(t1, t2);
-        }
-
-        private static void Aes256Assist2(ref Vector128<byte> t1, ref Vector128<byte> t3)
-        {
-            Vector128<byte> t2, t4;
-
-            t4 = Aes.KeygenAssist(t1, 0x00);
-            t2 = Sse2.Shuffle(t4.AsInt32(), 0xaa).AsByte();
-            t4 = Sse2.ShiftLeftLogical128BitLane(t3, 0x04);
-            t3 = Sse2.Xor(t3, t4);
-            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
-            t3 = Sse2.Xor(t3, t4);
-            t4 = Sse2.ShiftLeftLogical128BitLane(t4, 0x04);
-            t3 = Sse2.Xor(t3, t4);
-            t3 = Sse2.Xor(t3, t2);
-        }
-
-        /* https://github.com/turtlecoin/turtlecoin/blob/60f1dd1360503d606636185edf8dbf4eb1b2ace8/src/crypto/slow-hash-x86.c#L252 */
-        private static byte[] ExpandKeyNative(byte[] key)
-        {
-            int keyBase = key.Length / Constants.RoundKeyLength;
-            int numKeys = keyBase + Constants.RoundBase;
-
-            int expandedKeyLength = numKeys * Constants.RoundKeyLength
-                                            * Constants.ColumnLength;
-
-            byte[] expandedKey = new byte[240];
-
-            Vector128<byte> t1;
-            Vector128<byte> t2;
-            Vector128<byte> t3;
-
-            unsafe
-            {
-                fixed(byte* keyPtr = key)
-                {
-                    t1 = Sse2.LoadVector128(keyPtr);
-                    t3 = Sse2.LoadVector128(keyPtr + 16);
-                }
+                AESBSingleRoundNative(keys, input);
+                return;
             }
 
-            AssignVectorToArray(t1, expandedKey, 0);
-            AssignVectorToArray(t3, expandedKey, 16);
+            uint[] b0 = new uint[4];
+            uint[] b1 = new uint[4];
 
-            t2 = Aes.KeygenAssist(t3, 0x01);
-            Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, expandedKey, 32);
-            Aes256Assist2(ref t1, ref t3);
-            AssignVectorToArray(t3, expandedKey, 48);
+            /* Copy 16 bytes from input[inputOffset] to b0 (4 uints) */
+            Buffer.BlockCopy(input, 0, b0, 0, 16);
 
-            t2 = Aes.KeygenAssist(t3, 0x02);
-            Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, expandedKey, 64);
-            Aes256Assist2(ref t1, ref t3);
-            AssignVectorToArray(t3, expandedKey, 80);
+            uint[] keysAsUint = new uint[keys.Length / 4];
 
-            t2 = Aes.KeygenAssist(t3, 0x04);
-            Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, expandedKey, 96);
-            Aes256Assist2(ref t1, ref t3);
-            AssignVectorToArray(t3, expandedKey, 112);
+            /* Possibly do this with a pointer instead for speed? */
+            Buffer.BlockCopy(keys, 0, keysAsUint, 0, keys.Length);
 
-            t2 = Aes.KeygenAssist(t3, 0x08);
-            Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, expandedKey, 128);
-            Aes256Assist2(ref t1, ref t3);
-            AssignVectorToArray(t3, expandedKey, 144);
+            Round(b1, b0, keysAsUint, 0);
 
-            t2 = Aes.KeygenAssist(t3, 0x10);
-            Aes256Assist1(ref t1, ref t2);
-            AssignVectorToArray(t1, expandedKey, 160);
-
-            return expandedKey;
+            /* Copy 16 bytes from b1 to input (4 uints) */
+            Buffer.BlockCopy(b1, 0, input, 0, 16);
         }
 
         public static byte[] ExpandKey(byte[] key, bool enableIntrinsics = true)
@@ -436,9 +383,6 @@ namespace Canti.Blockchain.Crypto.AES
             return expanded;
         }
 
-        /* This can of course be done with a loop and utilizing FourTables()
-         * below, but we need all the speed we can get, so are manually
-         * unrolling it. */
         private static void Round(uint[] y, uint[] x, uint[] key, int keyOffset)
         {
             y[0] = key[keyOffset] ^ FourTablesA(x);
@@ -446,18 +390,6 @@ namespace Canti.Blockchain.Crypto.AES
             y[2] = key[keyOffset + 2] ^ FourTablesC(x);
             y[3] = key[keyOffset + 3] ^ FourTablesD(x);
         }
-
-        /* FourTablesA, B, C, D, are just this with the i variable prefilled in
-         * for a tad more speed.
-         * 
-        private static uint FourTables(uint[] x, uint i)
-        {
-            return Constants.SbData[0][BVal(x[(0 + i) % 4], 0)] ^
-            Constants.SbData[1][BVal(x[(1 + i) % 4], 1)] ^
-            Constants.SbData[2][BVal(x[(2 + i) % 4], 2)] ^
-            Constants.SbData[3][BVal(x[(3 + i) % 4], 3)];
-        }
-        */
 
         private static uint FourTablesA(uint[] x)
         {
@@ -514,17 +446,8 @@ namespace Canti.Blockchain.Crypto.AES
             return Constants.SubByteValue[y, x];
         }
 
-        /* Rotate array one step left, e.g. [1, 2, 3, 4] becomes [2, 3, 4, 1]
-           Assumes input is Constants.ColumnLength long 
-
-           I strongly suspect this won't work well with arrays that aren't 4 bytes long..
-                    
-           Old routine took 00:01:09 for 100000000 iterations
-           New routine took 00:00:85 for 100000000 iterations
-         */
         private static byte[] RotLeft(byte[] input)
         {
-            // Constants.ColumnLength = 4
             return new byte[] { input[1], input[2], input[3], input[0] };
         }
     }
