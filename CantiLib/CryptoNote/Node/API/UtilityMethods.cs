@@ -37,7 +37,7 @@ namespace Canti.CryptoNote
         #region API Methods
 
         // TODO - this is a debug method
-        [ApiMethod("PeerList")]
+        [ApiMethod("PeerList", RequiresValidation = true)]
         public string GetPeerList()
         {
             lock (Node.PeerList)

@@ -103,9 +103,9 @@ namespace Canti.CryptoNote
         internal void OnPacketReceived(Peer Peer, Packet Packet)
         {
             // Log debug message
-            Logger?.Debug($"[{Peer.Address}:{Peer.Port} IN] {Packet.Type} {Packet.Flag} (VALIDATED: {Peer.Validated}, " +
+            Logger.Debug($"[{Peer.Address}:{Peer.Port} IN] {Packet.Type} {Packet.Flag} (VALIDATED: {Peer.Validated}, " +
                 $"RESPONSE REQUIRED: {Packet.Header.ResponseRequired})");
-            //Logger?.Debug($"  Payload Size: {Packet.Header.PayloadSize}");
+            //Logger.Debug($"  Payload Size: {Packet.Header.PayloadSize}");
             //PrintPacketBody(Packet.Body);
 
             // Wrap this in a try-catch, in case we received an invalid packet
@@ -154,7 +154,7 @@ namespace Canti.CryptoNote
         internal void OnPacketSent(Peer Peer, Packet Packet)
         {
             // Log debug message
-            Logger?.Debug($"[{Peer.Address}:{Peer.Port} OUT] {Packet.Type} {Packet.Flag} (VALIDATED: {Peer.Validated}, " +
+            Logger.Debug($"[{Peer.Address}:{Peer.Port} OUT] {Packet.Type} {Packet.Flag} (VALIDATED: {Peer.Validated}, " +
                 $"RESPONSE REQUIRED: {Packet.Header.ResponseRequired})");
         }
 
@@ -162,7 +162,7 @@ namespace Canti.CryptoNote
         internal void OnPeerConnected(Peer Peer)
         {
             // Log connection message
-            Logger?.Debug($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] CONNECTION FORMED");
+            Logger.Debug($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] CONNECTION FORMED");
 
             // TODO - un-comment when syncing is ready to be tested, otherwise we get flooded
             //NotifyChain(Peer);
@@ -172,12 +172,12 @@ namespace Canti.CryptoNote
         internal void OnPeerDisconnected(Peer Peer)
         {
             // Log disconnection message
-            Logger?.Debug($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] PEER DISCONNECTED");
+            Logger.Debug($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] PEER DISCONNECTED");
 
             // Warn if we have no more connections
             if (!Stopped && PeerList.Count == 0)
             {
-                Logger?.Warning("All peer connections have been dropped");
+                Logger.Warning("All peer connections have been dropped");
             }
         }
 
@@ -196,26 +196,26 @@ namespace Canti.CryptoNote
                 {
                     string Output = $"[{Index}] {Entry.Key}:";
                     Output = Output.PadLeft(Output.Length + (Depth * 2));
-                    Logger?.Debug(Output);
+                    Logger.Debug(Output);
                     PrintPacketBody(Entry.Value, Depth + 1);
                 }
                 else if (Entry.Key == "block_ids")
                 {
                     string Output = $"[{Index}] {Entry.Key}:";
                     Output = Output.PadLeft(Output.Length + (Depth * 2));
-                    Logger?.Debug(Output);
+                    Logger.Debug(Output);
                     for (var i = 0; i < Entry.Value.Length; i += 64)
                     {
                         string tmp = $"[{i / 64}] {Entry.Value.Substring(i, 64)}";
                         tmp = tmp.PadLeft(tmp.Length + ((Depth + 1) * 2));
-                        Logger?.Debug(tmp);
+                        Logger.Debug(tmp);
                     }
                 }
                 else
                 {
                     string Output = $"[{Index}] {Entry.Key}: {Entry.Value}";
                     Output = Output.PadLeft(Output.Length + (Depth * 2));
-                    Logger?.Debug(Output);
+                    Logger.Debug(Output);
                 }
                 Index++;
             }

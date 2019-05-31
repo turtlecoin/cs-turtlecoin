@@ -56,6 +56,9 @@ namespace Canti.CryptoNote
             // Let the node know a handshake has been accepted
             OnPeerConnected(Peer);
 
+            // Add core sync data
+            AddSyncData(Peer, Packet["payload_data"]);
+
             // Add peer list candidates
             if (Packet["local_peerlist"] != null)
             {

@@ -22,7 +22,8 @@ namespace Canti.CryptoNote
 
             // TODO - use node time
 
-            // TODO - do something with payload/core sync data
+            // Add core sync data
+            AddSyncData(Peer, Packet["payload_data"]);
 
             // Received a request
             if (Packet.Flag == PacketFlag.REQUEST)

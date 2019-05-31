@@ -13,6 +13,10 @@ All but powerless
 
 You need the `dotnet` command line tools.
 
+Additionally, if the crypto portion of CantiLib is needed (as is in the case of CS-TurtleCoin), then you will also need to compile the turtlecoin-crypto-shared library from the link below and place the resulting file in the "Include" folder before compiling the solution.
+
+https://github.com/turtlecoin/turtlecoin-crypto/tree/development
+
 #### Windows
 
 Install the dotnet sdk from here - https://www.microsoft.com/net/download

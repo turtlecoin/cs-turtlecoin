@@ -18,7 +18,10 @@ namespace Canti.CryptoNote
         internal Logger Logger { get; set; }
 
         // The current height of the blockchain
-        internal int Height { get; set; }
+        internal uint Height { get; set; }
+
+        // The known height of the blockchain
+        internal uint KnownHeight { get; set; }
 
         // The hash of the last stored block
         internal string LastHash { get; set; }
@@ -66,6 +69,7 @@ namespace Canti.CryptoNote
             // Setup default variable values
             // TODO - all this
             Height = 1;
+            KnownHeight = 1;
             LastHash = "7fb97df81221dd1366051b2d0bc7f49c66c22ac4431d879c895b06d66ef66f4c";
         }
 

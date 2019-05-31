@@ -35,6 +35,7 @@ namespace Canti.CryptoNote
         {
             // Assign API method context
             ApiServer.MethodContexts += new UtilityMethods(this);
+            ApiServer.MethodContexts += new BlockchainMethods(this);
             Logger.Debug("API method contexts added");
 
             // Set to default port if not specified
@@ -47,7 +48,7 @@ namespace Canti.CryptoNote
             }
             catch (Exception e)
             {
-                Logger?.Error($"Could not start API server: {e.Message}");
+                Logger.Error($"Could not start API server: {e.Message}");
                 return false;
             }
             Logger.Debug("API server started");
@@ -61,7 +62,7 @@ namespace Canti.CryptoNote
         {
             // Stops the API server
             ApiServer.Stop();
-            Logger?.Debug("Server stopped");
+            Logger.Debug("Api listener stopped");
         }
 
         #endregion

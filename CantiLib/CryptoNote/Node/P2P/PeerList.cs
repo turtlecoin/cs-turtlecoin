@@ -30,17 +30,11 @@ namespace Canti.CryptoNote
         {
             // Assign variables
             PeerList = new List<Peer>();
-
-            // Start peer discovery
-            StartDiscovery();
         }
 
         // Stops peer list operations
         private void StopPeerList()
         {
-            // Stop peer discovery
-            StopDiscovery();
-
             // Loop until peer list is empty
             while (PeerList.Count > 0)
             {

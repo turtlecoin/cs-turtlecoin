@@ -52,6 +52,18 @@ namespace Canti.CryptoNote
             }
         }
 
+        // Handles core sync data sent by peers
+        private void AddSyncData(Peer Peer, PortableStorage SyncData)
+        {
+            // TODO - handle syncing
+            // TODO - queue sync data?
+            // TODO - compare heights and top block ids of peers?
+            if (SyncData["current_height"] > Blockchain.KnownHeight)
+            {
+                Blockchain.KnownHeight = SyncData["current_height"];
+            }
+        }
+
         #endregion
     }
 }

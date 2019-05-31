@@ -27,6 +27,9 @@ namespace Canti.CryptoNote
         // Thread in which new peers are discovered
         private Timer DiscoveryTimer { get; set; }
 
+        // Tells the discovery timer whether or not discovery is already active
+        private bool DiscoveryActive { get; set; }
+
         #endregion
 
         #endregion
@@ -184,6 +187,10 @@ namespace Canti.CryptoNote
             // Check if discovery is enabled
             if (!Globals.P2P_DISCOVERY_ENABLED) return;
 
+            // Check if discovery is already active
+            if (DiscoveryActive) return;
+            DiscoveryActive = true;
+
             // Check if the peer list has space for a new peer
             if (GetPeerCount() >= Globals.P2P_MAX_PEER_CONNECTIONS) return;
 
@@ -229,13 +236,16 @@ namespace Canti.CryptoNote
                 if (IsPeerBlacklisted(Peer)) return;
 
                 // Attempt to add this peer candidate
-                Logger?.Debug($"[{TryCount}/10] Trying candidate #{RandomIndex} {Peer.Address}:{Peer.Port}, last seen {GetTimeDelta(Peer.LastSeen)} seconds ago");
+                Logger.Debug($"[{TryCount}/10] Trying candidate #{RandomIndex} {Peer.Address}:{Peer.Port}, last seen {GetTimeDelta(Peer.LastSeen)} seconds ago");
                 if (!AddPeer(Peer.Address, (int)Peer.Port))
                 {
                     // Add to failed connection list
                     AddBlacklistedPeer(Peer);
                 }
             }
+
+            // Discovery process finished
+            DiscoveryActive = false;
         }
 
         #endregion

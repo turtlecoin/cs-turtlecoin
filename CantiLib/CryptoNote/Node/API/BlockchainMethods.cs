@@ -1,0 +1,65 @@
+﻿//
+// Copyright (c) 2018-2019 Canti, The TurtleCoin Developers
+// 
+// Please see the included LICENSE file for more information.
+
+using System;
+using System.Diagnostics;
+using Newtonsoft.Json.Linq;
+
+namespace Canti.CryptoNote
+{
+    // API method context for a node's API server
+    internal sealed class BlockchainMethods : IMethodContext
+    {
+        #region Properties and Fields
+
+        #region Private
+
+        // A reference to the associated node
+        private Node Node { get; set; }
+
+        #endregion
+
+        #endregion
+
+        #region Methods
+
+        // Verifies a request's version
+        public bool CheckVersion(int Version)
+        {
+            // Returns true if version is at least the minimum version, but not higher than the current version
+            return Version >= Node.Globals.API_MINIMUM_VERSION && Version <= Node.Globals.API_CURRENT_VERSION;
+        }
+
+        #endregion
+
+        #region API Methods
+
+        // TODO - this is a debug method
+        [ApiMethod("Height")]
+        public string GetHeight()
+        {
+            // Form response
+            var Response = new JObject
+            {
+                ["current_height"] = Node.Blockchain.Height,
+                ["known_height"] = Node.Blockchain.KnownHeight,
+                ["synced"] = Node.Blockchain.Height >= Node.Blockchain.KnownHeight
+            };
+            return Response.ToString();
+        }
+
+        #endregion
+
+        #region Constructors
+
+        // Initializes this API method context
+        internal BlockchainMethods(Node Node)
+        {
+            this.Node = Node;
+        }
+
+        #endregion
+    }
+}

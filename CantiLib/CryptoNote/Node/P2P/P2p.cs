@@ -53,7 +53,7 @@ namespace Canti.CryptoNote
             }
             catch (Exception e)
             {
-                Logger?.Error($"Could not start P2P server: {e.Message}");
+                Logger.Error($"Could not start P2P server: {e.Message}");
                 return false;
             }
             Logger.Debug("P2P server started");
@@ -62,6 +62,10 @@ namespace Canti.CryptoNote
             AddSeedNodes();
             Logger.Debug("Seed nodes added");
 
+            // Start peer discovery
+            StartDiscovery();
+            Logger.Debug("Peer discovery started");
+
             // P2P started
             return true;
         }
@@ -69,13 +73,17 @@ namespace Canti.CryptoNote
         // Stops all P2P operations
         private void StopP2p()
         {
+            // Stop peer discovery
+            StopDiscovery();
+            Logger.Debug("Peer discovery stopped");
+
             // Disposes of the peer list
             StopPeerList();
-            Logger?.Debug("Peer list stopped");
+            Logger.Debug("Peer list stopped");
 
             // Stops the P2P server
             P2pServer.Stop();
-            Logger?.Debug("Server stopped");
+            Logger.Debug("P2p server stopped");
         }
 
         // Adds seed nodes
@@ -97,7 +105,7 @@ namespace Canti.CryptoNote
                 // Stop node if no seeds were added
                 if (PeerList.Count == 0)
                 {
-                    Logger?.Warning("No seed nodes could be added, all connection attempts failed");
+                    Logger.Warning("No seed nodes could be added, all connection attempts failed");
                 }
             }).Start();
         }

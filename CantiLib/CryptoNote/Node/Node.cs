@@ -66,9 +66,13 @@ namespace Canti.CryptoNote
             // Create local storage directory if it doesn't exist
             if (!Directory.Exists(Globals.LOCAL_STORAGE_DIRECTORY))
             {
-                Logger?.Debug($"Creating directory {Globals.LOCAL_STORAGE_DIRECTORY}");
+                Logger.Debug($"Creating directory {Globals.LOCAL_STORAGE_DIRECTORY}");
                 Directory.CreateDirectory(Globals.LOCAL_STORAGE_DIRECTORY);
             }
+
+            // Start blockchain cache
+            if (!StartBlockchainCache()) return false;
+            Logger.WriteLine($"Blockchain cache loaded: {DatabaseLocation}");
 
             // Start P2P server
             if (!StartP2p()) return false;
@@ -78,11 +82,11 @@ namespace Canti.CryptoNote
             if (Globals.API_ENABLED && !StartApi()) return false;
             Logger.WriteLine($"API server started on port {ApiServer.Port}");
 
-            // Start blockchain cache
-            if (!StartBlockchainCache()) return false;
-            Logger.WriteLine($"Blockchain cache loaded: {DatabaseLocation}");
+            // Start syncing
+            StartSync();
+            Logger.WriteLine("Started syncing");
 
-            // Generate identifier
+            // Node started
             Logger.Important($"Node started with ID {Id}");
             return true;
         }
@@ -97,10 +101,11 @@ namespace Canti.CryptoNote
 
             // Set as stopped
             Stopped = true;
+            Logger.Debug("Set stop call");
 
             // Stop sync
             StopSync();
-            Logger.WriteLine("Sync stopped");
+            Logger.WriteLine("Syncing stopped");
 
             // Stop API server
             if (Globals.API_ENABLED) StopApi();

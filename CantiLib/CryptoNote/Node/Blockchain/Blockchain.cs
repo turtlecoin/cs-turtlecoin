@@ -12,6 +12,13 @@ namespace Canti.CryptoNote
     {
         #region Properties and Fields
 
+        #region Internal
+
+        // This node's blockchain storage handler
+        internal BlockchainCache Blockchain { get; private set; }
+
+        #endregion
+
         #region Private
 
         // The location of the database being used
@@ -19,9 +26,6 @@ namespace Canti.CryptoNote
 
         // The database this node will use for storage
         private IDatabase Database { get; set; }
-
-        // This node's blockchain storage handler
-        private BlockchainCache Blockchain { get; set; }
 
         #endregion
 
@@ -56,10 +60,6 @@ namespace Canti.CryptoNote
             }
             Logger.Debug("Cache started");
 
-            // Start syncing
-            StartSync();
-            Logger.Debug("Sync started");
-
             // Blockchain cache started
             return true;
         }
@@ -69,11 +69,7 @@ namespace Canti.CryptoNote
         {
             // Stops the blockchain cache
             Blockchain.Stop();
-            Logger.Debug("Server stopped");
-
-            // Stops syncing
-            StopSync();
-            Logger.Debug("Sync stopped");
+            Logger.Debug("Blockchain cache stopped");
         }
 
         #endregion

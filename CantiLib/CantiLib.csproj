@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
@@ -11,6 +11,13 @@
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="2.2.4" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="1.1.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Include\turtlecoin-crypto-shared.dll" Condition="Exists('..\Include\turtlecoin-crypto-shared.dll')">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

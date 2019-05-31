@@ -20,7 +20,7 @@ namespace Canti.CryptoNote
             // TODO - add unique flags and proper value types (need to finish researching)
             // { "Name", SQL Type, Size (if applicable), Unique, Default (if applicable) }
             // Create blocks table if it doesn't exist
-            Logger?.Debug("Setting up blocks table...");
+            Logger.Debug("Setting up blocks table...");
             Database.CreateTable(
                 // Table name
                 "blocks",
@@ -42,7 +42,7 @@ namespace Canti.CryptoNote
             );
 
             // Create transactions table if it doesn't exist
-            Logger?.Debug("Setting up transactions table...");
+            Logger.Debug("Setting up transactions table...");
             Database.CreateTable(
                 // Table name
                 "transactions",
