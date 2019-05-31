@@ -24,7 +24,7 @@ namespace Canti
 
         private const int MinimumVariationBytes = 43 * 2;
 
-        public const string LibraryName = "Include/turtlecoin-crypto-shared.dll";
+        public const string LibraryName = "turtlecoin-crypto-shared.dll";
 
         #endregion
 
@@ -82,13 +82,13 @@ namespace Canti
         [DllImport(LibraryName)]
         private static extern void _cn_turtle_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport("turtle_litecoin-crypto-shared")]
+        [DllImport(LibraryName)]
         private static extern void _cn_turtle_lite_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport("turtle_litecoin-crypto-shared")]
+        [DllImport(LibraryName)]
         private static extern void _cn_turtle_lite_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport("turtle_litecoin-crypto-shared")]
+        [DllImport(LibraryName)]
         private static extern void _cn_turtle_lite_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
         [DllImport(LibraryName)]
@@ -135,7 +135,10 @@ namespace Canti
         private static extern int _underivePublicKey([MarshalAs(UnmanagedType.LPStr)]string derivation, UInt32 outputIndex, [MarshalAs(UnmanagedType.LPStr)]string derivedKey, ref IntPtr publicKey);
 
         [DllImport(LibraryName)]
-        private static extern void _generateSignature([MarshalAs(UnmanagedType.LPStr)]string prefixHash, [MarshalAs(UnmanagedType.LPStr)]string publicKey, [MarshalAs(UnmanagedType.LPStr)]string privateKey, ref IntPtr signature);
+        private static extern void _generateSignature([MarshalAs(UnmanagedType.LPStr)]string prefixHash, [MarshalAs(UnmanagedType.LPStr)]string privateKey, [MarshalAs(UnmanagedType.LPStr)]string publicKey, ref IntPtr signature);
+
+        [DllImport(LibraryName)]
+        private static extern bool _checkSignature([MarshalAs(UnmanagedType.LPStr)]string prefixHash, [MarshalAs(UnmanagedType.LPStr)]string publicKey, [MarshalAs(UnmanagedType.LPStr)]string signature);
 
         [DllImport(LibraryName)]
         private static extern void _generateKeyImage([MarshalAs(UnmanagedType.LPStr)]string publicKey, [MarshalAs(UnmanagedType.LPStr)]string privateKey, ref IntPtr keyImage);
@@ -463,7 +466,7 @@ namespace Canti
 
             KeyPair viewKeys = new KeyPair();
 
-            _generateViewKeysFromPrivateSpendKey(spendPrivateKey, ref viewPrivateKey, ref viewPrivateKey);
+            _generateViewKeysFromPrivateSpendKey(spendPrivateKey, ref viewPrivateKey, ref viewPublicKey);
 
             viewKeys.PrivateKey = Marshal.PtrToStringAnsi(viewPrivateKey);
 
@@ -572,6 +575,15 @@ namespace Canti
             _generateSignature(prefixHash, publicKey, privateKey, ref signature);
 
             return Marshal.PtrToStringAnsi(signature);
+        }
+
+        public static bool CheckSignature(string prefixHash, string publicKey, string signature)
+        {
+            if (!IsKey(prefixHash) || !IsKey(publicKey)) return false;
+
+            if (!CheckKey(publicKey)) return false;
+
+            return _checkSignature(prefixHash, publicKey, signature);
         }
 
         public static string GenerateKeyImage(string publicKey, string privateKey)
