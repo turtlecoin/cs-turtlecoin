@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Daemon": {
+      "commandName": "Project",
+      "commandLineArgs": "-p2p-port 8099 -api-port 8095 -log-level 2"
+    }
+  }
+}

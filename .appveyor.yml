@@ -1,8 +1,5 @@
-os: Visual Studio 2017
+os: Visual Studio 2019
 
 build_script:
   # Does the repo compile
   - ps: dotnet build
-  - ps: cd Tests
-  # Do all the tests pass
-  - ps: dotnet test

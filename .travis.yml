@@ -13,6 +13,3 @@ matrix:
 script:
   # Does the repo compile
   - dotnet build
-  - cd Tests
-  # Do all the tests pass
-  - dotnet test
