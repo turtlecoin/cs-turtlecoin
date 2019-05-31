@@ -6,6 +6,7 @@
 // Please see the included LICENSE file for more information.
 
 using System;
+using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
 using Canti.Data;
@@ -113,6 +114,12 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                                             ICryptoNight cnParams,
                                             byte[] scratchpad)
         {
+            if (Sse2.IsSupported && Bmi2.X64.IsSupported && cnParams.Intrinsics())
+            {
+                MixScratchpadV0Native(cnState, cnParams, scratchpad);
+                return;
+            }
+
             MixScratchpadState mixingState = new MixScratchpadState(cnState);
 
             for (int i = 0; i < cnParams.Iterations() / 2; i++)
@@ -139,6 +146,91 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     CopyBlockToScratchpad(scratchpad, mixingState.c, j);
 
                     SwapBlocks(ref mixingState.a, ref mixingState.b);
+                }
+            }
+        }
+
+        /* CryptoNight Step 3: Bounce randomly 1,048,576 times (1<<20)
+         * through the mixing scratchpad, using 524,288 iterations of the
+         * following mixing function.  Each execution performs two reads
+         * and writes from the mixing scratchpad.
+         */
+        private static void MixScratchpadV0Native(
+            CNState cnState,
+            ICryptoNight cnParams,
+            byte[] scratchpad)
+        {
+            MixScratchpadState mixingState = new MixScratchpadState(cnState);
+
+            unsafe
+            {
+                fixed(byte* scratchpadPtr = scratchpad, aByte = mixingState.a, bByte = mixingState.b, cByte = mixingState.c)
+                {
+                    ulong lo;
+                    ulong hi;
+
+                    ulong *loPtr = &lo;
+                    ulong *p;
+
+                    ulong *a = (ulong *)aByte;
+                    ulong *b = (ulong *)bByte;
+                    ulong *c = (ulong *)cByte;
+
+                    Vector128<byte> _a;
+                    Vector128<byte> _b = Sse2.LoadVector128(bByte);
+                    Vector128<byte> _c;
+
+                    int j;
+
+                    for (int i = 0; i < cnParams.Iterations() / 2; i++)
+                    {
+                        /* Get our 'memory' address we're using for this round */
+                        j = E2I_Preconverted(*a, cnParams.Memory());
+
+                        /* Load C from the memory address in the scratchpad */
+                        _c = Sse2.LoadVector128(scratchpadPtr + (j * AES.Constants.BlockSize));
+
+                        /* Reload A from the buffer */
+                        _a = Sse2.LoadVector128(aByte);
+
+                        /* Use AES to mix scratchpad into c */
+                        _c = Aes.Encrypt(_c, _a);
+
+                        /* Store C back in it's original spot */
+                        Sse2.Store(cByte, _c);
+
+                        /* XOR b and C, and store back at the 'memory' address
+                           in the scratchpad */
+                        Sse2.Store(scratchpadPtr + (j * AES.Constants.BlockSize), Sse2.Xor(_b, _c));
+                        
+                        /* Get the new 'memory' address we're using for this round */
+                        j = E2I_Preconverted(*c, cnParams.Memory());
+
+                        /* Grab a pointer to the spot of memory we're interested */
+                        p = (ulong *)(scratchpadPtr + (j * AES.Constants.BlockSize));
+
+                        /* Load b from the memory address in the scratchpad */
+                        b[0] = p[0];
+                        b[1] = p[1];
+
+                        /* 64 bit multiply the low parts of C and B */
+                        hi = Bmi2.X64.MultiplyNoFlags(c[0], b[0], loPtr);
+
+                        /* Sum the result halves of the multiplication with each half of A */
+                        a[0] += hi;
+                        a[1] += lo;
+
+                        /* Write the modified A back to the scratchpad */
+                        p[0] = a[0];
+                        p[1] = a[1];
+
+                        /* Xor the two 64 bit halves of A and B */
+                        a[0] ^= b[0];
+                        a[1] ^= b[1];
+
+                        /* Store C in B */
+                        _b = _c;
+                    }
                 }
             }
         }
@@ -446,6 +538,14 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             /* Read 8 bytes as a ulong */
             ulong j = Encoding.UnsafeByteArrayToUlong(input);
 
+            j = j * 1 >> 4;
+
+            /* Bitwise AND with (memorySize / blocksize) - 1*/
+            return (int)(j & (ulong)((memorySize * 1 >> 4) - 1));
+        }
+
+        private static int E2I_Preconverted(ulong j, int memorySize)
+        {
             j = j * 1 >> 4;
 
             /* Bitwise AND with (memorySize / blocksize) - 1*/
