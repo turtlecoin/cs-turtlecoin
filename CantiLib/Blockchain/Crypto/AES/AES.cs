@@ -58,116 +58,107 @@ namespace Canti.Blockchain.Crypto.AES
 {
     public static class AES
     {
-        public static void AESPseudoRoundXOR(
+        public static unsafe void AESPseudoRoundXOR(
             byte[] keys,
             byte[] input,
             byte[] xor,
             int offset)
         {
-            unsafe
+            Vector128<byte>[] roundKeys = new Vector128<byte>[10];
+
+            fixed(byte* roundKeyPtr = keys)
             {
-                Vector128<byte>[] roundKeys = new Vector128<byte>[10];
+                roundKeys[0] = Sse2.LoadVector128(roundKeyPtr + 0);
+                roundKeys[1] = Sse2.LoadVector128(roundKeyPtr + 16);
+                roundKeys[2] = Sse2.LoadVector128(roundKeyPtr + 32);
+                roundKeys[3] = Sse2.LoadVector128(roundKeyPtr + 48);
+                roundKeys[4] = Sse2.LoadVector128(roundKeyPtr + 64);
+                roundKeys[5] = Sse2.LoadVector128(roundKeyPtr + 80);
+                roundKeys[6] = Sse2.LoadVector128(roundKeyPtr + 96);
+                roundKeys[7] = Sse2.LoadVector128(roundKeyPtr + 112);
+                roundKeys[8] = Sse2.LoadVector128(roundKeyPtr + 128);
+                roundKeys[9] = Sse2.LoadVector128(roundKeyPtr + 144);
+            }
 
-                fixed(byte* roundKeyPtr = keys)
+            fixed(byte* keyPtr = input, xorPtr = xor)
+            {
+                Vector128<byte> d;
+
+                int xorOffset = offset;
+
+                for (int i = 0; i < CryptoNight.Constants.InitSizeBlock; i++)
                 {
-                    roundKeys[0] = Sse2.LoadVector128(roundKeyPtr + 0);
-                    roundKeys[1] = Sse2.LoadVector128(roundKeyPtr + 16);
-                    roundKeys[2] = Sse2.LoadVector128(roundKeyPtr + 32);
-                    roundKeys[3] = Sse2.LoadVector128(roundKeyPtr + 48);
-                    roundKeys[4] = Sse2.LoadVector128(roundKeyPtr + 64);
-                    roundKeys[5] = Sse2.LoadVector128(roundKeyPtr + 80);
-                    roundKeys[6] = Sse2.LoadVector128(roundKeyPtr + 96);
-                    roundKeys[7] = Sse2.LoadVector128(roundKeyPtr + 112);
-                    roundKeys[8] = Sse2.LoadVector128(roundKeyPtr + 128);
-                    roundKeys[9] = Sse2.LoadVector128(roundKeyPtr + 144);
-                }
+                    d = Sse2.LoadVector128(keyPtr + (i * Constants.BlockSize));
 
-                fixed(byte* keyPtr = input, xorPtr = xor)
-                {
-                    Vector128<byte> d;
+                    d = Sse2.Xor(d, Sse2.LoadVector128(xorPtr + xorOffset));
 
-                    int xorOffset = offset;
+                    /* Increase offset by 128 bits (16 bytes) */
+                    xorOffset += 16;
 
-                    for (int i = 0; i < CryptoNight.Constants.InitSizeBlock; i++)
-                    {
-                        d = Sse2.LoadVector128(keyPtr + (i * Constants.BlockSize));
+                    d = Aes.Encrypt(d, roundKeys[0]);
+                    d = Aes.Encrypt(d, roundKeys[1]);
+                    d = Aes.Encrypt(d, roundKeys[2]);
+                    d = Aes.Encrypt(d, roundKeys[3]);
+                    d = Aes.Encrypt(d, roundKeys[4]);
+                    d = Aes.Encrypt(d, roundKeys[5]);
+                    d = Aes.Encrypt(d, roundKeys[6]);
+                    d = Aes.Encrypt(d, roundKeys[7]);
+                    d = Aes.Encrypt(d, roundKeys[8]);
+                    d = Aes.Encrypt(d, roundKeys[9]);
 
-                        d = Sse2.Xor(d, Sse2.LoadVector128(xorPtr + xorOffset));
-
-                        /* Increase offset by 128 bits (16 bytes) */
-                        xorOffset += 16;
-
-                        d = Aes.Encrypt(d, roundKeys[0]);
-                        d = Aes.Encrypt(d, roundKeys[1]);
-                        d = Aes.Encrypt(d, roundKeys[2]);
-                        d = Aes.Encrypt(d, roundKeys[3]);
-                        d = Aes.Encrypt(d, roundKeys[4]);
-                        d = Aes.Encrypt(d, roundKeys[5]);
-                        d = Aes.Encrypt(d, roundKeys[6]);
-                        d = Aes.Encrypt(d, roundKeys[7]);
-                        d = Aes.Encrypt(d, roundKeys[8]);
-                        d = Aes.Encrypt(d, roundKeys[9]);
-
-                        Sse2.Store(keyPtr + (i * Constants.BlockSize), d);
-                    }
+                    Sse2.Store(keyPtr + (i * Constants.BlockSize), d);
                 }
             }
         }
 
-        public static void AESBSingleRoundNative(byte[] keys, byte[] input)
+        public static unsafe void AESBSingleRoundNative(byte[] keys, byte[] input)
         {
-            unsafe
+            fixed(byte* roundKeyPtr = keys, valPtr = input)
             {
-                fixed(byte* roundKeyPtr = keys, valPtr = input)
-                {
-                    Vector128<byte> roundKey = Sse2.LoadVector128(roundKeyPtr);
-                    Vector128<byte> val = Sse2.LoadVector128(valPtr);
-                    Sse2.Store(valPtr, Aes.Encrypt(val, roundKey));
-                }
+                Vector128<byte> roundKey = Sse2.LoadVector128(roundKeyPtr);
+                Vector128<byte> val = Sse2.LoadVector128(valPtr);
+                Sse2.Store(valPtr, Aes.Encrypt(val, roundKey));
             }
         }
         
-        private static void AESPseudoRoundNative(byte[] keys, byte[] input)
+        private static unsafe void AESPseudoRoundNative(byte[] keys, byte[] input)
         {
-            unsafe
+            Vector128<byte>[] roundKeys = new Vector128<byte>[10];
+
+            fixed(byte* roundKeyPtr = keys)
             {
-                Vector128<byte>[] roundKeys = new Vector128<byte>[10];
+                roundKeys[0] = Sse2.LoadVector128(roundKeyPtr + 0);
+                roundKeys[1] = Sse2.LoadVector128(roundKeyPtr + 16);
+                roundKeys[2] = Sse2.LoadVector128(roundKeyPtr + 32);
+                roundKeys[3] = Sse2.LoadVector128(roundKeyPtr + 48);
+                roundKeys[4] = Sse2.LoadVector128(roundKeyPtr + 64);
+                roundKeys[5] = Sse2.LoadVector128(roundKeyPtr + 80);
+                roundKeys[6] = Sse2.LoadVector128(roundKeyPtr + 96);
+                roundKeys[7] = Sse2.LoadVector128(roundKeyPtr + 112);
+                roundKeys[8] = Sse2.LoadVector128(roundKeyPtr + 128);
+                roundKeys[9] = Sse2.LoadVector128(roundKeyPtr + 144);
+            }
 
-                fixed(byte* roundKeyPtr = keys)
+            fixed(byte* keyPtr = input)
+            {
+                Vector128<byte> d;
+
+                for (int i = 0; i < CryptoNight.Constants.InitSizeBlock; i++)
                 {
-                    roundKeys[0] = Sse2.LoadVector128(roundKeyPtr + 0);
-                    roundKeys[1] = Sse2.LoadVector128(roundKeyPtr + 16);
-                    roundKeys[2] = Sse2.LoadVector128(roundKeyPtr + 32);
-                    roundKeys[3] = Sse2.LoadVector128(roundKeyPtr + 48);
-                    roundKeys[4] = Sse2.LoadVector128(roundKeyPtr + 64);
-                    roundKeys[5] = Sse2.LoadVector128(roundKeyPtr + 80);
-                    roundKeys[6] = Sse2.LoadVector128(roundKeyPtr + 96);
-                    roundKeys[7] = Sse2.LoadVector128(roundKeyPtr + 112);
-                    roundKeys[8] = Sse2.LoadVector128(roundKeyPtr + 128);
-                    roundKeys[9] = Sse2.LoadVector128(roundKeyPtr + 144);
-                }
+                    d = Sse2.LoadVector128(keyPtr + (i * Constants.BlockSize));
 
-                fixed(byte* keyPtr = input)
-                {
-                    Vector128<byte> d;
+                    d = Aes.Encrypt(d, roundKeys[0]);
+                    d = Aes.Encrypt(d, roundKeys[1]);
+                    d = Aes.Encrypt(d, roundKeys[2]);
+                    d = Aes.Encrypt(d, roundKeys[3]);
+                    d = Aes.Encrypt(d, roundKeys[4]);
+                    d = Aes.Encrypt(d, roundKeys[5]);
+                    d = Aes.Encrypt(d, roundKeys[6]);
+                    d = Aes.Encrypt(d, roundKeys[7]);
+                    d = Aes.Encrypt(d, roundKeys[8]);
+                    d = Aes.Encrypt(d, roundKeys[9]);
 
-                    for (int i = 0; i < CryptoNight.Constants.InitSizeBlock; i++)
-                    {
-                        d = Sse2.LoadVector128(keyPtr + (i * Constants.BlockSize));
-
-                        d = Aes.Encrypt(d, roundKeys[0]);
-                        d = Aes.Encrypt(d, roundKeys[1]);
-                        d = Aes.Encrypt(d, roundKeys[2]);
-                        d = Aes.Encrypt(d, roundKeys[3]);
-                        d = Aes.Encrypt(d, roundKeys[4]);
-                        d = Aes.Encrypt(d, roundKeys[5]);
-                        d = Aes.Encrypt(d, roundKeys[6]);
-                        d = Aes.Encrypt(d, roundKeys[7]);
-                        d = Aes.Encrypt(d, roundKeys[8]);
-                        d = Aes.Encrypt(d, roundKeys[9]);
-
-                        Sse2.Store(keyPtr + (i * Constants.BlockSize), d);
-                    }
+                    Sse2.Store(keyPtr + (i * Constants.BlockSize), d);
                 }
             }
         }
@@ -201,54 +192,51 @@ namespace Canti.Blockchain.Crypto.AES
             t3 = Sse2.Xor(t3, t2);
         }
 
-        private static byte[] ExpandKeyNative(byte[] key)
+        private static unsafe byte[] ExpandKeyNative(byte[] key)
         {
-            unsafe
+            byte[] expandedKey = new byte[240];
+
+            fixed(byte* keyPtr = key, expandedKeyPtr = expandedKey)
             {
-                byte[] expandedKey = new byte[240];
+                Vector128<byte> t1;
+                Vector128<byte> t2;
+                Vector128<byte> t3;
 
-                fixed(byte* keyPtr = key, expandedKeyPtr = expandedKey)
-                {
-                    Vector128<byte> t1;
-                    Vector128<byte> t2;
-                    Vector128<byte> t3;
+                t1 = Sse2.LoadVector128(keyPtr);
+                t3 = Sse2.LoadVector128(keyPtr + 16);
 
-                    t1 = Sse2.LoadVector128(keyPtr);
-                    t3 = Sse2.LoadVector128(keyPtr + 16);
+                Sse2.Store(expandedKeyPtr, t1);
+                Sse2.Store(expandedKeyPtr + 16, t3);
 
-                    Sse2.Store(expandedKeyPtr, t1);
-                    Sse2.Store(expandedKeyPtr + 16, t3);
+                t2 = Aes.KeygenAssist(t3, 0x01);
+                Aes256Assist1(ref t1, ref t2);
+                Sse2.Store(expandedKeyPtr + 32, t1);
+                Aes256Assist2(ref t1, ref t3);
+                Sse2.Store(expandedKeyPtr + 48, t3);
 
-                    t2 = Aes.KeygenAssist(t3, 0x01);
-                    Aes256Assist1(ref t1, ref t2);
-                    Sse2.Store(expandedKeyPtr + 32, t1);
-                    Aes256Assist2(ref t1, ref t3);
-                    Sse2.Store(expandedKeyPtr + 48, t3);
+                t2 = Aes.KeygenAssist(t3, 0x02);
+                Aes256Assist1(ref t1, ref t2);
+                Sse2.Store(expandedKeyPtr + 64, t1);
+                Aes256Assist2(ref t1, ref t3);
+                Sse2.Store(expandedKeyPtr + 80, t3);
 
-                    t2 = Aes.KeygenAssist(t3, 0x02);
-                    Aes256Assist1(ref t1, ref t2);
-                    Sse2.Store(expandedKeyPtr + 64, t1);
-                    Aes256Assist2(ref t1, ref t3);
-                    Sse2.Store(expandedKeyPtr + 80, t3);
+                t2 = Aes.KeygenAssist(t3, 0x04);
+                Aes256Assist1(ref t1, ref t2);
+                Sse2.Store(expandedKeyPtr + 96, t1);
+                Aes256Assist2(ref t1, ref t3);
+                Sse2.Store(expandedKeyPtr + 112, t3);
 
-                    t2 = Aes.KeygenAssist(t3, 0x04);
-                    Aes256Assist1(ref t1, ref t2);
-                    Sse2.Store(expandedKeyPtr + 96, t1);
-                    Aes256Assist2(ref t1, ref t3);
-                    Sse2.Store(expandedKeyPtr + 112, t3);
+                t2 = Aes.KeygenAssist(t3, 0x08);
+                Aes256Assist1(ref t1, ref t2);
+                Sse2.Store(expandedKeyPtr + 128, t1);
+                Aes256Assist2(ref t1, ref t3);
+                Sse2.Store(expandedKeyPtr + 144, t3);
 
-                    t2 = Aes.KeygenAssist(t3, 0x08);
-                    Aes256Assist1(ref t1, ref t2);
-                    Sse2.Store(expandedKeyPtr + 128, t1);
-                    Aes256Assist2(ref t1, ref t3);
-                    Sse2.Store(expandedKeyPtr + 144, t3);
+                t2 = Aes.KeygenAssist(t3, 0x10);
+                Aes256Assist1(ref t1, ref t2);
+                Sse2.Store(expandedKeyPtr + 160, t1);
 
-                    t2 = Aes.KeygenAssist(t3, 0x10);
-                    Aes256Assist1(ref t1, ref t2);
-                    Sse2.Store(expandedKeyPtr + 160, t1);
-
-                    return expandedKey;
-                }
+                return expandedKey;
             }
         }
 

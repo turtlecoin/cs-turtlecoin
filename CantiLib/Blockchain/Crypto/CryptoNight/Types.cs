@@ -13,14 +13,20 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 {
     public class MixScratchpadState
     {
-        public MixScratchpadState(CNState cnState)
+        public unsafe MixScratchpadState(CNState cnState)
         {
             k = cnState.GetK();
 
-            for (int i = 0; i < AES.Constants.BlockSize; i++)
+            fixed (byte* aPtr = a, bPtr = b, kPtr = k)
             {
-                a[i] = (byte)(k[i] ^ k[i+32]);
-                b[i] = (byte)(k[i+16] ^ k[i+48]);
+                ulong *_a = (ulong *)aPtr;
+                ulong *_b = (ulong *)bPtr;
+                ulong *_k = (ulong *)kPtr;
+
+                _a[0] = (_k + 0)[0] ^ (_k + 4)[0];
+                _a[1] = (_k + 0)[1] ^ (_k + 4)[1];
+                _b[0] = (_k + 2)[0] ^ (_k + 6)[0];
+                _b[1] = (_k + 2)[1] ^ (_k + 6)[1];
             }
         }
 
