@@ -164,11 +164,9 @@ namespace Canti
                 foreach (var Entry in Entries)
                 {
                     // Serialize entry object
-                    byte[] ObjectBytes = SerializeObject(Entry.Value);
+                    byte[] ObjectBytes = SerializeObject(Entry);
 
                     // Append to output buffer
-                    Output = Output.AppendInteger((byte)Entry.Key.Length);
-                    Output = Output.AppendString(Entry.Key);
                     Output = Output.AppendBytes(ObjectBytes);
                 }
 
@@ -191,11 +189,22 @@ namespace Canti
         #region Private
 
         // Serializes an object to a byte array
-        private static byte[] SerializeObject(dynamic Value)
+        private static byte[] SerializeObject(dynamic Entry)
         {
+            // Append entry name
+            byte[] Output = new[] { (byte)Entry.Key.Length };
+            Output = Output.AppendString((string)Entry.Key);
+
+            // Get entry value
+            var Value = Entry.Value;
+
             // Get object's type
             var Type = GetType(Value);
-            byte[] Output = new[] { (byte)Type };
+            if (Type != SerializationType.BYTEARRAY)
+            {
+                Output = Output.AppendBytes(new[] { (byte)Type });
+            }
+            else Output = Output.AppendBytes(new[] { (byte)SerializationType.STRING });
 
             // Serialize object based on type
             switch (Type)
@@ -261,9 +270,6 @@ namespace Canti
                     break;
 
                 case SerializationType.BYTEARRAY:
-                    // Set serialization type to string
-                    Output = new byte[] { (byte)SerializationType.STRING };
-
                     // Byte size exceeds maximum length, default to nothing
                     if (((byte[])Value).Length > MAX_STRING_LENGTH)
                     {
@@ -438,7 +444,7 @@ namespace Canti
             // Non-serializable type, treat as a single long hex string
             else
             {
-                // TODO - DEBUG CODE
+                // TODO - This isn't final, I still need to explore how other things are serialized
                 Entries.Add(Name, ByteArrayToHexString(Data));
                 return new byte[0];
             }

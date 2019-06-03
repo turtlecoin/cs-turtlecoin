@@ -171,7 +171,7 @@ namespace Canti.CryptoNote
                 // Check if the connected peer list contains this peer
                 if (PeerList.Any(x => x.Id == Peer.Id)) return true;
 
-                // TODO - check if incoming connections has this address+port
+                // TODO - check if any incoming connections have this address + port
             }
 
             // Peer is not connected
@@ -229,7 +229,7 @@ namespace Canti.CryptoNote
                 // Check if this peer is already connected
                 if (IsPeerConnected(Peer)) continue;
 
-                // TODO - check if we are allowing remote connections
+                // TODO - check if we are allowing remote connections??
 
                 // Check if this peer has previously been blacklists
                 // TODO - have a timeout for blacklisted peers to free them (timeout in config)

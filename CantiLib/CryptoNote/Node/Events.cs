@@ -141,7 +141,7 @@ namespace Canti.CryptoNote
                 Logger.Warning($"{e.Message}, killing connection");
                 RemovePeer(Peer);
             }
-
+            
             // TODO - uncomment this catch when done debugging to catch any unknown errors
             /*catch (Exception e)
             {
@@ -162,7 +162,7 @@ namespace Canti.CryptoNote
         internal void OnPeerConnected(Peer Peer)
         {
             // Log connection message
-            Logger.Debug($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] CONNECTION FORMED");
+            Logger.WriteLine($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] CONNECTION FORMED");
 
             // TODO - un-comment when syncing is ready to be tested, otherwise we get flooded
             //NotifyChain(Peer);
@@ -172,12 +172,15 @@ namespace Canti.CryptoNote
         internal void OnPeerDisconnected(Peer Peer)
         {
             // Log disconnection message
-            Logger.Debug($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] PEER DISCONNECTED");
-
-            // Warn if we have no more connections
-            if (!Stopped && PeerList.Count == 0)
+            if (!Stopped)
             {
-                Logger.Warning("All peer connections have been dropped");
+                Logger.WriteLine($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] PEER DISCONNECTED");
+
+                // Warn if we have no more connections
+                if (PeerList.Count == 0)
+                {
+                    Logger.Warning("All peer connections have been dropped");
+                }
             }
         }
 
@@ -185,7 +188,7 @@ namespace Canti.CryptoNote
 
         #endregion
 
-        // TODO - DEBUG CODE
+        // TODO - This is test code to print full packet bodies
         private void PrintPacketBody(dynamic Body, int Depth = 1)
         {
             int Index = 0;

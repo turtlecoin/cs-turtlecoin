@@ -8,8 +8,17 @@ using static Canti.Utils;
 namespace Canti.CryptoNote
 {
     // Handles all blockchain and storage operations
+    // TODO - finish blockchain cache
     internal sealed partial class BlockchainCache
     {
+        #region Constants
+
+        // Table names
+        private const string BLOCKS_TABLE = "blocks";
+        private const string TRANSACTIONS_TABLE = "transactions";
+
+        #endregion
+
         #region Properties and Fields
 
         #region Internal
@@ -46,8 +55,6 @@ namespace Canti.CryptoNote
         {
             // Start database
             StartDatabase(Database);
-
-            // TODO - all this
         }
 
         // Stops the blockchain handler and closes the database connection
@@ -55,8 +62,6 @@ namespace Canti.CryptoNote
         {
             // Stop database
             StopDatabase();
-
-            // TODO
         }
 
         #endregion
@@ -67,7 +72,6 @@ namespace Canti.CryptoNote
         internal BlockchainCache()
         {
             // Setup default variable values
-            // TODO - all this
             Height = 1;
             KnownHeight = 1;
             LastHash = "7fb97df81221dd1366051b2d0bc7f49c66c22ac4431d879c895b06d66ef66f4c";

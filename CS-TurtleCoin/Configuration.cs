@@ -15,7 +15,7 @@ namespace CSTurtleCoin
         // This is the network configuration we will pass to our node instance when creating it
         private static readonly NodeConfig Configuration = new NodeConfig
         {
-            #region Network
+            #region NETWORK
 
             NETWORK_ID = new byte[] {
                 0xb5, 0x0c, 0x4a, 0x6c, 0xcf, 0x52, 0x57, 0x41,
@@ -38,6 +38,13 @@ namespace CSTurtleCoin
                 new PeerCandidate("142.44.242.106", 11897),
                 new PeerCandidate("165.227.252.132", 11897)
             },
+
+            #endregion
+
+            #region CURRENCY
+
+            CURRENCY_NAME = "TurtleCoin",
+            CURRENCY_DIFFICULTY_TARGET = 30,
 
             #endregion
 

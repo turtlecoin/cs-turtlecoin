@@ -36,7 +36,7 @@ namespace Canti.CryptoNote
 
         #region API Methods
 
-        // TODO - this is a debug method
+        // TODO - these are all test methods
         [ApiMethod("PeerList", RequiresValidation = true)]
         public string GetPeerList()
         {
@@ -50,6 +50,7 @@ namespace Canti.CryptoNote
                     {
                         ["incoming"] = Peer.P2pPeer.Direction == PeerDirection.IN,
                         ["last_seen"] = DateTimeOffset.FromUnixTimeSeconds((long)Peer.LastSeen).ToString("dd/MM/yy hh:mm:ss"),
+                        ["height"]= Peer.Height,
                         ["validated"] = Peer.Validated,
                     };
                     if (Peer.Validated)
@@ -80,6 +81,19 @@ namespace Canti.CryptoNote
                 ["local_time"] = DateTime.Now,
                 ["memory_usage"] = CurrentProcess.WorkingSet64,
                 ["peak_memory_usage"] = CurrentProcess.PeakWorkingSet64
+            };
+            return Response.ToString();
+        }
+
+        // Example of a POST-only method
+        [ApiMethod("Test", Type = ApiRequestType.POST)]
+        public string PostTest(string Hi, string Lo)
+        {
+            // Form response
+            var Response = new JObject
+            {
+                ["hi"] = Hi,
+                ["lo"] = Lo
             };
             return Response.ToString();
         }

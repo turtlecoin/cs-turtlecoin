@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (c) 2019, The TurtleCoin Developers
+// Copyright (c) 2019 The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -8,10 +8,18 @@ using System.Runtime.InteropServices;
 
 namespace Canti
 {
-    public class Crypto
+    // TODO - generateRingSignatures
+    // TODO - checkRingSignature
+    /// <summary>
+    /// TurtleCoin cryptography functions
+    /// </summary>
+    public sealed partial class Crypto
     {
         #region Structs
 
+        /// <summary>
+        /// ED25519 keypair
+        /// </summary>
         public struct KeyPair
         {
             public string PrivateKey;
@@ -22,9 +30,11 @@ namespace Canti
 
         #region Constants
 
-        private const int MinimumVariationBytes = 43 * 2;
+        // Minimum variation bytes required for certain hash functions
+        private const int MINIMUM_VARIATION_BYTES = 43 * 2;
 
-        public const string LibraryName = "turtlecoin-crypto-shared.dll";
+        // Location of file
+        private const string LIBRARY_LOCATION = "turtlecoin-crypto-shared.dll";
 
         #endregion
 
@@ -34,129 +44,129 @@ namespace Canti
 
         #region Hashing
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_fast_hash([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_lite_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_lite_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_lite_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_dark_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_dark_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_dark_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_dark_lite_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_dark_lite_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_dark_lite_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_turtle_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_turtle_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_turtle_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_turtle_lite_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_turtle_lite_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _cn_turtle_lite_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
-        private static extern void _cn_soft_shell_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, UInt32 height, ref IntPtr output);
+        [DllImport(LIBRARY_LOCATION)]
+        private static extern void _cn_soft_shell_slow_hash_v0([MarshalAs(UnmanagedType.LPStr)]string input, uint height, ref IntPtr output);
 
-        [DllImport(LibraryName)]
-        private static extern void _cn_soft_shell_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, UInt32 height, ref IntPtr output);
+        [DllImport(LIBRARY_LOCATION)]
+        private static extern void _cn_soft_shell_slow_hash_v1([MarshalAs(UnmanagedType.LPStr)]string input, uint height, ref IntPtr output);
 
-        [DllImport(LibraryName)]
-        private static extern void _cn_soft_shell_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, UInt32 height, ref IntPtr output);
+        [DllImport(LIBRARY_LOCATION)]
+        private static extern void _cn_soft_shell_slow_hash_v2([MarshalAs(UnmanagedType.LPStr)]string input, uint height, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _chukwa_slow_hash([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
         #endregion
 
         #region Keys and Signatures
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _generatePrivateViewKeyFromPrivateSpendKey([MarshalAs(UnmanagedType.LPStr)]string spendPrivateKey, ref IntPtr viewPrivateKey);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _generateViewKeysFromPrivateSpendKey([MarshalAs(UnmanagedType.LPStr)]string spendPrivateKey, ref IntPtr viewPrivateKey, ref IntPtr viewPublicKey);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _generateKeys(ref IntPtr privateKey, ref IntPtr publicKey);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern int _checkKey([MarshalAs(UnmanagedType.LPStr)]string publicKey);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern int _secretKeyToPublicKey([MarshalAs(UnmanagedType.LPStr)]string privateKey, ref IntPtr publicKey);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern int _generateKeyDerivation([MarshalAs(UnmanagedType.LPStr)]string publicKey, [MarshalAs(UnmanagedType.LPStr)]string privateKey, ref IntPtr derivation);
 
-        [DllImport(LibraryName)]
-        private static extern int _derivePublicKey([MarshalAs(UnmanagedType.LPStr)]string derivation, UInt32 outputIndex, [MarshalAs(UnmanagedType.LPStr)]string publicKey, ref IntPtr derivedKey);
+        [DllImport(LIBRARY_LOCATION)]
+        private static extern int _derivePublicKey([MarshalAs(UnmanagedType.LPStr)]string derivation, uint outputIndex, [MarshalAs(UnmanagedType.LPStr)]string publicKey, ref IntPtr derivedKey);
 
-        [DllImport(LibraryName)]
-        private static extern void _deriveSecretKey([MarshalAs(UnmanagedType.LPStr)]string derivation, UInt32 outputIndex, [MarshalAs(UnmanagedType.LPStr)]string privateKey, ref IntPtr derivedKey);
+        [DllImport(LIBRARY_LOCATION)]
+        private static extern void _deriveSecretKey([MarshalAs(UnmanagedType.LPStr)]string derivation, uint outputIndex, [MarshalAs(UnmanagedType.LPStr)]string privateKey, ref IntPtr derivedKey);
 
-        [DllImport(LibraryName)]
-        private static extern int _underivePublicKey([MarshalAs(UnmanagedType.LPStr)]string derivation, UInt32 outputIndex, [MarshalAs(UnmanagedType.LPStr)]string derivedKey, ref IntPtr publicKey);
+        [DllImport(LIBRARY_LOCATION)]
+        private static extern int _underivePublicKey([MarshalAs(UnmanagedType.LPStr)]string derivation, uint outputIndex, [MarshalAs(UnmanagedType.LPStr)]string derivedKey, ref IntPtr publicKey);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _generateSignature([MarshalAs(UnmanagedType.LPStr)]string prefixHash, [MarshalAs(UnmanagedType.LPStr)]string privateKey, [MarshalAs(UnmanagedType.LPStr)]string publicKey, ref IntPtr signature);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern bool _checkSignature([MarshalAs(UnmanagedType.LPStr)]string prefixHash, [MarshalAs(UnmanagedType.LPStr)]string publicKey, [MarshalAs(UnmanagedType.LPStr)]string signature);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _generateKeyImage([MarshalAs(UnmanagedType.LPStr)]string publicKey, [MarshalAs(UnmanagedType.LPStr)]string privateKey, ref IntPtr keyImage);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _scalarmultKey([MarshalAs(UnmanagedType.LPStr)]string keyImageA, [MarshalAs(UnmanagedType.LPStr)]string keyImageB, ref IntPtr keyImageC);
 
         #endregion
 
         #region Conversion and Utility
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _hashToEllipticCurve([MarshalAs(UnmanagedType.LPStr)]string hash, ref IntPtr ec);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _scReduce32([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
-        [DllImport(LibraryName)]
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _hashToScalar([MarshalAs(UnmanagedType.LPStr)]string hash, ref IntPtr scalar);
 
         #endregion
@@ -202,7 +212,7 @@ namespace Canti
 
         public static string CN_SlowHashV1(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -213,7 +223,7 @@ namespace Canti
 
         public static string CN_SlowHashV2(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -235,7 +245,7 @@ namespace Canti
 
         public static string CN_LiteSlowHashV1(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -246,7 +256,7 @@ namespace Canti
 
         public static string CN_LiteSlowHashV2(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -268,7 +278,7 @@ namespace Canti
 
         public static string CN_DarkSlowHashV1(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -279,7 +289,7 @@ namespace Canti
 
         public static string CN_DarkSlowHashV2(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -301,7 +311,7 @@ namespace Canti
 
         public static string CN_DarkLiteSlowHashV1(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -312,7 +322,7 @@ namespace Canti
 
         public static string CN_DarkLiteSlowHashV2(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -334,7 +344,7 @@ namespace Canti
 
         public static string CN_TurtleSlowHashV1(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -345,7 +355,7 @@ namespace Canti
 
         public static string CN_TurtleSlowHashV2(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -367,7 +377,7 @@ namespace Canti
 
         public static string CN_TurtleLiteSlowHashV1(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -378,7 +388,7 @@ namespace Canti
 
         public static string CN_TurtleLiteSlowHashV2(string data)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -387,7 +397,7 @@ namespace Canti
             return Marshal.PtrToStringAnsi(output);
         }
 
-        public static string CN_SoftShellSlowHashV0(string data, UInt32 height)
+        public static string CN_SoftShellSlowHashV0(string data, uint height)
         {
             if (data.Length % 2 != 0) return null;
 
@@ -398,9 +408,9 @@ namespace Canti
             return Marshal.PtrToStringAnsi(output);
         }
 
-        public static string CN_SoftShellSlowHashV1(string data, UInt32 height)
+        public static string CN_SoftShellSlowHashV1(string data, uint height)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -409,9 +419,9 @@ namespace Canti
             return Marshal.PtrToStringAnsi(output);
         }
 
-        public static string CN_SoftShellSlowHashV2(string data, UInt32 height)
+        public static string CN_SoftShellSlowHashV2(string data, uint height)
         {
-            if (data.Length % 2 != 0 || data.Length < MinimumVariationBytes) return null;
+            if (data.Length % 2 != 0 || data.Length < MINIMUM_VARIATION_BYTES) return null;
 
             IntPtr output = new IntPtr();
 
@@ -431,19 +441,9 @@ namespace Canti
             return Marshal.PtrToStringAnsi(output);
         }
 
-        // TODO - tree_hash
-
-        // TODO - tree_branch
-
-        // TODO - tree_hash_from_branch
-
         #endregion
 
         #region Keys and Signatures
-
-        // TODO - generateRingSignatures
-
-        // TODO - checkRingSignature
 
         public static string GeneratePrivateViewKeyFromPrivateSpendKey(string spendPrivateKey)
         {
@@ -529,7 +529,7 @@ namespace Canti
             return null;
         }
 
-        public static string DerivePublicKey(string derivation, UInt32 outputIndex, string publicKey)
+        public static string DerivePublicKey(string derivation, uint outputIndex, string publicKey)
         {
             if (!IsKey(derivation) || !IsKey(publicKey)) return null;
 
@@ -542,7 +542,7 @@ namespace Canti
             return null;
         }
 
-        public static string DeriveSecretKey(string derivation, UInt32 outputIndex, string privateKey)
+        public static string DeriveSecretKey(string derivation, uint outputIndex, string privateKey)
         {
             if (!IsKey(derivation) || !IsKey(privateKey)) return null;
 
@@ -553,7 +553,7 @@ namespace Canti
             return Marshal.PtrToStringAnsi(derivedKey);
         }
 
-        public static string UnderivePublicKey(string derivation, UInt32 outputIndex, string derivedKey)
+        public static string UnderivePublicKey(string derivation, uint outputIndex, string derivedKey)
         {
             if (!IsKey(derivation) || !IsKey(derivedKey)) return null;
 

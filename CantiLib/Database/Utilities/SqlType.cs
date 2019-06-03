@@ -62,24 +62,4 @@ namespace Canti
         /// </summary>
         BOOLEAN
     }
-
-    // For parsing object types to sql types
-    public static class SqlHelper
-    {
-        // TODO - is this used?
-        public static SqlType GetType(dynamic Value)
-        {
-            // Get object type
-            var Type = Value.GetType();
-
-            // Integer type
-            if (Type == typeof(byte) || Type == typeof(sbyte)) return SqlType.TINYINT;
-            else if (Type == typeof(short) || Type == typeof(ushort)) return SqlType.SMALLINT;
-            else if (Type == typeof(int) || Type == typeof(uint)) return SqlType.INT;
-            else if (Type == typeof(long) || Type == typeof(ulong)) return SqlType.BIGINT;
-            else if (Type == typeof(string)) return SqlType.TEXT;
-            else if (Type == typeof(byte[])) return SqlType.VARBINARY;
-            else throw new ArgumentOutOfRangeException($"Could not parse SQL serialization type for object {Value}");
-        }
-    }
 }

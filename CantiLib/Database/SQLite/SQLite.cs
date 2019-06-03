@@ -7,11 +7,12 @@ using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Text;
 using System.Threading;
 
 namespace Canti
 {
-    // TODO - finish labeling
+    // TODO - finish summary labeling on anything public
     /// <summary>
     /// A SQLite database handler
     /// </summary>
@@ -88,6 +89,8 @@ namespace Canti
             Connection.Dispose();
         }
 
+        // Creates a table if it does not exist
+        // TODO - add table versions to update existing tables
         public void CreateTable(string TableName, ValueList Values)
         {
             // Check for bad values
@@ -101,26 +104,28 @@ namespace Canti
             }
 
             // Create values string
-            string CommandString = "";
+            StringBuilder Data = new StringBuilder($"CREATE TABLE IF NOT EXISTS {TableName} (");
             for (int i = 0; i < Values.Count; i++)
             {
-                if (i > 0) CommandString += ", ";
+                if (i > 0) Data.Append(", ");
 
                 var Entry = Values[i];
-                CommandString += $"{Entry.Name} {Entry.Type}";
-                if (Entry.Size > 0) CommandString += $"({Entry.Size})";
-                if (Entry.Unique) CommandString += " UNIQUE";
-                if (Entry.Value != null) CommandString += $" DEFAULT '{Entry.Value.Value}'";
+                Data.Append($"{Entry.Name} {Entry.Type}");
+                if (Entry.Size > 0) Data.Append($"({Entry.Size})");
+                if (Entry.Unique) Data.Append(" UNIQUE");
+                if (Entry.Value != null) Data.Append($" DEFAULT '{Entry.Value.Value}'");
             }
+            Data.Append(")");
 
             // Create SQL command
-            var Command = new SqliteCommand($"CREATE TABLE IF NOT EXISTS {TableName} ({CommandString})", Connection);
+            var Command = new SqliteCommand(Data.ToString(), Connection);
 
             // Add data to our write queue
             WriteQueue.Enqueue(Command);
             ReadyEvent.Set();
         }
 
+        // Non-queries the database manually
         public void NonQuery(string Data)
         {
             // Create SQL command
@@ -131,6 +136,7 @@ namespace Canti
             ReadyEvent.Set();
         }
 
+        // Queries the database manually
         public ValueList[] Query(string Data)
         {
             // Lock the write queue so we can read data right now
@@ -161,33 +167,33 @@ namespace Canti
             }
         }
 
-        // TODO - make this string creation more efficient
-        public void Insert(string TableName, ValueList Values)
+        // Adds a row to the database
+        public void Add(string TableName, ValueList Values)
         {
             // Check for bad values
             if (string.IsNullOrEmpty(TableName)) return;
             if (Values == null || Values.Count == 0) return;
 
             // Begin constructing an SQL command
-            string Data = $"INSERT INTO {TableName} (";
+            StringBuilder Data = new StringBuilder($"INSERT INTO {TableName} (");
 
             // Loop through the given values
-            string ValueList = "";
+            StringBuilder ValueList = new StringBuilder();
             for (int i = 0; i < Values.Count; i++)
             {
                 // Add name to command string
                 if (i > 0)
                 {
-                    Data += ", ";
-                    ValueList += ", ";
+                    Data.Append(", ");
+                    ValueList.Append(", ");
                 }
-                Data += $"{Values[i].Name}";
-                ValueList += $"@{Values[i].Name}_1";
+                Data.Append($"{Values[i].Name}");
+                ValueList.Append($"@{Values[i].Name}_1");
             }
-            Data += $") VALUES ({ValueList})";
+            Data.Append($") VALUES ({ValueList})");
 
             // Create SQL command
-            var Command = new SqliteCommand(Data, Connection);
+            var Command = new SqliteCommand(Data.ToString(), Connection);
 
             // Add values from the value list
             foreach (var Value in Values)
@@ -199,6 +205,8 @@ namespace Canti
             WriteQueue.Enqueue(Command);
             ReadyEvent.Set();
         }
+
+        // Updates a row in the database
         public void Update(string TableName, ValueList Values, ValueList Conditions)
         {
             // Check for bad values
@@ -207,27 +215,27 @@ namespace Canti
             if (Conditions == null || Conditions.Count == 0) return;
 
             // Begin constructing an SQL command
-            string Data = $"UPDATE {TableName} SET ";
+            StringBuilder Data = new StringBuilder($"UPDATE {TableName} SET ");
 
             // Loop through the given values
             for (int i = 0; i < Values.Count; i++)
             {
                 // Add name to command string
-                if (i > 0) Data += ", ";
-                Data += $"{Values[i].Name} = @{Values[i].Name}_1";
+                if (i > 0) Data.Append(", ");
+                Data.Append($"{Values[i].Name} = @{Values[i].Name}_1");
             }
 
             // Add conditions
-            Data += " WHERE ";
+            Data.Append(" WHERE ");
             for (int i = 0; i < Conditions.Count; i++)
             {
                 // Add name to command string
-                if (i > 0) Data += " AND ";
-                Data += $"{Conditions[i].Name} = @{Conditions[i].Name}_2";
+                if (i > 0) Data.Append(" AND ");
+                Data.Append($"{Conditions[i].Name} = @{Conditions[i].Name}_2");
             }
 
             // Create SQL command
-            var Command = new SqliteCommand(Data, Connection);
+            var Command = new SqliteCommand(Data.ToString(), Connection);
 
             // Add values from the value list
             foreach (var Value in Values)
@@ -246,6 +254,7 @@ namespace Canti
             ReadyEvent.Set();
         }
 
+        // Selects rows based on a set of conditions
         public ValueList[] Select(string TableName, ValueList Conditions)
         {
             // Check for bad values
@@ -262,22 +271,22 @@ namespace Canti
             lock (WriteQueue)
             {
                 // Begin constructing an SQL command
-                string Data = $"SELECT * FROM {TableName}";
+                StringBuilder Data = new StringBuilder($"SELECT * FROM {TableName}");
 
                 // Add conditions
                 if (Conditions.Count > 0)
                 {
-                    Data += " WHERE ";
+                    Data.Append(" WHERE ");
                     for (int i = 0; i < Conditions.Count; i++)
                     {
                         // Add name to command string
-                        if (i > 0) Data += " AND ";
-                        Data += $"{Conditions[i].Name} = @{Conditions[i].Name}_1";
+                        if (i > 0) Data.Append(" AND ");
+                        Data.Append($"{Conditions[i].Name} = @{Conditions[i].Name}_1");
                     }
                 }
 
                 // Create SQL command
-                SqliteCommand Command = new SqliteCommand(Data, Connection);
+                SqliteCommand Command = new SqliteCommand(Data.ToString(), Connection);
 
                 // Add conditions from the conditions list
                 foreach (var Condition in Conditions)
@@ -327,22 +336,22 @@ namespace Canti
             lock (WriteQueue)
             {
                 // Begin constructing an SQL command
-                string Data = $"SELECT COUNT(*) FROM {TableName}";
+                StringBuilder Data = new StringBuilder($"SELECT COUNT(*) FROM {TableName}");
 
                 // Add conditions
                 if (Conditions.Count > 0)
                 {
-                    Data += " WHERE ";
+                    Data.Append(" WHERE ");
                     for (int i = 0; i < Conditions.Count; i++)
                     {
                         // Add name to command string
-                        if (i > 0) Data += " AND ";
-                        Data += $"{Conditions[i].Name} = @{Conditions[i].Name}_1";
+                        if (i > 0) Data.Append(" AND ");
+                        Data.Append($"{Conditions[i].Name} = @{Conditions[i].Name}_1");
                     }
                 }
 
                 // populate command
-                SqliteCommand Command = new SqliteCommand("SELECT COUNT(height) FROM blocks", Connection);
+                SqliteCommand Command = new SqliteCommand(Data.ToString(), Connection);
 
                 // Add conditions from the conditions list
                 foreach (var Condition in Conditions)

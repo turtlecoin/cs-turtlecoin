@@ -4,7 +4,6 @@
 // Please see the included LICENSE file for more information.
 
 using System;
-using System.Collections.Generic;
 using static Canti.Utils;
 
 namespace Canti.CryptoNote
@@ -20,22 +19,18 @@ namespace Canti.CryptoNote
                 throw new InvalidOperationException($"Received a {Packet.Type} packet from non-validated peer {Peer.Address}:{Peer.Port}, killing connection...");
             }
 
-            // TODO - use node time
-
-            // Add core sync data
-            AddSyncData(Peer, Packet["payload_data"]);
+            // TODO - use node time?
 
             // Received a request
             if (Packet.Flag == PacketFlag.REQUEST)
             {
                 // Construct a response packet
-                var Response = new Packet(PacketType.TIMED_SYNC, PacketFlag.RESPONSE, false);
-                Response["payload_data"] = new Dictionary<string, dynamic>
+                var Response = new Packet(PacketType.TIMED_SYNC, PacketFlag.RESPONSE, false)
                 {
-                    ["current_height"] = Blockchain.Height,
-                    ["top_id"] = Blockchain.TopId
+                    ["local_time"] = GetTimestamp(),
+                    ["payload_data"] = GetCoreSyncData(),
+                    ["local_peerlist"] = SerializePeerList()
                 };
-                Response["local_peerlist"] = SerializePeerList();
 
                 // Send our response
                 Peer.SendMessage(Response);
@@ -47,6 +42,9 @@ namespace Canti.CryptoNote
                 // Update peer list
                 AddPeerCandidates(HexStringToByteArray(Packet["local_peerlist"]));
             }
+
+            // Add core sync data
+            HandleSyncData(Peer, Packet["payload_data"]);
         }
 
         // Sends a timed sync request packet
@@ -56,11 +54,9 @@ namespace Canti.CryptoNote
             if (!Peer.Validated) return;
 
             // Construct a request packet
-            var Request = new Packet(PacketType.TIMED_SYNC, PacketFlag.REQUEST, true);
-            Request["payload_data"] = new Dictionary<string, dynamic>
+            var Request = new Packet(PacketType.TIMED_SYNC, PacketFlag.REQUEST, true)
             {
-                ["current_height"] = Blockchain.Height,
-                ["top_id"] = Blockchain.TopId
+                ["payload_data"] = GetCoreSyncData()
             };
 
             // Send our request

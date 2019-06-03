@@ -9,7 +9,6 @@ using static Canti.Utils;
 
 namespace Canti.CryptoNote
 {
-    // TODO - This file is a mess, it really needs further testing, and *really* needs cleaned up
     public sealed partial class Node
     {
         #region Properties and Fields
@@ -148,8 +147,8 @@ namespace Canti.CryptoNote
             }
         }
 
-        // Serializes our peer list as a byte array
-        // TODO - Assuming we only share connected peers, should we share known candidates too?
+        // Serializes our connected peer list as a byte array
+        // TODO - Show historic peer list??
         private byte[] SerializePeerList()
         {
             // Lock peer list to prevent race conditions
@@ -167,7 +166,7 @@ namespace Canti.CryptoNote
                     Buffer = Buffer.AppendInteger(Peer.Id);
                     Buffer = Buffer.AppendInteger(Peer.LastSeen);
                 }
-
+                
                 // Return completed buffer
                 return Buffer;
             }

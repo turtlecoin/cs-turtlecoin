@@ -265,7 +265,7 @@ namespace Canti
         }
 
         // Writes a log message to the console, as well as to an optional log file
-        // TODO - this is kinda a monolith, it could probably be shortened
+        // TODO - this is kind of a monolith, it could probably be shortened
         private void Write()
         {
             // Create a wait handle array so we can cancel this thread if need be
@@ -376,7 +376,6 @@ namespace Canti
                     // Append to log file
                     if (!string.IsNullOrEmpty(LogFile))
                     {
-                        // TODO - Queue this and write it from queue to prevent rare race conditions
                         try { File.AppendAllText(LogFile, $"{Output}\n"); }
                         catch { }
                     }

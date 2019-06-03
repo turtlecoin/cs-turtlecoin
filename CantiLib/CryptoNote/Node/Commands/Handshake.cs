@@ -4,7 +4,6 @@
 // Please see the included LICENSE file for more information.
 
 using System;
-using System.Collections.Generic;
 using static Canti.Utils;
 
 namespace Canti.CryptoNote
@@ -43,8 +42,6 @@ namespace Canti.CryptoNote
             {
                 throw new InvalidOperationException("Time delta is too large");
             }
-
-            // TODO - whitelist + blacklist + greylist
         }
 
         // A handshake packet was received
@@ -56,34 +53,16 @@ namespace Canti.CryptoNote
             // Let the node know a handshake has been accepted
             OnPeerConnected(Peer);
 
-            // Add core sync data
-            AddSyncData(Peer, Packet["payload_data"]);
-
-            // Add peer list candidates
-            if (Packet["local_peerlist"] != null)
-            {
-                AddPeerCandidates(HexStringToByteArray(Packet["local_peerlist"]));
-            }
-
             // Send response
             if (Packet.Flag == PacketFlag.REQUEST)
             {
                 // Construct a response packet
-                var Response = new Packet(PacketType.HANDSHAKE, PacketFlag.RESPONSE, false);
-                Response["node_data"] = new Dictionary<string, dynamic>
+                var Response = new Packet(PacketType.HANDSHAKE, PacketFlag.RESPONSE, false)
                 {
-                    ["network_id"] = Globals.NETWORK_ID,
-                    ["version"] = Globals.P2P_CURRENT_VERSION,
-                    ["peer_id"] = Id,
-                    ["local_time"] = GetTimestamp(),
-                    ["my_port"] = P2pPort
+                    ["node_data"] = GetNodeData(),
+                    ["payload_data"] = GetCoreSyncData(),
+                    ["local_peerlist"] = SerializePeerList()
                 };
-                Response["payload_data"] = new Dictionary<string, dynamic>
-                {
-                    ["current_height"] = Blockchain.Height,
-                    ["top_id"] = Blockchain.TopId
-                };
-                Response["local_peerlist"] = SerializePeerList();
 
                 // Send our response
                 Peer.SendMessage(Response);
@@ -93,6 +72,15 @@ namespace Canti.CryptoNote
             Peer.Port = Packet["node_data"]["my_port"];
             Peer.Id = Packet["node_data"]["peer_id"];
             Peer.Validated = true;
+
+            // Add peer list candidates
+            if (Packet["local_peerlist"] != null)
+            {
+                AddPeerCandidates(HexStringToByteArray(Packet["local_peerlist"]));
+            }
+
+            // Add core sync data
+            HandleSyncData(Peer, Packet["payload_data"]);
         }
 
         // Sends a handshake request packet
@@ -105,19 +93,10 @@ namespace Canti.CryptoNote
             }
 
             // Construct a request packet
-            var Request = new Packet(PacketType.HANDSHAKE, PacketFlag.REQUEST, true);
-            Request["node_data"] = new Dictionary<string, dynamic>
+            var Request = new Packet(PacketType.HANDSHAKE, PacketFlag.REQUEST, true)
             {
-                ["network_id"] = Globals.NETWORK_ID,
-                ["version"] = Globals.P2P_CURRENT_VERSION,
-                ["peer_id"] = Id,
-                ["local_time"] = GetTimestamp(),
-                ["my_port"] = P2pPort
-            };
-            Request["payload_data"] = new Dictionary<string, dynamic>
-            {
-                ["current_height"] = Blockchain.Height,
-                ["top_id"] = Blockchain.TopId
+                ["node_data"] = GetNodeData(),
+                ["payload_data"] = GetCoreSyncData()
             };
 
             // Send our request

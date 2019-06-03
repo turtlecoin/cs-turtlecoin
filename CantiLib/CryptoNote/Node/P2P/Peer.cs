@@ -9,9 +9,10 @@ using static Canti.Utils;
 
 namespace Canti.CryptoNote
 {
+    // TODO - see which of these are actually used, pulled these values from core source
     internal enum PeerState
     {
-        BEFORE_HANDSHAKE = 0,
+        BEFORE_HANDSHAKE,
         SYNCHRONIZING,
         IDLE,
         NORMAL,
@@ -43,6 +44,9 @@ namespace Canti.CryptoNote
 
         // The unix timestamp of the last time this peer was heard from
         internal ulong LastSeen { get; set; }
+
+        // The last known height of this peer
+        internal uint Height { get; set; }
 
         // The connection state of this peer
         internal PeerState State { get; set; }

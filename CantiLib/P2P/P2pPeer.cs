@@ -141,15 +141,15 @@ namespace Canti
         // Reads incoming data from the client's network stream
         private void Read()
         {
-            
             // Get client stream
             var Stream = Client.GetStream();
 
             // Create a byte buffer
-            byte[] Buffer = new byte[Client.Available];
+            int BytesRead = Client.Available;
+            byte[] Buffer = new byte[BytesRead];
 
             // Create a wait handle array so we can cancel this thread if need be
-            Stream.BeginRead(Buffer, 0, Client.Available, (IAsyncResult Result) =>
+            Stream.BeginRead(Buffer, 0, BytesRead, (IAsyncResult Result) =>
             {
                 try
                 {
@@ -157,7 +157,7 @@ namespace Canti
                     if (StopEvent.WaitOne(0)) return;
 
                     // End reading
-                    var BytesRead = Stream.EndRead(Result);
+                    BytesRead = Stream.EndRead(Result);
 
                     // Check if any data was read
                     if (BytesRead > 0)
@@ -165,11 +165,11 @@ namespace Canti
                         // Invoke data received handler
                         Server.OnDataReceived?.Invoke((this, Buffer), EventArgs.Empty);
                     }
-
-                    // Start reading again
-                    Read();
                 }
                 catch { }
+
+                // Start reading again
+                Read();
             }, null);
         }
 

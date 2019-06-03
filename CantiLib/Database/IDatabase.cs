@@ -64,7 +64,7 @@ namespace Canti
         /// </summary>
         /// <param name="TableName">The name of the table to insert into</param>
         /// <param name="Values">The values to set within the new row</param>
-        void Insert(string TableName, ValueList Values);
+        void Add(string TableName, ValueList Values);
 
         /// <summary>
         /// Updates a set of values within the database

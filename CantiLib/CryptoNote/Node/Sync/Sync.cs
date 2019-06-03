@@ -3,8 +3,12 @@
 // 
 // Please see the included LICENSE file for more information.
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
+using static Canti.Utils;
 
 namespace Canti.CryptoNote
 {
@@ -52,16 +56,92 @@ namespace Canti.CryptoNote
             }
         }
 
-        // Handles core sync data sent by peers
-        private void AddSyncData(Peer Peer, PortableStorage SyncData)
+        // Gets core sync data for handshake and timed sync packets
+        private Dictionary<string, dynamic> GetCoreSyncData()
         {
-            // TODO - handle syncing
-            // TODO - queue sync data?
-            // TODO - compare heights and top block ids of peers?
-            if (SyncData["current_height"] > Blockchain.KnownHeight)
+            return new Dictionary<string, dynamic>
             {
-                Blockchain.KnownHeight = SyncData["current_height"];
+                ["current_height"] = (uint)Blockchain.Height,
+                ["top_id"] = Blockchain.TopId
+            };
+        }
+
+        // Builds a sparse chain array from synced data
+        private byte[] GetSparseChain()
+        {
+            // TODO - build sparse chain data
+            // https://github.com/turtlecoin/turtlecoin/blob/4cc08299b40230f0ac47ecfa7e974abb3da40e54/src/CryptoNoteCore/Core.cpp#L2289
+            return Blockchain.TopId;
+        }
+
+        // Updates the current observed height
+        private void UpdateObservedHeight(uint Height)
+        {
+            // Check that given height is higher than the current height
+            if (Height < Blockchain.KnownHeight) return;
+
+            // Set cache known height
+            Blockchain.KnownHeight = Height;
+
+            // Log debug message
+            Logger.Debug($"Observed height updated, new height: {Blockchain.KnownHeight}");
+        }
+
+        // Handles core sync data sent by peers
+        private void HandleSyncData(Peer Peer, PortableStorage SyncData)
+        {
+            // Update peer height
+            Peer.Height = SyncData["current_height"];
+
+            // Check if peer is validated
+            if (!Peer.Validated) return;
+
+            // Check if peer is syncing
+            if (Peer.State == PeerState.SYNCHRONIZING) return;
+
+            // Check if we have this block stored
+            if (Blockchain.IsBlockStored(SyncData["top_id"]))
+            {
+                Peer.State = PeerState.NORMAL;
+                return;
             }
+
+            // Update observed height
+            UpdateObservedHeight(Peer.Height);
+
+            // Get the height difference between the local cache and remote node
+            int Diff = (int)Blockchain.KnownHeight - (int)Blockchain.Height;
+            int Days = Math.Abs(Diff) / (24 * 60 * 60 / Globals.CURRENCY_DIFFICULTY_TARGET);
+
+            // Print how for behind/ahead we are
+            StringBuilder Output = new StringBuilder($"Your {Globals.CURRENCY_NAME} node is syncing with the network ");
+            if (Diff >= 0)
+            {
+                Output.Append($"({Math.Round((decimal)Blockchain.Height / Peer.Height * 100, 2)}% complete) ");
+                Output.Append($"You are {Diff} blocks ({Days} days) behind ");
+            }
+            else
+            {
+                Output.Append($"You are {Math.Abs(Diff)} blocks ({Days} days) ahead of ");
+            }
+            Output.Append("the current peer you're connected to. Slow and steady wins the race!");
+            Logger.Important(Output);
+
+            // Log debug message
+            Logger.Debug($"Remote top block height: {Peer.Height}, id: {SyncData["top_id"]}");
+
+            // TODO - this is just test code
+            /*Blockchain.StoreBlock(new Block()
+            {
+                Height = Peer.Height,
+                Hash = SyncData["top_id"]
+            });*/
+
+            // Set new peer state
+            Peer.State = PeerState.SYNC_REQUIRED;
+
+            // TODO - handle syncing
+            Peer.State = PeerState.SYNCHRONIZING;
         }
 
         #endregion

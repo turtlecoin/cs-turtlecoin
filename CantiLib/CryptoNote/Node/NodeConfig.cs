@@ -24,7 +24,24 @@ namespace Canti.CryptoNote
         /// </summary>
         public string ASCII_ART { get; set; }
 
+        /// <summary>
+        /// A list of seed node peers for initial P2P connections
+        /// </summary>
         public PeerCandidate[] SEED_NODES { get; set; }
+
+        #endregion
+
+        #region CURRENCY
+
+        /// <summary>
+        /// The name of the currency
+        /// </summary>
+        public string CURRENCY_NAME { get; set; }
+
+        /// <summary>
+        /// The difficulty target time for the currency
+        /// </summary>
+        public int CURRENCY_DIFFICULTY_TARGET { get; set; }
 
         #endregion
 

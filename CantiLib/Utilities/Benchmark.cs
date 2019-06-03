@@ -1,4 +1,9 @@
-﻿using System;
+﻿//
+// Copyright (c) 2019 Canti, The TurtleCoin Developers
+//
+// Please see the included LICENSE file for more information.
+
+using System;
 using System.Diagnostics;
 
 namespace Canti

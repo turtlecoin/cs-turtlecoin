@@ -36,7 +36,6 @@ namespace Canti.CryptoNote
 
         #region API Methods
 
-        // TODO - this is a debug method
         [ApiMethod("Height")]
         public string GetHeight()
         {
@@ -46,6 +45,64 @@ namespace Canti.CryptoNote
                 ["current_height"] = Node.Blockchain.Height,
                 ["known_height"] = Node.Blockchain.KnownHeight,
                 ["synced"] = Node.Blockchain.Height >= Node.Blockchain.KnownHeight
+            };
+            return Response.ToString();
+        }
+
+        [ApiMethod("block")]
+        public string GetBlockByHash(string Hash)
+        {
+            // Query block
+            if (!Node.Blockchain.TryGetBlock(Hash, out Block Block))
+            {
+                return new JObject
+                {
+                    ["error"] = "Could not find block"
+                }.ToString();
+            }
+
+            // Form response
+            var Response = new JObject
+            {
+                ["height"] = Block.Height,
+                ["hash"] = Block.Hash,
+                ["size"] = Block.Size,
+                ["timestamp"] = Block.Timestamp,
+                ["nonce"] = Block.Nonce,
+                ["major_version"] = Block.MajorVersion,
+                ["minor_version"] = Block.MinorVersion,
+                ["base_reward"] = Block.BaseReward,
+                ["total_fees"] = Block.TotalFees,
+                ["base_transaction"] = Block.BaseTransaction
+            };
+            return Response.ToString();
+        }
+
+        [ApiMethod("block")]
+        public string GetBlockByHeight(uint Height)
+        {
+            // Query block
+            if (!Node.Blockchain.TryGetBlock(Height, out Block Block))
+            {
+                return new JObject
+                {
+                    ["error"] = "Could not find block"
+                }.ToString();
+            }
+
+            // Form response
+            var Response = new JObject
+            {
+                ["height"] = Block.Height,
+                ["hash"] = Block.Hash,
+                ["size"] = Block.Size,
+                ["timestamp"] = Block.Timestamp,
+                ["nonce"] = Block.Nonce,
+                ["major_version"] = Block.MajorVersion,
+                ["minor_version"] = Block.MinorVersion,
+                ["base_reward"] = Block.BaseReward,
+                ["total_fees"] = Block.TotalFees,
+                ["base_transaction"] = Block.BaseTransaction
             };
             return Response.ToString();
         }

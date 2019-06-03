@@ -15,8 +15,19 @@ using System.Text;
 using System.Threading;
 using static Canti.Utils;
 
+// TODO - Configurable rate limiter
+// TODO - HTTPS/SSL support?
 namespace Canti
 {
+    /// <summary>
+    /// The type of HTTP request this method expects
+    /// </summary>
+    public enum ApiRequestType
+    {
+        GET,
+        POST
+    }
+
     /// <summary>
     /// This is used to label api methods in our source
     /// </summary>
@@ -28,7 +39,12 @@ namespace Canti
         public string MethodName { get; set; }
 
         /// <summary>
-        /// Whether or not this method requires validation
+        /// The type of HTTP request this method expects (default = get)
+        /// </summary>
+        public ApiRequestType Type { get; set; }
+
+        /// <summary>
+        /// Whether or not this method requires validation (default = false)
         /// </summary>
         public bool RequiresValidation { get; set; }
 
@@ -36,12 +52,23 @@ namespace Canti
         /// Specifies a function is an API method
         /// </summary>
         /// <param name="MethodName">The name of this method request</param>
-        /// <param name="RequiresValidation">Whether or not this method requires validation</param>
-        public ApiMethod(string MethodName, bool RequiresValidation = false)
+        /// <param name="RequiresValidation">Whether or not this method requires validation (default = false)</param>
+        /// <param name="Type">The type of HTTP request this method expects (default = get)</param>
+        public ApiMethod(string MethodName, bool RequiresValidation = false, ApiRequestType Type = ApiRequestType.GET)
         {
             this.MethodName = MethodName.ToUpper();
             this.RequiresValidation = RequiresValidation;
+            this.Type = Type;
         }
+    }
+
+    // Contains information about invoke-able methods found in a context list
+    internal struct InvokeableMethod
+    {
+        internal IMethodContext Context { get; set; }
+        internal MethodInfo Method { get; set; }
+        internal bool RequiresValidation { get; set; }
+        internal ApiRequestType Type { get; set; }
     }
 
     /// <summary>
@@ -79,28 +106,44 @@ namespace Canti
         #region Methods
 
         // Tries to find a method by name from the list of contexts
-        internal bool TryGetMethod(string MethodName, out MethodInfo Method, out IMethodContext Context,
-            out bool RequiresValidation)
+        // TODO - Could probably replace all these foreachs with linq
+        internal List<InvokeableMethod> GetMethods(string MethodName)
         {
             lock (ContextList)
             {
+                // Create a list of invokeable methods
+                var Methods = new List<InvokeableMethod>();
+
+                // Loop through all given context lists
                 foreach (var MethodContext in ContextList)
                 {
-                    if (MethodContext.GetType().GetMethods().Any(x => x.GetCustomAttributes(true)
-                        .Any(i => i is ApiMethod && ((ApiMethod)i).MethodName == MethodName)))
+                    // Loop through methods in the current context
+                    foreach (var MethodInfo in MethodContext.GetType().GetMethods())
                     {
-                        Method = MethodContext.GetType().GetMethods().First(x => x.GetCustomAttributes(true)
-                            .Any(i => i is ApiMethod && ((ApiMethod)i).MethodName == MethodName));
-                        Context = MethodContext;
-                        RequiresValidation = Method.GetCustomAttributes(true).Any(i => i is ApiMethod
-                            && ((ApiMethod)i).RequiresValidation);
-                        return true;
+                        // Loop through custom attributes
+                        foreach (var Attribute in MethodInfo.GetCustomAttributes(true))
+                        {
+                            // Check if this attribute matches the method name
+                            if (!(Attribute is ApiMethod)|| ((ApiMethod)Attribute).MethodName != MethodName)
+                            {
+                                // Not applicable, continue
+                                continue;
+                            }
+
+                            // Suitable method found, add to list
+                            Methods.Add(new InvokeableMethod
+                            {
+                                Context = MethodContext,
+                                RequiresValidation = ((ApiMethod)Attribute).RequiresValidation,
+                                Type = ((ApiMethod)Attribute).Type,
+                                Method = MethodInfo
+                            });
+                        }
                     }
                 }
-                Method = null;
-                Context = null;
-                RequiresValidation = false;
-                return false;
+
+                // Return result
+                return Methods;
             }
         }
 
@@ -164,7 +207,6 @@ namespace Canti
         private Queue<HttpListenerContext> ContextQueue { get; set; }
 
         // Password for API methods requiring credentials
-        // TODO - hash this even if storing local and privately? Is that paranoid?
         private string Password { get; set; }
 
         #endregion
@@ -284,9 +326,6 @@ namespace Canti
             }
         }
 
-        // Finds a method in the list of method contexts
-
-
         // Handles an incoming request
         private void HandleRequest(HttpListenerContext HttpContext)
         {
@@ -297,73 +336,116 @@ namespace Canti
                 var Request = HttpContext.Request;
                 string RequestType = Request.HttpMethod;
                 string Password = Request.Headers["Password"];
+                string MethodName = Request.Url.Segments[2].Replace("/", "").ToUpper();
+                int Version = int.Parse(Request.Url.Segments[1].Replace("/", ""));
 
                 // Check if requested method exists
-                string MethodName = Request.Url.Segments[2].Replace("/", "").ToUpper();
-                if (!MethodContexts.TryGetMethod(MethodName, out var Method, out var Context, out var Validate))
+                var Methods = MethodContexts.GetMethods(MethodName);
+                if (!Methods.Any())
                 {
                     throw new InvalidOperationException("Invalid API method");
                 }
 
-                // Check request's API version
-                if (!int.TryParse(Request.Url.Segments[1].Replace("/", ""), out int Version)
-                    || !Context.CheckVersion(Version))
+                // Loop through found methods
+                // TODO - also check # of params needed when getting methods
+                foreach (var Entry in Methods)
                 {
-                    throw new InvalidOperationException("Invalid API version");
-                }
+                    // Check request type
+                    // TODO - This looks ugly... Clean it up
+                    if ((Entry.Type == ApiRequestType.POST && RequestType != "POST") ||
+                        (Entry.Type == ApiRequestType.GET && RequestType != "GET")) continue;
 
-                // Check request validation
-                if (Validate && Password != this.Password)
-                {
-                    throw new InvalidOperationException("Invalid password");
-                }
+                    // Check request version against context version
+                    if (!Entry.Context.CheckVersion(Version)) continue;
 
-                // "GET" request
-                if (RequestType == "GET")
-                {
-                    // Get our request's params directly from URL string
-                    string[] Params = Request.Url.Segments.Skip(3).Select(x => x.Replace("/", "")).ToArray();
-                    Logger.Debug($"[{Request.RemoteEndPoint.Address.ToString()} API] " +
-                        $"/{Version}/{MethodName}/{string.Join("/", Request.Url.Segments.Skip(3))}");
+                    // Check request validation
+                    if (Entry.RequiresValidation && Password != this.Password) continue;
 
-                    // Populate our parameters
-                    var Parameters = Method.GetParameters();
-                    object[] MethodParams = new object[Parameters.Length];
-                    for (int i = 0; i < Parameters.Length; i++)
+                    // Get method parameters
+                    var MethodParams = Entry.Method.GetParameters();
+
+                    // Get request parameters
+                    object[] Params = new object[MethodParams.Length];
+                    if (RequestType == "GET")
                     {
-                        if (i < Params.Length) MethodParams[i] = Convert.ChangeType(Params[i], Parameters[i].ParameterType);
-                        else MethodParams[i] = null;
+                        // Get our request's params directly from URL string
+                        string[] RequestParams = Request.Url.Segments.Skip(3).Select(x => x.Replace("/", "")).ToArray();
+
+                        // Populate our parameters
+                        for (int i = 0; i < MethodParams.Length; i++)
+                        {
+                            // Check if this parameter is present in the request
+                            if (i < RequestParams.Length)
+                            {
+                                // Convert to method parameter type
+                                Params[i] = Convert.ChangeType(RequestParams[i], MethodParams[i].ParameterType);
+                            }
+
+                            // Otherwise default to a null value
+                            else continue;
+                        }
+                    }
+                    else if (RequestType == "POST")
+                    {
+                        // Get our request's params from the stream data
+                        var RequestParams = new Dictionary<string, dynamic>();
+                        using (var Reader = new StreamReader(Request.InputStream, Request.ContentEncoding))
+                        {
+                            var Json = JsonConvert.DeserializeObject<JObject>(Reader.ReadToEnd());
+                            RequestParams = new Dictionary<string, object>(
+                                Json.ToObject<IDictionary<string, object>>(), StringComparer.CurrentCultureIgnoreCase);
+                        }
+
+                        // Populate our parameters
+                        for (int i = 0; i < MethodParams.Length; i++)
+                        {
+                            // Check if this parameter is present in the request
+                            if (RequestParams.ContainsKey(MethodParams[i].Name))
+                            {
+                                // Convert to method parameter type
+                                Params[i] = Convert.ChangeType(RequestParams[MethodParams[i].Name], MethodParams[i].ParameterType);
+                            }
+
+                            // Otherwise default to a null value
+                            else continue;
+                        }
                     }
 
-                    // Invoke the requested method
-                    Result = (string)Method.Invoke(Context, MethodParams);
+                    // Try invoke method
+                    var Output = (string)Entry.Method.Invoke(Entry.Context, Params);
+
+                    // TODO - better (more efficient) way to catch errors, yikes
+                    if (JsonConvert.DeserializeObject<JObject>(Output).TryGetValue("error", out _))
+                    {
+                        continue;
+                    }
+                    Result = Output;
+                    break;
                 }
 
-                // "POST" request
-                else if (RequestType == "POST")
+                // Check if result is empty
+                if (string.IsNullOrEmpty(Result))
                 {
-                    // Get our request's params from the stream data
-                    string RequestBody = "";
-                    using (var Reader = new StreamReader(Request.InputStream, Request.ContentEncoding))
-                        RequestBody = Reader.ReadToEnd();
-                    JObject Params = JsonConvert.DeserializeObject<JObject>(RequestBody);
-                    Logger.Debug($"[{Request.RemoteEndPoint.Address.ToString()} API] /{Version}/{MethodName}/");
-
-                    // Invoke the requested method
-                    Result = (string)Method.Invoke(this, new object[] { Params });
+                    throw new InvalidOperationException("Invalid API method");
                 }
             }
 
             // A known error was caught
             catch (InvalidOperationException e)
             {
-                Result = $"{{'error':'{e.Message}'}}";
+                Result = new JObject
+                {
+                    ["error"] = e.Message
+                }.ToString();
             }
 
             // Unable to parse this request
             catch
             {
-                Result = "{'error':'Invalid request'}";
+                Result = new JObject
+                {
+                    ["error"] = "Invalid request"
+                }.ToString();
             }
 
             // Populate a new HTTP header and send our response

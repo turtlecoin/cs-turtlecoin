@@ -3,7 +3,9 @@
 // 
 // Please see the included LICENSE file for more information.
 
+using System.Collections.Generic;
 using System.IO;
+using static Canti.Utils;
 
 namespace Canti.CryptoNote
 {
@@ -39,6 +41,8 @@ namespace Canti.CryptoNote
         #endregion
 
         #region Methods
+
+        #region Public
 
         /// <summary>
         /// Starts this node and any associated threads
@@ -137,6 +141,25 @@ namespace Canti.CryptoNote
             // Add peer to server
             return P2pServer.AddPeer(Address, Port);
         }
+
+        #endregion
+
+        #region Private
+
+        // Serializes node data into a dictionary for packets
+        private Dictionary<string, dynamic> GetNodeData()
+        {
+            return new Dictionary<string, dynamic>
+            {
+                ["network_id"] = Globals.NETWORK_ID,
+                ["version"] = Globals.P2P_CURRENT_VERSION,
+                ["peer_id"] = Id,
+                ["local_time"] = GetTimestamp(),
+                ["my_port"] = P2pPort
+            };
+        }
+
+        #endregion
 
         #endregion
 

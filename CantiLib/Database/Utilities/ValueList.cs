@@ -118,6 +118,19 @@ namespace Canti
             Add(SqlValue);
         }
 
+        /*/// <summary>
+        /// Adds a value to the list
+        /// </summary>
+        /// <param name="Name">The name of this value in the database</param>
+        public void Add(string Name)
+        {
+            var SqlValue = new DatabaseValue
+            {
+                Name = Name
+            };
+            Add(SqlValue);
+        }*/
+
         /// <summary>
         /// Initializes a new value list
         /// </summary>
