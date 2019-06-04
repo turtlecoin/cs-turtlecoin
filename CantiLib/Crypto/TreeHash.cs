@@ -5,45 +5,125 @@
 
 using System;
 
+// I spent way too long with this, it ain't a standard tree hash, and to that I say...
+// Fuck it, this dumpster fire can burn, I ain't putting it out.
 namespace Canti
 {
-    // TODO - tree_branch
-    // TODO - tree_hash_from_branch
     public sealed partial class Crypto
     {
-        // Performs a tree hash on a list of hashes to get one root hash
         public static string TreeHash(string[] Hashes)
         {
             // Empty hashes array
             if (Hashes.Length == 0) return null;
 
-            // Only one hash, return that hash
-            else if (Hashes.Length == 1)
+            // Loop through and verify that each input entry is a valid hash
+            for (var x = 0; x < Hashes.Length; x++)
             {
-                return Hashes[0];
+                if (!IsKey(Hashes[x])) return null;
             }
 
-            // More than one hash, perform tree hash
-            else
-            {
-                // Loop until hash array length is just 1, that will be our final value
-                Start:
-                // Calculate a new size
-                var Size = (Hashes.Length % 2 == 0) ? Hashes.Length / 2 : Hashes.Length / 2  + 1;
+            // If input length is 1, we don't need to perform any hashing
+            if (Hashes.Length == 1) return Hashes[0];
 
-                // Perform hashing
-                for (var i = 0; i < Size; i++)
+            // If input length is 2, hash only those two values
+            if (Hashes.Length == 2) return CN_FastHash(Hashes[0] + Hashes[1]);
+
+            // Declare some values
+            int InputIndex, OutputIndex;
+            int Count = Hashes.Length - 1;
+
+            // Perform some bitshift shenanigans
+            for (InputIndex = 1; InputIndex < 8; InputIndex <<= 1)
+            {
+                Count |= Count >> InputIndex;
+            }
+            Count &= ~(Count >> 1);
+
+            // Assign this value now so it's not assigned multiple times
+            int val = 2 * Count - Hashes.Length;
+
+            // Create an output array and copy a set of values to it
+            string[] Buffer = new string[Count];
+            for (InputIndex = 0; InputIndex < val; InputIndex++)
+            {
+                Buffer[InputIndex] = Hashes[InputIndex];
+            }
+
+            // Perform first round of hashing
+            for (InputIndex = val, OutputIndex = val; OutputIndex < Count; InputIndex += 2, OutputIndex++)
+            {
+                Buffer[OutputIndex] = CN_FastHash(Hashes[InputIndex] + Hashes[InputIndex + 1]);
+            }
+
+            // Sanity check
+            if (InputIndex != Hashes.Length)
+            {
+                throw new Exception("Invalid tree hash operation");
+            }
+
+            // Loop until there are just two hashes left
+            while (Count > 2)
+            {
+                Count >>= 1;
+                for (InputIndex = 0, OutputIndex = 0; OutputIndex < Count; InputIndex += 2, OutputIndex++)
                 {
-                    var val = i * 2;
-                    if (i == Size - 1) Hashes[i] = CN_FastHash(Hashes[val]);
-                    else Hashes[i] = CN_FastHash(Hashes[val] + Hashes[val + 1]);
+                    Buffer[OutputIndex] = CN_FastHash(Buffer[InputIndex] + Buffer[InputIndex + 1]);
                 }
-
-                // Resize hashes array
-                if (Size == 1) return Hashes[0];
-                Array.Resize(ref Hashes, Size);
-                goto Start;
             }
+
+            // Perform final hash
+            return CN_FastHash(Buffer[0] + Buffer[1]);
+        }
+
+        public static string TreeHashFromBranch(string[] Branch, int Depth, ref string Leaf, ref string Path)
+        {
+            // If depth is 0, the leaf hash is our root
+            if (Depth == 0)
+            {
+                return Leaf;
+            }
+
+            // Declare some variables
+            string[] Buffer = new string[2];
+            bool FromLeaf = true;
+
+            // Loop until we are at root depth
+            while (Depth > 0)
+            {
+                // Decrement depth
+                Depth--;
+
+                // Assign path values
+                if (!string.IsNullOrEmpty(Path) && (Path[Depth >> 3] & (1 << (Depth & 7))) != 0)
+                {
+                    if (FromLeaf)
+                    {
+                        Leaf = Buffer[1];
+                        FromLeaf = false;
+                    }
+                    else
+                    {
+                        Buffer[1] = CN_FastHash(Buffer[0] + Buffer[1]);
+                    }
+                    Branch[Depth] = Buffer[0];
+                }
+                else
+                {
+                    if (FromLeaf)
+                    {
+                        Leaf = Buffer[0];
+                        FromLeaf = false;
+                    }
+                    else
+                    {
+                        Buffer[0] = CN_FastHash(Buffer[0] + Buffer[1]);
+                    }
+                    Branch[Depth] = Buffer[1];
+                }
+            }
+
+            // Perform final hashing
+            return CN_FastHash(Buffer[0] + Buffer[1]);
         }
     }
 }
