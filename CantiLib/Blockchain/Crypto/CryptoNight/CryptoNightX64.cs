@@ -439,7 +439,6 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             Vector128<ulong> expDoubleBias = Vector128.Create(0, 1023UL << 52);
 
-            /* TODO: Check for 64 bit support */
             Vector128<ulong> x = Sse2.Add(Sse2.X64.ConvertScalarToVector128UInt64(sqrtInput >> 12), expDoubleBias);
             sqrtResult = Sse2.X64.ConvertToUInt64(Sse2.Subtract(x, expDoubleBias)) >> 19;
 
