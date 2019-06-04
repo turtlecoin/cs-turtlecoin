@@ -155,24 +155,14 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                         d = dArray,
                         k = cnState.GetK())
             {
-                /* Init */
-                {
-                    ulong *_a = (ulong *)a;
-                    ulong *_b = (ulong *)b;
-                    ulong *_k = (ulong *)k;
-
-                    _a[0] = (_k + 0)[0] ^ (_k + 4)[0];
-                    _a[1] = (_k + 0)[1] ^ (_k + 4)[1];
-                    _b[0] = (_k + 2)[0] ^ (_k + 6)[0];
-                    _b[1] = (_k + 2)[1] ^ (_k + 6)[1];
-                }
+                InitMixingState((ulong *)a, (ulong *)b, (ulong *)k);
 
                 for (int i = 0; i < cnParams.AesRounds; i++)
                 {
                     /* ITERATION ONE */
 
                     /* Get the memory address */
-                    int j = E2I_Preconverted(*(ulong *)a, cnParams.ScratchModulus);
+                    int j = StateIndex(*(ulong *)a, cnParams.ScratchModulus);
 
                     /* Get a pointer to the memory address in the scratchpad */
                     ulong *p = (ulong *)(scratchpadPtr + j);
@@ -189,7 +179,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     /* ITERATION TWO */
 
                     /* Get new memory address */
-                    j = E2I_Preconverted(*(ulong *)c1, cnParams.ScratchModulus);
+                    j = StateIndex(*(ulong *)c1, cnParams.ScratchModulus);
 
                     /* Update pointer to scratchpad */
                     p = (ulong *)(scratchpadPtr + j);
@@ -226,9 +216,15 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             ICryptoNight cnParams,
             byte[] scratchpad)
         {
-            MixScratchpadState mixingState = new MixScratchpadState(cnState);
+            byte[] aArray = new byte[AES.Constants.BlockSize];
+            byte[] bArray = new byte[AES.Constants.BlockSize * 2];
+            byte[] cArray = new byte[AES.Constants.BlockSize];
 
-            fixed(byte* scratchpadPtr = scratchpad, aByte = mixingState.a, bByte = mixingState.b, cByte = mixingState.c)
+            fixed(byte* scratchpadPtr = scratchpad,
+                        aByte = aArray,
+                        bByte = bArray,
+                        cByte = cArray,
+                        k = cnState.GetK())
             {
                 ulong lo;
                 ulong hi;
@@ -240,6 +236,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 ulong *b = (ulong *)bByte;
                 ulong *c = (ulong *)cByte;
 
+                InitMixingState(a, b, (ulong *)k);
+
                 Vector128<byte> _a;
                 Vector128<byte> _b = Sse2.LoadVector128(bByte);
                 Vector128<byte> _c;
@@ -249,7 +247,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 for (int i = 0; i < cnParams.AesRounds; i++)
                 {
                     /* Get our 'memory' address we're using for this round */
-                    j = E2I_Preconverted(*a, cnParams.ScratchModulus);
+                    j = StateIndex(*a, cnParams.ScratchModulus);
 
                     /* Load C from the memory address in the scratchpad */
                     _c = Sse2.LoadVector128(scratchpadPtr + j);
@@ -268,7 +266,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     Sse2.Store(scratchpadPtr + j, Sse2.Xor(_b, _c));
                     
                     /* Get the new 'memory' address we're using for this round */
-                    j = E2I_Preconverted(*c, cnParams.ScratchModulus);
+                    j = StateIndex(*c, cnParams.ScratchModulus);
 
                     /* Grab a pointer to the spot of memory we're interested */
                     p = (ulong *)(scratchpadPtr + j);
@@ -298,36 +296,17 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             }
         }
 
-        private static unsafe ulong Multiply64(ulong x, ulong y, ulong *lowPointer)
-        {
-            ulong x_lo = x & 0xffffffff;
-            ulong x_hi = x >> 32;
-
-            ulong y_lo = y & 0xffffffff;
-            ulong y_hi = y >> 32;
-
-            ulong mul_lo = x_lo * y_lo;
-            ulong mul_hi = (x_hi * y_lo) + (mul_lo >> 32);
-            ulong mul_carry = (x_lo * y_hi) + (mul_hi & 0xffffffff);
-
-            ulong result_hi = (x_hi * y_hi) + (mul_hi >> 32) 
-                                            + (mul_carry >> 32);
-
-            ulong result_lo = (mul_carry << 32) + (mul_lo & 0xffffffff);
-
-            *lowPointer = result_lo;
-
-            return result_hi;
-        }
-
+        
         /* CryptoNight Step 3: Bounce randomly 1,048,576 times (1<<20)
          * through the mixing scratchpad, using 524,288 iterations of the
          * following mixing function.  Each execution performs two reads
          * and writes from the mixing scratchpad.
          */
-        private static void MixScratchpadV1(CNState cnState,
-                                            ICryptoNight cnParams,
-                                            byte[] scratchpad, byte[] tweak)
+        private static unsafe void MixScratchpadV1(
+            CNState cnState,
+            ICryptoNight cnParams,
+            byte[] scratchpad,
+            byte[] tweak)
         {
             if (Sse2.IsSupported && Bmi2.IsSupported && cnParams.Intrinsics)
             {
@@ -335,40 +314,72 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 return;
             }
 
-            MixScratchpadState mixingState = new MixScratchpadState(cnState);
+            byte[] aArray = new byte[AES.Constants.BlockSize];
+            byte[] bArray = new byte[AES.Constants.BlockSize * 2];
+            byte[] cArray = new byte[AES.Constants.BlockSize];
+            byte[] c1Array = new byte[AES.Constants.BlockSize];
+            byte[] dArray = new byte[AES.Constants.BlockSize];
 
-            for (int i = 0; i < cnParams.AesRounds; i++)
+            fixed(byte *scratchpadPtr = scratchpad,
+                        a = aArray,
+                        b = bArray,
+                        c = cArray,
+                        c1 = c1Array,
+                        d = dArray,
+                        k = cnState.GetK(),
+                        tweakByte = tweak)
             {
-                for (int iteration = 1; iteration < 3; iteration++)
+                InitMixingState((ulong *)a, (ulong *)b, (ulong *)k);
+
+                for (int i = 0; i < cnParams.AesRounds; i++)
                 {
-                    /* Get our 'memory' address we're using for this round */
-                    int j = E2I(mixingState.a, cnParams.ScratchModulus);
+                    /* ITERATION ONE */
 
-                    /* Load c from the scratchpad */
-                    CopyBlockFromScratchpad(scratchpad, mixingState.c, j);
+                    /* Get the memory address */
+                    int j = StateIndex(*(ulong *)a, cnParams.ScratchModulus);
 
-                    /* Perform the mixing function */
-                    if (iteration == 1)
-                    {
-                        MixScratchpadIterationOne(mixingState, cnParams);
-                    }
-                    else
-                    {
-                        MixScratchpadIterationTwo(mixingState);
-                        /* Perform the variant one tweak, second iteration */
-                        VariantOneStepTwo(mixingState.c, 8, tweak);
-                    }
+                    /* Get a pointer to the memory address in the scratchpad */
+                    ulong *p = (ulong *)(scratchpadPtr + j);
+                    
+                    /* Perform AES round from/to scratchpad, with A as the
+                       expanded key */
+                    AES.AES.AESBSingleRound((uint *)p, (uint *)a);
 
-                    /* Write c back to the scratchpad */
-                    CopyBlockToScratchpad(scratchpad, mixingState.c, j);
+                    /* Copy a block from p to c1 */
+                    CopyBlock(c1, p);
 
-                    SwapBlocks(ref mixingState.a, ref mixingState.b);
+                    XORBlocks(p, (ulong *)b);
 
-                    /* Perform the variant one tweak, first iteration */
-                    if (iteration == 1)
-                    {
-                        VariantOneStepOne(scratchpad, j);
-                    }
+                    VariantOneStepOnePtr((byte *)p);
+
+                    /* ITERATION TWO */
+
+                    /* Get new memory address */
+                    j = StateIndex(*(ulong *)c1, cnParams.ScratchModulus);
+
+                    /* Update pointer to scratchpad */
+                    p = (ulong *)(scratchpadPtr + j);
+
+                    /* Copy a block from p to c */
+                    CopyBlock(c, p);
+
+                    Multiply64((ulong *)c1, (ulong *)c, (ulong *)d);
+
+                    /* Sum half blocks */
+                    ((ulong *)a)[0] += ((ulong *)d)[0];
+                    ((ulong *)a)[1] += ((ulong *)d)[1];
+
+                    SwapBlocks((ulong *)a, (ulong *)c);
+
+                    XORBlocks((ulong *)a, (ulong *)c);
+
+                    VariantOneStepTwoPtr((ulong *)(c + 8), (ulong *)tweakByte);
+
+                    /* Copy a block from c to p */
+                    CopyBlock(p, c);
+                    
+                    /* Copy a block from c1 to b */
+                    CopyBlock(b, c1);
                 }
             }
         }
@@ -383,12 +394,15 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             ICryptoNight cnParams,
             byte[] scratchpad, byte[] tweak)
         {
-            MixScratchpadState mixingState = new MixScratchpadState(cnState);
+            byte[] aArray = new byte[AES.Constants.BlockSize];
+            byte[] bArray = new byte[AES.Constants.BlockSize * 2];
+            byte[] cArray = new byte[AES.Constants.BlockSize];
 
             fixed(byte* scratchpadPtr = scratchpad,
-                        aByte = mixingState.a,
-                        bByte = mixingState.b,
-                        cByte = mixingState.c,
+                        aByte = aArray,
+                        bByte = bArray,
+                        cByte = cArray,
+                        k = cnState.GetK(),
                         tweakByte = tweak)
             {
                 ulong lo;
@@ -402,6 +416,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 ulong *c = (ulong *)cByte;
                 ulong *tweak1_2 = (ulong *)tweakByte;
 
+                InitMixingState(a, b, (ulong *)k);
+
                 Vector128<byte> _a;
                 Vector128<byte> _b = Sse2.LoadVector128(bByte);
                 Vector128<byte> _c;
@@ -411,7 +427,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 for (int i = 0; i < cnParams.AesRounds; i++)
                 {
                     /* Get our 'memory' address we're using for this round */
-                    j = E2I_Preconverted(*a, cnParams.ScratchModulus);
+                    j = StateIndex(*a, cnParams.ScratchModulus);
 
                     /* Load C from the memory address in the scratchpad */
                     _c = Sse2.LoadVector128(scratchpadPtr + j);
@@ -429,10 +445,10 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                        in the scratchpad */
                     Sse2.Store(scratchpadPtr + j, Sse2.Xor(_b, _c));
 
-                    VariantOneStepOnePtr(scratchpadPtr, j);
+                    VariantOneStepOnePtr(scratchpadPtr + j);
                     
                     /* Get the new 'memory' address we're using for this round */
-                    j = E2I_Preconverted(*c, cnParams.ScratchModulus);
+                    j = StateIndex(*c, cnParams.ScratchModulus);
 
                     /* Grab a pointer to the spot of memory we're interested */
                     p = (ulong *)(scratchpadPtr + j);
@@ -464,32 +480,6 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             }
         }
 
-        private static void MixScratchpadIterationOne(
-            MixScratchpadState mixingState,
-            ICryptoNight cnParams)
-        {
-            AES.AES.AESBSingleRound(mixingState.a, mixingState.c, cnParams.Intrinsics);
-
-            XORBlocks(mixingState.b, mixingState.c);
-
-            SwapBlocks(ref mixingState.b, ref mixingState.c);
-        }
-
-        private static void MixScratchpadIterationTwo(MixScratchpadState
-                                                      mixingState)
-        {
-            /* Multiply a and c together, and place the result in
-               b, a and c are ulongs stored as byte arrays, d is a
-               128 bit value stored as a byte array */
-            Multiply128(mixingState.a, mixingState.c, mixingState.d);
-
-            SumHalfBlocks(mixingState.b, mixingState.d);
-
-            SwapBlocks(ref mixingState.b, ref mixingState.c);
-
-            XORBlocks(mixingState.b, mixingState.c);
-        }
-
         private static unsafe void MixScratchpadV2(
             CNState cnState,
             ICryptoNight cnParams,
@@ -519,17 +509,12 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 ulong divisionResult;
                 ulong sqrtResult;
 
+                InitMixingState((ulong *)a, (ulong *)b, (ulong *)k);
+
                 /* Init */
                 {
-                    ulong *_a = (ulong *)a;
                     ulong *_b = (ulong *)b;
-                    ulong *_k = (ulong *)k;
                     ulong *w = (ulong *)hashState;
-
-                    _a[0] = (_k + 0)[0] ^ (_k + 4)[0];
-                    _a[1] = (_k + 0)[1] ^ (_k + 4)[1];
-                    _b[0] = (_k + 2)[0] ^ (_k + 6)[0];
-                    _b[1] = (_k + 2)[1] ^ (_k + 6)[1];
 
                     _b[2] = w[8] ^ w[10];
                     _b[3] = w[9] ^ w[11];
@@ -543,7 +528,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     /* ITERATION ONE */
 
                     /* Get the memory address */
-                    int j = E2I_Preconverted(*(ulong *)a, cnParams.ScratchModulus);
+                    int j = StateIndex(*(ulong *)a, cnParams.ScratchModulus);
 
                     /* Get a pointer to the memory address in the scratchpad */
                     ulong *p = (ulong *)(scratchpadPtr + j);
@@ -562,7 +547,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     /* ITERATION TWO */
 
                     /* Get new memory address */
-                    j = E2I_Preconverted(*(ulong *)c1, cnParams.ScratchModulus);
+                    j = StateIndex(*(ulong *)c1, cnParams.ScratchModulus);
 
                     /* Update pointer to scratchpad */
                     p = (ulong *)(scratchpadPtr + j);
@@ -615,12 +600,15 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             ICryptoNight cnParams,
             byte[] scratchpad)
         {
-            MixScratchpadState mixingState = new MixScratchpadState(cnState);
+            byte[] aArray = new byte[AES.Constants.BlockSize];
+            byte[] bArray = new byte[AES.Constants.BlockSize * 2];
+            byte[] cArray = new byte[AES.Constants.BlockSize];
 
             fixed(byte* scratchpadPtr = scratchpad,
-                        aByte = mixingState.a,
-                        bByte = mixingState.b,
-                        cByte = mixingState.c,
+                        aByte = aArray,
+                        bByte = bArray,
+                        cByte = cArray,
+                        k = cnState.GetK(),
                         hashState = cnState.GetState())
             {
                 ulong lo;
@@ -642,6 +630,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
                 ulong *w = (ulong *)hashState;
 
+                InitMixingState((ulong *)a, (ulong *)b, (ulong *)k);
+
                 b[2] = w[8] ^ w[10];
                 b[3] = w[9] ^ w[11];
 
@@ -651,7 +641,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                 for (int i = 0; i < cnParams.AesRounds; i++)
                 {
                     /* Get our 'memory' address we're using for this round */
-                    j = E2I_Preconverted(*a, cnParams.ScratchModulus);
+                    j = StateIndex(*a, cnParams.ScratchModulus);
 
                     /* Load C from the memory address in the scratchpad */
                     _c = Sse2.LoadVector128(scratchpadPtr + j);
@@ -678,7 +668,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     Sse2.Store(scratchpadPtr + j, Sse2.Xor(_b, _c));
                     
                     /* Get the new 'memory' address we're using for this round */
-                    j = E2I_Preconverted(*c, cnParams.ScratchModulus);
+                    j = StateIndex(*c, cnParams.ScratchModulus);
 
                     /* Grab a pointer to the spot of memory we're interested */
                     p = (ulong *)(scratchpadPtr + j);
@@ -881,10 +871,10 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             ulong sqrtInput = ptr[0] + divisionResult;
 
-            sqrtResult = integerSquareRootV2(sqrtInput);
+            sqrtResult = IntegerSquareRootV2(sqrtInput);
         }
 
-        private static uint integerSquareRootV2(ulong n)
+        private static uint IntegerSquareRootV2(ulong n)
         {
             ulong r = 1UL << 63;
 
@@ -939,30 +929,15 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             }
         }
 
-        private unsafe static void VariantOneStepOnePtr(byte* scratchpad, int j)
+        private unsafe static void VariantOneStepOnePtr(byte* scratchpad)
         {
-            int offset = j + 11;
-
-            byte tmp = scratchpad[offset];
+            byte tmp = scratchpad[11];
 
             uint table = 0x75310;
 
             byte index = (byte)((((tmp >> 3) & 6) | (tmp & 1)) << 1);
 
-            scratchpad[offset] = (byte)(tmp ^ ((table >> index) & 0x30));
-        }
-
-        private static void VariantOneStepOne(byte[] scratchpad, int j)
-        {
-            int offset = j + 11;
-
-            byte tmp = scratchpad[offset];
-
-            uint table = 0x75310;
-
-            byte index = (byte)((((tmp >> 3) & 6) | (tmp & 1)) << 1);
-
-            scratchpad[offset] = (byte)(tmp ^ ((table >> index) & 0x30));
+            scratchpad[11] = (byte)(tmp ^ ((table >> index) & 0x30));
         }
 
         private unsafe static void VariantOneStepTwoPtr(ulong *a, ulong *b)
@@ -976,54 +951,24 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             XOR64(c, tweak, offset, 0);
         }
 
-        private static void SumHalfBlocks(byte[] a, byte[] b)
+        private static unsafe void InitMixingState(
+            ulong *a,
+            ulong *b,
+            ulong *k)
         {
-            /* a0 = a[0..7] + b[0..7] */
-            ulong a0 = Encoding.UnsafeByteArrayToUlong(a)
-                     + Encoding.UnsafeByteArrayToUlong(b);
-
-            /* b0 = a[8..15] + b[8..15] */
-            ulong b0 = Encoding.UnsafeByteArrayToUlong(a, 8)
-                     + Encoding.UnsafeByteArrayToUlong(b, 8);
-
-            /* Copy a0 into a[0..7], and b0 into a[8..15] */
-            Encoding.UnsafeWriteUlongToByteArray(a, a0, 0);
-            Encoding.UnsafeWriteUlongToByteArray(a, b0, 8);
-        }
-
-        /* Thanks to https://stackoverflow.com/a/42426934/8737306 */
-        private static void Multiply128(byte[] a, byte[] b, byte[] result)
-        {
-            /* Read 8 bytes from a and b as a ulong */
-            ulong x = Encoding.UnsafeByteArrayToUlong(a);
-            ulong y = Encoding.UnsafeByteArrayToUlong(b);
-
-            ulong x_lo = x & 0xffffffff;
-            ulong x_hi = x >> 32;
-
-            ulong y_lo = y & 0xffffffff;
-            ulong y_hi = y >> 32;
-
-            ulong mul_lo = x_lo * y_lo;
-            ulong mul_hi = (x_hi * y_lo) + (mul_lo >> 32);
-            ulong mul_carry = (x_lo * y_hi) + (mul_hi & 0xffffffff);
-
-            ulong result_hi = (x_hi * y_hi) + (mul_hi >> 32) 
-                                            + (mul_carry >> 32);
-
-            ulong result_lo = (mul_carry << 32) + (mul_lo & 0xffffffff);
-
-            /* Write result_hi to result[0..7] and result_lo to
-             * result[8..15] */
-            Encoding.UnsafeWriteUlongToByteArray(result, result_hi);
-            Encoding.UnsafeWriteUlongToByteArray(result, result_lo, 8);
+            a[0] = (k + 0)[0] ^ (k + 4)[0];
+            a[1] = (k + 0)[1] ^ (k + 4)[1];
+            b[0] = (k + 2)[0] ^ (k + 6)[0];
+            b[1] = (k + 2)[1] ^ (k + 6)[1];
         }
 
         private static unsafe void Multiply64(ulong *a, ulong *b, ulong *result)
         {
-            ulong x = *a;
-            ulong y = *b;
+            result[0] = Multiply64(*a, *b, result + 1);
+        }
 
+        private static unsafe ulong Multiply64(ulong x, ulong y, ulong *lowPointer)
+        {
             ulong x_lo = x & 0xffffffff;
             ulong x_hi = x >> 32;
 
@@ -1039,26 +984,9 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
             ulong result_lo = (mul_carry << 32) + (mul_lo & 0xffffffff);
 
-            result[0] = result_hi;
-            result[1] = result_lo;
-        }
+            *lowPointer = result_lo;
 
-        /* Copy blocksize bytes from the scratchpad at an offset of
-           offset to destination */
-        private static void CopyBlockFromScratchpad(byte[] scratchpad,
-                                                    byte[] destination,
-                                                    int offset)
-        {
-            Buffer.BlockCopy(scratchpad, offset, destination, 0, AES.Constants.BlockSize);
-        }
-
-        /* Copy blocksize bytes from the source to the scratchpad at an offset
-           of offset in the scratchpad */
-        private static void CopyBlockToScratchpad(byte[] scratchpad,
-                                                  byte[] source,
-                                                  int offset)
-        {
-            Buffer.BlockCopy(source, 0, scratchpad, offset, AES.Constants.BlockSize);
+            return result_hi;
         }
 
         /* XOR a and b, with optional offsets in the array */
@@ -1079,22 +1007,12 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 
         private static unsafe void CopyBlock(void *destination, void *source)
         {
-            Buffer.MemoryCopy(source, destination, AES.Constants.BlockSize, AES.Constants.BlockSize);
-        }
-
-        /* 
-          Swap the values of a and b 
-          
-          Dropped the loop.
-          
-          Old routine took 00:02:26 for 100000000 iterations
-          New routine took 00:00:08 for 100000000 iterations
-         */
-        private static void SwapBlocks(ref byte[] a, ref byte[] b)
-        {
-            byte[] tmpAESBuffer = a;
-            a = b;
-            b = tmpAESBuffer;
+            Buffer.MemoryCopy(
+                source,
+                destination,
+                AES.Constants.BlockSize,
+                AES.Constants.BlockSize
+            );
         }
 
         /* Swap A and B - Can't swap the underlying arrays since the pointer
@@ -1113,15 +1031,7 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             b[1] = tmp[1];
         }
         
-        private static int E2I(byte[] input, int modulus)
-        {
-            /* Read 8 bytes as a ulong */
-            ulong j = Encoding.UnsafeByteArrayToUlong(input);
-
-            return (int)(j >> 4 & (ulong)modulus) << 4;
-        }
-
-        private static int E2I_Preconverted(ulong j, int modulus)
+        private static int StateIndex(ulong j, int modulus)
         {
             return (int)(j >> 4 & (ulong)modulus) << 4;
         }
