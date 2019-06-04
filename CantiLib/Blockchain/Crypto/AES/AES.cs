@@ -287,6 +287,58 @@ namespace Canti.Blockchain.Crypto.AES
             Buffer.BlockCopy(b0, 0, input, inputOffset, 16);
         }
 
+        private static unsafe void Round(uint* y, uint* x, uint* key, int keyOffset)
+        {
+            y[0] = key[keyOffset] ^ FourTablesA(x);
+            y[1] = key[keyOffset + 1] ^ FourTablesB(x);
+            y[2] = key[keyOffset + 2] ^ FourTablesC(x);
+            y[3] = key[keyOffset + 3] ^ FourTablesD(x);
+        }
+
+        private static unsafe uint FourTablesA(uint* x)
+        {
+            return Constants.SbData[0][BVal(x[0], 0)] ^
+                   Constants.SbData[1][BVal(x[1], 1)] ^
+                   Constants.SbData[2][BVal(x[2], 2)] ^
+                   Constants.SbData[3][BVal(x[3], 3)];
+        }
+
+        private static unsafe uint FourTablesB(uint* x)
+        {
+            return Constants.SbData[0][BVal(x[1], 0)] ^
+                   Constants.SbData[1][BVal(x[2], 1)] ^
+                   Constants.SbData[2][BVal(x[3], 2)] ^
+                   Constants.SbData[3][BVal(x[0], 3)];
+        }
+
+        private static unsafe uint FourTablesC(uint* x)
+        {
+            return Constants.SbData[0][BVal(x[2], 0)] ^
+                   Constants.SbData[1][BVal(x[3], 1)] ^
+                   Constants.SbData[2][BVal(x[0], 2)] ^
+                   Constants.SbData[3][BVal(x[1], 3)];
+        }
+
+        private static unsafe uint FourTablesD(uint* x)
+        {
+            return Constants.SbData[0][BVal(x[3], 0)] ^
+                   Constants.SbData[1][BVal(x[0], 1)] ^
+                   Constants.SbData[2][BVal(x[1], 2)] ^
+                   Constants.SbData[3][BVal(x[2], 3)];
+        }
+
+        public static unsafe void AESBSingleRound(
+            uint *input, uint* keys)
+        {
+            uint[] output = new uint[4];
+
+            fixed (uint *outputPtr = output)
+            {
+                Round(outputPtr, input, keys, 0);
+                Buffer.MemoryCopy(outputPtr, input, 16, 16);
+            }
+        }
+
         public static void AESBSingleRound(byte[] keys, byte[] input, bool enableIntrinsics = true)
         {
             if (Aes.IsSupported && enableIntrinsics)
@@ -382,33 +434,33 @@ namespace Canti.Blockchain.Crypto.AES
         private static uint FourTablesA(uint[] x)
         {
             return Constants.SbData[0][BVal(x[0], 0)] ^
-            Constants.SbData[1][BVal(x[1], 1)] ^
-            Constants.SbData[2][BVal(x[2], 2)] ^
-            Constants.SbData[3][BVal(x[3], 3)];
+                   Constants.SbData[1][BVal(x[1], 1)] ^
+                   Constants.SbData[2][BVal(x[2], 2)] ^
+                   Constants.SbData[3][BVal(x[3], 3)];
         }
 
         private static uint FourTablesB(uint[] x)
         {
             return Constants.SbData[0][BVal(x[1], 0)] ^
-            Constants.SbData[1][BVal(x[2], 1)] ^
-            Constants.SbData[2][BVal(x[3], 2)] ^
-            Constants.SbData[3][BVal(x[0], 3)];
+                   Constants.SbData[1][BVal(x[2], 1)] ^
+                   Constants.SbData[2][BVal(x[3], 2)] ^
+                   Constants.SbData[3][BVal(x[0], 3)];
         }
 
         private static uint FourTablesC(uint[] x)
         {
             return Constants.SbData[0][BVal(x[2], 0)] ^
-            Constants.SbData[1][BVal(x[3], 1)] ^
-            Constants.SbData[2][BVal(x[0], 2)] ^
-            Constants.SbData[3][BVal(x[1], 3)];
+                   Constants.SbData[1][BVal(x[3], 1)] ^
+                   Constants.SbData[2][BVal(x[0], 2)] ^
+                   Constants.SbData[3][BVal(x[1], 3)];
         }
 
         private static uint FourTablesD(uint[] x)
         {
             return Constants.SbData[0][BVal(x[3], 0)] ^
-            Constants.SbData[1][BVal(x[0], 1)] ^
-            Constants.SbData[2][BVal(x[1], 2)] ^
-            Constants.SbData[3][BVal(x[2], 3)];
+                   Constants.SbData[1][BVal(x[0], 1)] ^
+                   Constants.SbData[2][BVal(x[1], 2)] ^
+                   Constants.SbData[3][BVal(x[2], 3)];
         }
 
         private static uint ForwardVar(uint[] x, uint r, uint i)

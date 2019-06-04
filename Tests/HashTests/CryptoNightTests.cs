@@ -156,5 +156,69 @@ namespace Tests
             };
             HashTests.Test(testVectors, new CNLiteV1());
         }
+
+        /*
+        [TestMethod]
+        public void TestCNV2()
+        {
+            var testVectors = new Dictionary<string, string>
+            {
+                { "", "e34985722288be50a2068f973f02248d62e7bc6a0a0dfca2eb84909724857a72" },
+                { "The quick brown fox jumps over the lazy dog", "89dc534dd473da35f6360dcdc5583aa54279d4370475a46d623463e5d2846c13" },
+                { "The quick brown fox jumps over the lazy dog.", "6426bc9c004916344b27e66cbc64f7efc1f4f7c7fba00a37e6928915ae88a552" },
+                { "I'd just like to interject for a moment. What you're referring to as Linux, is in fact, GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself", "17ef5baf4fe920df66387a719e6df60f5441fc79f3c1684aa925e72358b2bdaf" },
+                { INPUT_DATA, "871fcd6823f6a879bb3f33951c8e8e891d4043880b02dfa1bb3be498b50e7578" },
+            };
+
+            HashTests.Test(testVectors, new CNV2());
+        }
+        */
+
+        [TestMethod]
+        public void TestCNV2PlatformIndependent()
+        {
+            var testVectors = new Dictionary<string, string>
+            {
+                { "", "e34985722288be50a2068f973f02248d62e7bc6a0a0dfca2eb84909724857a72" },
+                { "The quick brown fox jumps over the lazy dog", "89dc534dd473da35f6360dcdc5583aa54279d4370475a46d623463e5d2846c13" },
+                { "The quick brown fox jumps over the lazy dog.", "6426bc9c004916344b27e66cbc64f7efc1f4f7c7fba00a37e6928915ae88a552" },
+                { "I'd just like to interject for a moment. What you're referring to as Linux, is in fact, GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself", "17ef5baf4fe920df66387a719e6df60f5441fc79f3c1684aa925e72358b2bdaf" },
+                { INPUT_DATA, "871fcd6823f6a879bb3f33951c8e8e891d4043880b02dfa1bb3be498b50e7578" },
+            };
+
+            HashTests.Test(testVectors, new CNV2(false));
+        }
+
+        /*
+        [TestMethod]
+        public void TestCNTurtleV2()
+        {
+            var testVectors = new Dictionary<string, string>
+            {
+                { "", "16cba4f89786b8aa785a4085f529f757296402aca4edbaefc1470bc691071ed9" },
+                { "The quick brown fox jumps over the lazy dog", "32406c24600411f331e8a1decf38b65442a2feb6a3b71384bb50473e3e0dc11b" },
+                { "The quick brown fox jumps over the lazy dog.", "9684a0c6bc9d1256bb64ee9eaecf429e545073a3a06d88478cd4d2aa6f15263c" },
+                { "I'd just like to interject for a moment. What you're referring to as Linux, is in fact, GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself", "decefe366f49f7fc26c8b4f87caf7da47552162c236ebc1819c851bc37861ae0" },
+                { INPUT_DATA, "b2172ec9466e1aee70ec8572a14c233ee354582bcb93f869d429744de5726a26" },
+            };
+
+            HashTests.Test(testVectors, new CNTurtleV2());
+        }
+        */
+
+        [TestMethod]
+        public void TestCNTurtleV2PlatformIndependent()
+        {
+            var testVectors = new Dictionary<string, string>
+            {
+                { "", "16cba4f89786b8aa785a4085f529f757296402aca4edbaefc1470bc691071ed9" },
+                { "The quick brown fox jumps over the lazy dog", "32406c24600411f331e8a1decf38b65442a2feb6a3b71384bb50473e3e0dc11b" },
+                { "The quick brown fox jumps over the lazy dog.", "9684a0c6bc9d1256bb64ee9eaecf429e545073a3a06d88478cd4d2aa6f15263c" },
+                { "I'd just like to interject for a moment. What you're referring to as Linux, is in fact, GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself", "decefe366f49f7fc26c8b4f87caf7da47552162c236ebc1819c851bc37861ae0" },
+                { INPUT_DATA, "b2172ec9466e1aee70ec8572a14c233ee354582bcb93f869d429744de5726a26" },
+            };
+
+            HashTests.Test(testVectors, new CNTurtleV2(false));
+        }
     }
 }

@@ -27,6 +27,8 @@ namespace Benchmark
                 new HashFunction("CNLiteV0 (Platform Independent)", new CNLiteV0(false),    150),
                 new HashFunction("CNLiteV1",                        new CNLiteV1(),         1000),
                 new HashFunction("CNLiteV1 (Platform Independent)", new CNLiteV1(false),    150),
+                new HashFunction("CNV2",                            new CNV2(),             500),
+                new HashFunction("CNV2 (Platform Independent)",     new CNV2(false),        60),
                 new HashFunction("Groestl",                         new Groestl(),          200000),
                 new HashFunction("JH",                              new JH(),               50000),
                 new HashFunction("Keccak",                          new Keccak(),           2000000),
