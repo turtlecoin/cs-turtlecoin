@@ -66,6 +66,7 @@ namespace CSTurtleCoin
             P2P_MAX_PEER_CONNECTIONS = 50,
             P2P_DISCOVERY_ENABLED = true,
             P2P_DISCOVERY_INTERVAL = 5,
+            P2P_DISCOVERY_TIMEOUT = 1200,
             P2P_CONNECTION_TIMEOUT = 2000,
             P2P_POLLING_INTERVAL = 100,
             P2P_TIMED_SYNC_INTERVAL = 60,

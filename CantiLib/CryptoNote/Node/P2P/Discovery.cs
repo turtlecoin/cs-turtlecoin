@@ -19,13 +19,20 @@ namespace Canti.CryptoNote
         #region Private
 
         // Contains a list of peer candidates
-        private List<PeerCandidate> PeerCandidates { get; set; }
+        private List<PeerCandidate> PeerCandidatesGreyList { get; set; }
+
+        // Contains a list of priority peer candidates
+        // TODO - pull from priority list before greylist
+        private List<PeerCandidate> PeerCandidatesWhiteList { get; set; }
 
         // Contains a list of previously tried peer candidate IDs
-        private List<ulong> PeerBlackList { get; set; }
+        private List<ulong> RecentlyTriedPeerCandidates { get; set; }
 
-        // Thread in which new peers are discovered
+        // Thread timer in which new peers are discovered
         private Timer DiscoveryTimer { get; set; }
+
+        // Thread timer in which recently tried peers are re-added as candidates
+        private Timer DiscoveryTimoutTimer { get; set; }
 
         // Tells the discovery timer whether or not discovery is already active
         private bool DiscoveryActive { get; set; }
@@ -40,18 +47,23 @@ namespace Canti.CryptoNote
         private void StartDiscovery()
         {
             // Assign variables
-            PeerCandidates = new List<PeerCandidate>();
-            PeerBlackList = new List<ulong>();
+            PeerCandidatesGreyList = new List<PeerCandidate>();
+            RecentlyTriedPeerCandidates = new List<ulong>();
 
             // Setup discovery timer
             DiscoveryTimer = new Timer(new TimerCallback(AutomatedDiscovery), null, 0, Globals.P2P_DISCOVERY_INTERVAL * 1000);
+
+            // Setup discovery timeout timer
+            DiscoveryTimoutTimer = new Timer(new TimerCallback(ClearRecentlyTriedPeers), null,
+                Globals.P2P_DISCOVERY_TIMEOUT * 1000, Globals.P2P_DISCOVERY_TIMEOUT * 1000);
         }
 
         // Stops peer discovery
         private void StopDiscovery()
         {
-            // Dispose of our timer, clearing resources
+            // Dispose of our timers, clearing resources
             DiscoveryTimer.Dispose();
+            DiscoveryTimoutTimer.Dispose();
         }
 
         // Adds peer list candidates from a local peer list blob
@@ -102,13 +114,13 @@ namespace Canti.CryptoNote
         private void AddPeerCandidate(PeerCandidate Peer)
         {
             // Lock peer candidate list to prevent race conditions
-            lock (PeerCandidates)
+            lock (PeerCandidatesGreyList)
             {
                 // Peer exists in the list already
-                if (PeerCandidates.Any(x => x.Id == Peer.Id))
+                if (PeerCandidatesGreyList.Any(x => x.Id == Peer.Id))
                 {
                     // Find peer in the list
-                    var LocalPeer = PeerCandidates.First(x => x.Id == Peer.Id);
+                    var LocalPeer = PeerCandidatesGreyList.First(x => x.Id == Peer.Id);
 
                     // Update peer's last seen time
                     if (LocalPeer.LastSeen < Peer.LastSeen)
@@ -121,7 +133,7 @@ namespace Canti.CryptoNote
                 else
                 {
                     // Add peer to the candidate list
-                    PeerCandidates.Add(Peer);
+                    PeerCandidatesGreyList.Add(Peer);
                 }
             }
         }
@@ -130,32 +142,32 @@ namespace Canti.CryptoNote
         private List<PeerCandidate> GetPeerCandidates()
         {
             // Lock peer candidate list to prevent race conditions
-            lock (PeerCandidates)
+            lock (PeerCandidatesGreyList)
             {
                 // Order candidate list by last seen time, newest first
-                return PeerCandidates.OrderByDescending(x => x.LastSeen).ToList();
+                return PeerCandidatesGreyList.OrderByDescending(x => x.LastSeen).ToList();
             }
         }
 
-        // Adds a peer to the list of blacklisted peers
-        private void AddBlacklistedPeer(PeerCandidate Peer)
+        // Adds a peer to the list of recently tried peers
+        private void AddRecentlyTriedPeer(PeerCandidate Peer)
         {
-            // Lock blacklist to prevent race conditions
-            lock (PeerBlackList)
+            // Lock list to prevent race conditions
+            lock (RecentlyTriedPeerCandidates)
             {
                 // Add the peer id to the list
-                PeerBlackList.Add(Peer.Id);
+                RecentlyTriedPeerCandidates.Add(Peer.Id);
             }
         }
 
         // Returns whether or not a peer is blacklisted
-        private bool IsPeerBlacklisted(PeerCandidate Peer)
+        private bool IsPeerAllowed(PeerCandidate Peer)
         {
-            // Lock blacklist to prevent race conditions
-            lock (PeerBlackList)
+            // Lock list to prevent race conditions
+            lock (RecentlyTriedPeerCandidates)
             {
-                // Return whether or not the blacklist contains this peer
-                return PeerBlackList.Contains(Peer.Id);
+                // Return whether or not the recently tried peer list contains this peer
+                return RecentlyTriedPeerCandidates.Contains(Peer.Id);
             }
         }
 
@@ -169,9 +181,16 @@ namespace Canti.CryptoNote
             lock (PeerList)
             {
                 // Check if the connected peer list contains this peer
-                if (PeerList.Any(x => x.Id == Peer.Id)) return true;
+                if (PeerList.Any(x => x.Id == Peer.Id))
+                {
+                    return true;
+                }
 
-                // TODO - check if any incoming connections have this address + port
+                // Check if any incoming connections have this address + port
+                if (P2pServer.PendingConnections.Any(x => x.Client.RemoteEndPoint.ToString() == $"{Peer.Address}:{Peer.Port}"))
+                {
+                    return true;
+                }
             }
 
             // Peer is not connected
@@ -232,20 +251,30 @@ namespace Canti.CryptoNote
                 // TODO - check if we are allowing remote connections??
 
                 // Check if this peer has previously been blacklists
-                // TODO - have a timeout for blacklisted peers to free them (timeout in config)
-                if (IsPeerBlacklisted(Peer)) return;
+                if (IsPeerAllowed(Peer)) return;
 
                 // Attempt to add this peer candidate
                 Logger.Debug($"[{TryCount}/10] Trying candidate #{RandomIndex} {Peer.Address}:{Peer.Port}, last seen {GetTimeDelta(Peer.LastSeen)} seconds ago");
                 if (!AddPeer(Peer.Address, (int)Peer.Port))
                 {
                     // Add to failed connection list
-                    AddBlacklistedPeer(Peer);
+                    AddRecentlyTriedPeer(Peer);
                 }
             }
 
             // Discovery process finished
             DiscoveryActive = false;
+        }
+
+        // Clears the list of recently tried peers
+        private void ClearRecentlyTriedPeers(object _)
+        {
+            // Lock list to prevent race conditions
+            lock (RecentlyTriedPeerCandidates)
+            {
+                // Empty list
+                RecentlyTriedPeerCandidates.Clear();
+            }
         }
 
         #endregion

@@ -84,6 +84,38 @@ namespace Canti
         /// </summary>
         public int Port { get; private set; }
 
+        /// <summary>
+        /// Returns a copy of the connected peer list
+        /// </summary>
+        public List<P2pPeer> PeerList
+        {
+            get
+            {
+                // Lock peer list to prevent race conditions
+                lock (Peers)
+                {
+                    // Return a copied list instance
+                    return new List<P2pPeer>(Peers);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns a copy of the pending connection list
+        /// </summary>
+        public List<TcpClient> PendingConnections
+        {
+            get
+            {
+                // Lock connection queue to prevent race conditions
+                lock (ConnectionQueue)
+                {
+                    // Return a copied list instance
+                    return new List<TcpClient>(ConnectionQueue);
+                }
+            }
+        }
+
         #endregion
 
         #region Private

@@ -142,6 +142,7 @@ namespace Canti
         private void Read()
         {
             // Get client stream
+            // TODO - this can fail if internet drops, needs to be debugged and checked for
             var Stream = Client.GetStream();
 
             // Create a byte buffer

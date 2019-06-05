@@ -107,6 +107,11 @@ namespace Canti.CryptoNote
         public int P2P_DISCOVERY_INTERVAL { get; set; }
 
         /// <summary>
+        /// How often the list of recently tried peer candidates is emptied (in seconds)
+        /// </summary>
+        public int P2P_DISCOVERY_TIMEOUT { get; set; }
+
+        /// <summary>
         /// The amount of time to wait for a connection to be made before giving up (in milliseconds)
         /// </summary>
         public int P2P_CONNECTION_TIMEOUT { get; set; }
