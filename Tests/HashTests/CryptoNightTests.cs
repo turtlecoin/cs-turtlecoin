@@ -157,7 +157,6 @@ namespace Tests
             HashTests.Test(testVectors, new CNLiteV1());
         }
 
-        /*
         [TestMethod]
         public void TestCNV2()
         {
@@ -172,7 +171,6 @@ namespace Tests
 
             HashTests.Test(testVectors, new CNV2());
         }
-        */
 
         [TestMethod]
         public void TestCNV2PlatformIndependent()
