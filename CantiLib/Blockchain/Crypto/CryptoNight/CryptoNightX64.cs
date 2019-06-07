@@ -351,9 +351,9 @@ namespace Canti.Blockchain.Crypto.CryptoNight
                     hi = Bmi2.X64.MultiplyNoFlags(c[0], b[0], loPtr);
 
                     *(ulong *)(scratchpadPtr + (j ^ 0x10)) ^= hi;
-                    *(ulong *)(scratchpadPtr + (j ^ 0x10) + 1) ^= lo;
+                    *((ulong *)(scratchpadPtr + (j ^ 0x10)) + 1) ^= lo;
                     hi ^= *(ulong *)(scratchpadPtr + (j ^ 0x20));
-                    lo ^= *(ulong *)(scratchpadPtr + (j ^ 0x20) + 1);
+                    lo ^= *((ulong *)(scratchpadPtr + (j ^ 0x20)) + 1);
 
                     VariantTwoShuffleAdd(
                         scratchpadPtr,
@@ -431,16 +431,17 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             ref ulong divisionResult,
             ref ulong sqrtResult)
         {
+
             b[0] ^= divisionResult ^ (sqrtResult << 32);
             ulong dividend = ptr[1];
-            uint divisor = (uint)(ptr[0] + (uint)(sqrtResult << 1)) | 0x80000001;
+            uint divisor = (uint)((ptr[0] + (uint)(sqrtResult << 1)) | 0x80000001UL);
             divisionResult = ((uint)(dividend / divisor)) + ((ulong)(dividend % divisor) << 32);
             ulong sqrtInput = ptr[0] + divisionResult;
 
-            Vector128<ulong> expDoubleBias = Vector128.Create(0, 1023UL << 52);
-
-            Vector128<ulong> x = Sse2.Add(Sse2.X64.ConvertScalarToVector128UInt64(sqrtInput >> 12), expDoubleBias);
-            sqrtResult = Sse2.X64.ConvertToUInt64(Sse2.Subtract(x, expDoubleBias)) >> 19;
+            Vector128<ulong> expDoubleBias = Vector128.Create(1023UL << 52, 0);
+            Vector128<double> x = Sse2.Add(Sse2.X64.ConvertScalarToVector128UInt64(sqrtInput >> 12), expDoubleBias).AsDouble();
+            x = Sse2.SqrtScalar(Vector128.Create(0).AsDouble(), x);
+            sqrtResult = Sse2.X64.ConvertToUInt64(Sse2.Subtract(x.AsUInt64(), expDoubleBias)) >> 19;
 
             VariantTwoSqrtFixup(ref sqrtResult, sqrtInput);
         }
@@ -450,7 +451,8 @@ namespace Canti.Blockchain.Crypto.CryptoNight
             ulong s = r >> 1;
             ulong b = r & 1;
             ulong r2 = s * (s + b) + (r << 32);
-            r = (ulong)((long)r + ((r2 + b > sqrtInput) ? -1L : 0L) + ((r2 + (1 << 32) < sqrtInput - s) ? 1L : 0L));
+            long tmp = ((r2 + b > sqrtInput) ? -1L : 0L) + ((r2 + (1UL << 32) < sqrtInput - s) ? 1L : 0L);
+            r = (ulong)((long)r + tmp);
         }
     }
 }
