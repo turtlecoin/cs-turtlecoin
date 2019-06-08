@@ -80,6 +80,14 @@ Thank you to all the awesome developers who have made their software open source
 * The NewtonSoft Developers (For their excellent JSon library)
 * The Microsoft Developers (For the Microsoft.Data.Sqlite.Core package)
 * Eric Sink (For his bundle_green SQLite PCL package)
+* Diego Alejandro Gómez (For his C# version of Groestl)
+* Nabil S. Al Ramli (For his C version of OpenAES which we ported)
+* Dominik Reichl (For his C# version of Blake256)
+* Markku-Juhani O. Saarinen (For his C version of Keccak, which we ported)
+* Alberto Fajardo (For his C# version of Skein)
+* Pavel Kovalenko (For his tweaks to the C# version of Skein)
+* Hongjun Wu (For his C version of JH, which we ported)
+* Brian Gladman (For his C version of AESB which we ported)
 
 (Will add more as added)
 
