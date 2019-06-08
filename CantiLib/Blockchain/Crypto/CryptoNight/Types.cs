@@ -13,23 +13,41 @@ namespace Canti.Blockchain.Crypto.CryptoNight
 {
     public class MixScratchpadState
     {
-        public MixScratchpadState(CNState cnState)
+        public static MixScratchpadState GetScratchpadState(CNState cnState)
+        {
+            if (cachedState == null)
+            {
+                cachedState = new MixScratchpadState(cnState);
+            }
+
+            return cachedState;
+        }
+
+        public unsafe MixScratchpadState(CNState cnState)
         {
             k = cnState.GetK();
 
-            for (int i = 0; i < AES.Constants.BlockSize; i++)
+            fixed (byte* aPtr = a, bPtr = b, kPtr = k)
             {
-                a[i] = (byte)(k[i] ^ k[i+32]);
-                b[i] = (byte)(k[i+16] ^ k[i+48]);
+                ulong *_a = (ulong *)aPtr;
+                ulong *_b = (ulong *)bPtr;
+                ulong *_k = (ulong *)kPtr;
+
+                _a[0] = (_k + 0)[0] ^ (_k + 4)[0];
+                _a[1] = (_k + 0)[1] ^ (_k + 4)[1];
+                _b[0] = (_k + 2)[0] ^ (_k + 6)[0];
+                _b[1] = (_k + 2)[1] ^ (_k + 6)[1];
             }
         }
 
         public byte[] a = new byte[AES.Constants.BlockSize];
-        public byte[] b = new byte[AES.Constants.BlockSize];
+        public byte[] b = new byte[AES.Constants.BlockSize * 2];
         public byte[] c = new byte[AES.Constants.BlockSize];
         public byte[] d = new byte[AES.Constants.BlockSize];
 
         public byte[] k;
+
+        private static MixScratchpadState cachedState = null;
     }
 
     /* This class encapsulates the different ways we index the 200 byte
