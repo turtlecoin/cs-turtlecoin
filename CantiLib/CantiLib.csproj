@@ -7,6 +7,10 @@
     <ApplicationIcon />
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="2.2.4" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
@@ -18,6 +22,15 @@
       <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Cryptography\Native\CryptoNight\" />
+    <Folder Include="Cryptography\Native\AES\" />
+    <Folder Include="Cryptography\Native\Groestl\" />
+    <Folder Include="Cryptography\Native\Blake\" />
+    <Folder Include="Cryptography\Native\JH\" />
+    <Folder Include="Cryptography\Native\Skein\" />
   </ItemGroup>
 
 </Project>
