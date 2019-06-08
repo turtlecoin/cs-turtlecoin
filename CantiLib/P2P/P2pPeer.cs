@@ -226,7 +226,8 @@ namespace Canti
             this.Server = Server;
             this.Client = Client;
             this.Direction = Direction;
-            Address = ((IPEndPoint)Client.Client.RemoteEndPoint).Address.ToString();
+            // TODO - Should we use ipv6 or v4?
+            Address = ((IPEndPoint)Client.Client.RemoteEndPoint).Address.MapToIPv4().ToString();
             Port = ((IPEndPoint)Client.Client.RemoteEndPoint).Port;
 
             // Threading

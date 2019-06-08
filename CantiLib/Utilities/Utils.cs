@@ -213,11 +213,24 @@ namespace Canti
         /// </summary>
         /// <param name="Destination">The byte array to be appended to</param>
         /// <param name="Input">The integer value to be encoded and appended</param>
+        /// <param name="Shrink">Whether or not to shrink the integer to its smallest byte footprint (niche)</param>
         /// <returns>A new byte array with the given integer value encoded and appended to it</returns>
-        public static byte[] AppendInteger<T>(this byte[] Destination, T Input) where T : IComparable<T>
+        public static byte[] AppendInteger<T>(this byte[] Destination, T Input, bool Shrink = false) where T : IComparable<T>
         {
-            byte[] tmp = IntegerToByteArray(Input);
-            return Destination.AppendBytes(tmp);
+            if (!Shrink)
+            {
+                byte[] tmp = IntegerToByteArray(Input);
+                return Destination.AppendBytes(tmp);
+            }
+            else
+            {
+                dynamic val = Input;
+                if (val < byte.MaxValue) val = (byte)val;
+                else if (val < ushort.MaxValue) val = (ushort)val;
+                else if (val < uint.MaxValue) val = (uint)val;
+                else val = (ulong)val;
+                return AppendInteger(Destination, val);
+            }
         }
 
         /// <summary>

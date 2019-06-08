@@ -90,7 +90,7 @@ namespace Canti.CryptoNote
         internal void SetHash()
         {
             // Get hashing array
-            var HashingArray = GetHashingArray();
+            byte[] HashingArray = GetHashingArray();
 
             // Check block version
             if (MajorVersion >= Constants.BLOCK_MAJOR_VERSION_2)
@@ -98,8 +98,13 @@ namespace Canti.CryptoNote
                 // TODO - Handle block versions 2 and over
             }
 
+            // Create a byte array that will act as our hash seed
+            byte[] Buffer = new byte[0];
+            Buffer = Buffer.AppendInteger(HashingArray.Length, true);
+            Buffer = Buffer.AppendBytes(HashingArray);
+
             // Store computed hash
-            _hash = Crypto.CN_FastHash(HashingArray);
+            _hash = Crypto.CN_FastHash(Buffer);
         }
 
         internal string GetTransactionTreeHash()
