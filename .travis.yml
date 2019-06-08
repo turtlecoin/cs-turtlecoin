@@ -1,0 +1,16 @@
+dist: xenial
+addons:
+  snaps:
+  - name: dotnet-sdk
+    confinement: classic
+    channel: latest/beta
+sudo: required
+language: csharp
+mono: none
+script:
+  - sudo snap alias dotnet-sdk.dotnet dotnet
+  # Does the repo compile
+  - dotnet build
+  - cd Tests
+  # Do all the tests pass
+  - dotnet test

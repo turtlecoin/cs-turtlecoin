@@ -1,0 +1,8 @@
+os: Visual Studio 2019 Preview
+
+build_script:
+  # Does the repo compile
+  - ps: dotnet build
+  - ps: cd Tests
+  # Do all the tests pass
+  - ps: dotnet test
