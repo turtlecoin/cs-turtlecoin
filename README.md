@@ -6,8 +6,10 @@ All but powerless
 
 ## CantiLib
 
-[![Build Status](https://travis-ci.org/turtlecoin/cs-turtlecoin.svg?branch=master)](https://travis-ci.org/turtlecoin/cs-turtlecoin)
-[![Build status](https://ci.appveyor.com/api/projects/status/nxfp3iplp4fclfla?svg=true)](https://ci.appveyor.com/project/RocksteadyTC/cs-turtlecoin)
+<!-- When Travis/Appveyor stop choking on preview builds or when net core 3.0 comes out, un-comment the following: -->
+<!-- [![Build Status](https://travis-ci.org/turtlecoin/cs-turtlecoin.svg?branch=master)](https://travis-ci.org/turtlecoin/cs-turtlecoin) -->
+<!-- [![Build status](https://ci.appveyor.com/api/projects/status/nxfp3iplp4fclfla?svg=true)](https://ci.appveyor.com/project/RocksteadyTC/cs-turtlecoin) -->
+<!-- (Then re-add travis and appveyor files) -->
 
 ### Prerequisites
 
