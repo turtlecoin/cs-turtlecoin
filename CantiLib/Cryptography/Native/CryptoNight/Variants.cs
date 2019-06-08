@@ -396,6 +396,8 @@ namespace Canti.Cryptography.Native.CryptoNight
             public override int Variant { get; } = 0;
 
             public override bool Intrinsics { get; }
+
+            public override int Light { get; } = 2;
         }
     }
 
@@ -431,6 +433,8 @@ namespace Canti.Cryptography.Native.CryptoNight
             public override int Variant { get; } = 1;
 
             public override bool Intrinsics { get; }
+
+            public override int Light { get; } = 2;
         }
     }
 
@@ -466,6 +470,8 @@ namespace Canti.Cryptography.Native.CryptoNight
             public override int Variant { get; } = 2;
 
             public override bool Intrinsics { get; }
+
+            public override int Light { get; } = 2;
         }
     }
 
@@ -571,8 +577,6 @@ namespace Canti.Cryptography.Native.CryptoNight
             public override int Variant { get; } = 2;
 
             public override bool Intrinsics { get; }
-            
-            public override int Light { get; } = 0;
         }
     }
 
@@ -605,7 +609,7 @@ namespace Canti.Cryptography.Native.CryptoNight
             /* 2 ^ 17 */
             public override int Iterations { get; } = 131072;
 
-            public override int Variant { get; } = 2;
+            public override int Variant { get; } = 0;
 
             public override bool Intrinsics { get; }
 
@@ -642,7 +646,7 @@ namespace Canti.Cryptography.Native.CryptoNight
             /* 2 ^ 17 */
             public override int Iterations { get; } = 131072;
 
-            public override int Variant { get; } = 2;
+            public override int Variant { get; } = 1;
 
             public override bool Intrinsics { get; }
 
