@@ -13,6 +13,8 @@ All but powerless
 
 You need the `dotnet` command line tools.
 
+This project targets Net Core version 3.0 (preview 5).
+
 *Optionally*, if you want to use TurtleCoin-Crypto as opposed to the native C# cryptography implementations, then you will also need to compile the turtlecoin-crypto-shared library from the link below and place the resulting file in the "Include" folder before compiling the solution.
 
 https://github.com/turtlecoin/turtlecoin-crypto/tree/development
