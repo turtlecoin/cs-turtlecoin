@@ -27,6 +27,11 @@ namespace Canti
         /// </summary>
         public DatabaseType Type { get; private set; }
 
+        /// <summary>
+        /// Whether or not this database has been started
+        /// </summary>
+        public bool Started { get; private set; }
+
         #endregion
 
         #region Private
@@ -70,6 +75,9 @@ namespace Canti
 
             // Begin the write thread
             WriteThread.Start();
+
+            // Set as started
+            Started = true;
         }
 
         /// <summary>
@@ -77,6 +85,9 @@ namespace Canti
         /// </summary>
         public void Stop()
         {
+            // Set as stopped
+            Started = false;
+
             // Signal a stop event
             StopEvent.Set();
             WriteThread.Join();
@@ -110,10 +121,15 @@ namespace Canti
                 if (i > 0) Data.Append(", ");
 
                 var Entry = Values[i];
-                Data.Append($"{Entry.Name} {Entry.Type}");
-                if (Entry.Size > 0) Data.Append($"({Entry.Size})");
-                if (Entry.Unique) Data.Append(" UNIQUE");
-                if (Entry.Value != null) Data.Append($" DEFAULT '{Entry.Value.Value}'");
+                Data.Append($"{Entry.Name}");
+                if (!Entry.Primary)
+                {
+                    Data.Append($" {Entry.Type}");
+                    if (Entry.Size > 0) Data.Append($"({Entry.Size})");
+                    if (Entry.Unique) Data.Append(" UNIQUE");
+                    if (Entry.Value != null) Data.Append($" DEFAULT '{Entry.Value}'");
+                }
+                else Data.Append(" INTEGER PRIMARY KEY");
             }
             Data.Append(")");
 

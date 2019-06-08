@@ -3,7 +3,7 @@
 // 
 // Please see the included LICENSE file for more information.
 
-using static Canti.Utils;
+using System;
 
 namespace Canti.CryptoNote
 {
@@ -26,23 +26,15 @@ namespace Canti.CryptoNote
         // Logger used to log messages
         internal Logger Logger { get; set; }
 
-        // The current height of the blockchain
-        internal uint Height { get; set; }
+        // Holds configuration for everything on the network
+        internal NetworkConfig Globals { get; private set; }
 
-        // The known height of the blockchain
-        internal uint KnownHeight { get; set; }
+        #endregion
 
-        // The hash of the last stored block
-        internal string LastHash { get; set; }
+        #region Private
 
-        // A byte array representation of the last stored block's hash
-        internal byte[] TopId
-        {
-            get
-            {
-                return HexStringToByteArray(LastHash);
-            }
-        }
+        // Contains a cached copy of the first block of the chain
+        private Block Genesis { get; set; }
 
         #endregion
 
@@ -55,6 +47,9 @@ namespace Canti.CryptoNote
         {
             // Start database
             StartDatabase(Database);
+
+            // Cache genesis block
+            CacheGenesisBlock();
         }
 
         // Stops the blockchain handler and closes the database connection
@@ -64,17 +59,31 @@ namespace Canti.CryptoNote
             StopDatabase();
         }
 
+        // TODO - Move to a better location - CryptoNoteUtils?
+        //        Along with others such as generating a genesis block?
+        internal ulong GetBlockBaseRewardByHeight(uint Height)
+        {
+            // Try to get the previous block
+            if (!TryGetBlock(Height - 1, out Block Block))
+            {
+                throw new InvalidOperationException("Can't find previous block");
+            }
+
+            // Calculate reward
+            ulong AlreadyGeneratedUnits = Block.AlreadyGeneratedUnits;
+
+            return (Globals.CURRENCY_TOTAL_SUPPLY - AlreadyGeneratedUnits) >> Globals.CURRENCY_EMISSION_FACTOR;
+        }
+
         #endregion
 
         #region Constructors
 
         // Initializes a new blockchain storage
-        internal BlockchainCache()
+        internal BlockchainCache(NetworkConfig Config)
         {
-            // Setup default variable values
-            Height = 1;
-            KnownHeight = 1;
-            LastHash = "7fb97df81221dd1366051b2d0bc7f49c66c22ac4431d879c895b06d66ef66f4c";
+            // Assign network config
+            Globals = Config;
         }
 
         #endregion

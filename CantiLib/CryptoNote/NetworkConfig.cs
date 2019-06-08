@@ -8,9 +8,9 @@ using System;
 namespace Canti.CryptoNote
 {
     /// <summary>
-    /// A configuration class that needs to be specified when initializing a node
+    /// A configuration class that needs to be specified when initializing a node/blockchain cache
     /// </summary>
-    public class NodeConfig
+    public class NetworkConfig
     {
         #region NETWORK
 
@@ -39,9 +39,29 @@ namespace Canti.CryptoNote
         public string CURRENCY_NAME { get; set; }
 
         /// <summary>
-        /// The difficulty target time for the currency
+        /// The currency's difficulty target time (in seconds)
         /// </summary>
         public int CURRENCY_DIFFICULTY_TARGET { get; set; }
+
+        /// <summary>
+        /// The total supply units ultimately available
+        /// </summary>
+        public ulong CURRENCY_TOTAL_SUPPLY { get; set; }
+
+        /// <summary>
+        /// The factor used to determine the rate at which rewards are emitted
+        /// </summary>
+        public int CURRENCY_EMISSION_FACTOR { get; set; }
+
+        /// <summary>
+        /// The reward amount of the genesis block (premine)
+        /// </summary>
+        public ulong CURRENCY_GENESIS_REWARD { get; set; }
+
+        /// <summary>
+        /// The hex string representing the genesis transaction
+        /// </summary>
+        public string CURRENCY_GENESIS_TRANSACTION { get; set; }
 
         #endregion
 

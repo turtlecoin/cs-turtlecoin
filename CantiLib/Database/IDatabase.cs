@@ -25,6 +25,11 @@ namespace Canti
         /// </summary>
         DatabaseType Type { get; }
 
+        /// <summary>
+        /// Whether or not this database has been started
+        /// </summary>
+        bool Started { get; }
+
         #endregion
 
         #region Methods

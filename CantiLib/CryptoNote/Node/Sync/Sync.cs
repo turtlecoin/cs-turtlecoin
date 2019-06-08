@@ -62,16 +62,25 @@ namespace Canti.CryptoNote
             return new Dictionary<string, dynamic>
             {
                 ["current_height"] = (uint)Blockchain.Height,
-                ["top_id"] = Blockchain.TopId
+                ["top_id"] = Blockchain.TopBlockHash
             };
         }
 
         // Builds a sparse chain array from synced data
         private byte[] GetSparseChain()
         {
-            // TODO - build sparse chain data
-            // https://github.com/turtlecoin/turtlecoin/blob/4cc08299b40230f0ac47ecfa7e974abb3da40e54/src/CryptoNoteCore/Core.cpp#L2289
-            return Blockchain.TopId;
+            // Get sparse chain hashes from cache
+            var Hashes = Blockchain.BuildSparseChain();
+
+            // TODO - Test this?
+            byte[] Output = new byte[0];
+            foreach (var Hash in Hashes)
+            {
+                Output.AppendBytes(HexStringToByteArray(Hash));
+            }
+
+            // Return output
+            return Output;
         }
 
         // Updates the current observed height
@@ -93,9 +102,6 @@ namespace Canti.CryptoNote
             // Update peer height
             Peer.Height = SyncData["current_height"];
 
-            // Check if peer is validated
-            if (!Peer.Validated) return;
-
             // Check if peer is syncing
             if (Peer.State == PeerState.SYNCHRONIZING) return;
 
@@ -111,21 +117,32 @@ namespace Canti.CryptoNote
 
             // Get the height difference between the local cache and remote node
             int Diff = (int)Blockchain.KnownHeight - (int)Blockchain.Height;
-            int Days = Math.Abs(Diff) / (24 * 60 * 60 / Globals.CURRENCY_DIFFICULTY_TARGET);
+            int Days = Math.Abs(Diff) / (86_400 / Globals.CURRENCY_DIFFICULTY_TARGET);
 
             // Print how for behind/ahead we are
-            StringBuilder Output = new StringBuilder($"Your {Globals.CURRENCY_NAME} node is syncing with the network ");
+            StringBuilder Output = new StringBuilder($"[{Peer.Address}:{Peer.Port} {Peer.P2pPeer.Direction}] ");
+            Output.Append($"Your {Globals.CURRENCY_NAME} node is syncing with the network");
             if (Diff >= 0)
             {
-                Output.Append($"({Math.Round((decimal)Blockchain.Height / Peer.Height * 100, 2)}% complete) ");
-                Output.Append($"You are {Diff} blocks ({Days} days) behind ");
+                Output.Append($" ({Math.Round((decimal)Blockchain.Height / Peer.Height * 100, 2)}% complete)");
+
+                Output.Append($". You are {Diff} blocks ({Days} days) behind ");
             }
             else
             {
-                Output.Append($"You are {Math.Abs(Diff)} blocks ({Days} days) ahead of ");
+                Output.Append($". You are {Math.Abs(Diff)} blocks ({Days} days) ahead of ");
             }
             Output.Append("the current peer you're connected to. Slow and steady wins the race!");
-            Logger.Important(Output);
+
+            // If peer isn't validated, this is first contact
+            if (!Peer.Validated)
+            {
+                Logger.Important(Output);
+            }
+            else
+            {
+                Logger.Debug(Output);
+            }
 
             // Log debug message
             Logger.Debug($"Remote top block height: {Peer.Height}, id: {SyncData["top_id"]}");

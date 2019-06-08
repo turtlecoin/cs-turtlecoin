@@ -34,6 +34,11 @@ namespace Canti
         public bool Unique { get; set; }
 
         /// <summary>
+        /// Whether this column will be the row's primary key
+        /// </summary>
+        public bool Primary { get; set; }
+
+        /// <summary>
         /// The value or default value of this column
         /// </summary>
         public dynamic Value { get; set; }
@@ -89,8 +94,10 @@ namespace Canti
         /// <param name="Type">This column's SQL type</param>
         /// <param name="Size">Only required for types CHAR and BINARY, set to 0 to be ignored</param>
         /// <param name="Unique">Whether or not this column must be unique</param>
+        /// <param name="Primary">Whether this column will be the row's primary key</param>
         /// <param name="Default">The default value for this column</param>
-        public void Add(string Name, SqlType Type, int Size = 0, bool Unique = false, dynamic Default = null)
+        public void Add(string Name, SqlType Type, int Size = 0, bool Unique = false, bool Primary = false,
+            dynamic Default = null)
         {
             var SqlValue = new DatabaseValue
             {
@@ -98,6 +105,7 @@ namespace Canti
                 Type = Type,
                 Size = Size,
                 Unique = Unique,
+                Primary = Primary,
                 Value = Default
             };
             Add(SqlValue);

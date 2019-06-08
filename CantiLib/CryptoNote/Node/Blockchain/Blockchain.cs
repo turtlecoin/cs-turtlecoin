@@ -49,16 +49,16 @@ namespace Canti.CryptoNote
             Logger.Debug("Database initialized");
 
             // Start blockchain cache
-            try
-            {
+            /*try
+            {*/
                 Blockchain.Start(Database);
-            }
+            /*}
             catch (Exception e)
             {
                 Logger.Error($"Could not start blockchain cache: {e.Message}");
                 return false;
             }
-            Logger.Debug("Cache started");
+            Logger.Debug("Cache started");*/
 
             // Blockchain cache started
             return true;

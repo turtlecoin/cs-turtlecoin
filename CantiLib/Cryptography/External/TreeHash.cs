@@ -1,17 +1,24 @@
 ﻿//
+// Copyright 2012-2013 The CryptoNote Developers
 // Copyright (c) 2019 Canti, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
 using System;
+using static Canti.Utils;
 
-// I spent way too long with this, it ain't a standard tree hash, and to that I say...
-// Fuck it, this dumpster fire can burn, I ain't putting it out.
-namespace Canti
+// TODO - Use external tree hash, this is currently copied from C# implementation
+namespace Canti.Cryptography
 {
-    public sealed partial class Crypto
+    // Tree hash functions
+    public sealed partial class TurtleCoinCrypto : ICryptography
     {
-        public static string TreeHash(string[] Hashes)
+        /// <summary>
+        /// Hashes a set of hashes into an asymmetric tree hash
+        /// </summary>
+        /// <param name="Hashes">An array of hashes to tree hash</param>
+        /// <returns>A 32 byte hash of the input hash array</returns>
+        public string TreeHash(string[] Hashes)
         {
             // Empty hashes array
             if (Hashes.Length == 0) return null;
@@ -75,7 +82,8 @@ namespace Canti
             return CN_FastHash(Buffer[0] + Buffer[1]);
         }
 
-        public static string TreeHashFromBranch(string[] Branch, int Depth, ref string Leaf, ref string Path)
+        // TODO - Write a public summary for this method
+        public string TreeHashFromBranch(string[] Branch, int Depth, ref string Leaf, ref string Path)
         {
             // If depth is 0, the leaf hash is our root
             if (Depth == 0)

@@ -13,7 +13,7 @@ namespace CSTurtleCoin
     partial class Daemon
     {
         // This is the network configuration we will pass to our node instance when creating it
-        private static readonly NodeConfig Configuration = new NodeConfig
+        private static readonly NetworkConfig Configuration = new NetworkConfig
         {
             #region NETWORK
 
@@ -45,6 +45,11 @@ namespace CSTurtleCoin
 
             CURRENCY_NAME = "TurtleCoin",
             CURRENCY_DIFFICULTY_TARGET = 30,
+            CURRENCY_TOTAL_SUPPLY = 100_000_000_000_000,
+            CURRENCY_EMISSION_FACTOR = 25,
+            CURRENCY_GENESIS_REWARD = 0,
+            CURRENCY_GENESIS_TRANSACTION = "010a01ff000188f3b501029b2e4c0281c0b02e7c53291a94d1d0cbff8883f802" +
+                 "4f5142ee494ffbbd088071210142694232c5b04151d9e4c27d31ec7a68ea568b19488cfcb422659a07a0e44dd5",
 
             #endregion
 

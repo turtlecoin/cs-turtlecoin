@@ -1,6 +1,11 @@
-﻿using System;
+﻿//
+// Copyright (c) 2019 Canti, The TurtleCoin Developers
+// 
+// Please see the included LICENSE file for more information.
 
-using static Canti.Crypto;
+using Canti.Cryptography;
+using System;
+using static Canti.Cryptography.Crypto;
 
 namespace CryptoTests
 {

@@ -66,14 +66,13 @@ namespace Canti.CryptoNote
             {
                 ["height"] = Block.Height,
                 ["hash"] = Block.Hash,
-                ["size"] = Block.Size,
                 ["timestamp"] = Block.Timestamp,
                 ["nonce"] = Block.Nonce,
                 ["major_version"] = Block.MajorVersion,
                 ["minor_version"] = Block.MinorVersion,
                 ["base_reward"] = Block.BaseReward,
                 ["total_fees"] = Block.TotalFees,
-                ["base_transaction"] = Block.BaseTransaction
+                ["base_transaction"] = Block.BaseTransaction.Hash
             };
             return Response.ToString();
         }
@@ -95,14 +94,13 @@ namespace Canti.CryptoNote
             {
                 ["height"] = Block.Height,
                 ["hash"] = Block.Hash,
-                ["size"] = Block.Size,
                 ["timestamp"] = Block.Timestamp,
                 ["nonce"] = Block.Nonce,
                 ["major_version"] = Block.MajorVersion,
                 ["minor_version"] = Block.MinorVersion,
                 ["base_reward"] = Block.BaseReward,
                 ["total_fees"] = Block.TotalFees,
-                ["base_transaction"] = Block.BaseTransaction
+                ["base_transaction"] = Block.BaseTransaction.Hash
             };
             return Response.ToString();
         }

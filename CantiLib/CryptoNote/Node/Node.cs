@@ -31,7 +31,7 @@ namespace Canti.CryptoNote
         internal Logger Logger { get; private set; }
 
         // Holds configuration for everything on the network
-        internal NodeConfig Globals { get; private set; }
+        internal NetworkConfig Globals { get; private set; }
 
         // Whether the node has been stopped
         internal bool Stopped { get; private set; }
@@ -169,7 +169,7 @@ namespace Canti.CryptoNote
         /// Initializes this node with the specified network configuration
         /// </summary>
         /// <param name="Configuration">A class containing all global information this node needs to operate</param>
-        public Node(NodeConfig Configuration)
+        public Node(NetworkConfig Configuration)
         {
             // Assign configuration
             Globals = Configuration;
@@ -191,7 +191,7 @@ namespace Canti.CryptoNote
             };
 
             // Setup blockchain cache
-            Blockchain = new BlockchainCache()
+            Blockchain = new BlockchainCache(Globals)
             {
                 Logger = Logger
             };

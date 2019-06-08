@@ -68,11 +68,6 @@ namespace Canti.CryptoNote
                 Peer.SendMessage(Response);
             }
 
-            // Set peer to validated
-            Peer.Port = Packet["node_data"]["my_port"];
-            Peer.Id = Packet["node_data"]["peer_id"];
-            Peer.Validated = true;
-
             // Add peer list candidates
             if (Packet["local_peerlist"] != null)
             {
@@ -81,6 +76,11 @@ namespace Canti.CryptoNote
 
             // Add core sync data
             HandleSyncData(Peer, Packet["payload_data"]);
+
+            // Set peer to validated
+            Peer.Port = Packet["node_data"]["my_port"];
+            Peer.Id = Packet["node_data"]["peer_id"];
+            Peer.Validated = true;
         }
 
         // Sends a handshake request packet

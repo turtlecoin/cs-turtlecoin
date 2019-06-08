@@ -45,7 +45,7 @@ namespace Canti
         /// <summary>
         /// Int
         /// </summary>
-        INT,
+        INTEGER,
 
         /// <summary>
         /// Long

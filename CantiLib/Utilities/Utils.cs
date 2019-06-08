@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
 namespace Canti
@@ -116,6 +117,48 @@ namespace Canti
             return (T)Convert.ChangeType(Output, typeof(T));
         }
 
+        public static T UnpackVarInt<T>(byte[] Data, int Offset, out int NewOffset) where T : IComparable<T>
+        {
+            NewOffset = Offset;
+            ulong Output = 0;
+            int i;
+            for (i = 0; i < Data.Length - Offset; i++)
+            {
+                byte Temp = Data[i + Offset];
+                if (!(i > 0 && Temp == 0)) NewOffset++;
+                Output |= (ulong)(Temp & 0x7f) << (i * 7);
+                if ((Temp & 0x80) == 0) break;
+            }
+            return (T)Convert.ChangeType(Output, typeof(T));
+        }
+
+        #endregion
+
+        #region Objects
+
+        // Encodes an object to a byte array
+        public static byte[] ObjectToByteArray(object Input)
+        {
+            BinaryFormatter Binary = new BinaryFormatter();
+            using (MemoryStream Stream = new MemoryStream())
+            {
+                Binary.Serialize(Stream, Input);
+                return Stream.ToArray();
+            }
+        }
+
+        // Decodes an object from a byte array
+        public static T ByteArrayToObject<T>(byte[] Input)
+        {
+            using (var Stream = new MemoryStream())
+            {
+                BinaryFormatter Binary = new BinaryFormatter();
+                Stream.Write(Input, 0, Input.Length);
+                Stream.Seek(0, SeekOrigin.Begin);
+                return (T)Binary.Deserialize(Stream);
+            }
+        }
+
         #endregion
 
         #endregion
@@ -169,7 +212,7 @@ namespace Canti
         /// Appends an encoded byte array representation of an integer to the end of another byte array
         /// </summary>
         /// <param name="Destination">The byte array to be appended to</param>
-        /// <param name="Input">The integer value to be encoded and tappended</param>
+        /// <param name="Input">The integer value to be encoded and appended</param>
         /// <returns>A new byte array with the given integer value encoded and appended to it</returns>
         public static byte[] AppendInteger<T>(this byte[] Destination, T Input) where T : IComparable<T>
         {
@@ -181,12 +224,47 @@ namespace Canti
         /// Appends an encoded byte array representation of a string to the end of another byte array
         /// </summary>
         /// <param name="Destination">The byte array to be appended to</param>
-        /// <param name="Input">The string value to be encoded and tappended</param>
+        /// <param name="Input">The string value to be encoded and appended</param>
         /// <returns>A new byte array with the given string value encoded and appended to it</returns>
         public static byte[] AppendString(this byte[] Destination, string Input)
         {
             byte[] tmp = Encoding.UTF8.GetBytes(Input);
             return Destination.AppendBytes(tmp);
+        }
+
+        /// <summary>
+        /// Appends a string to the end of another byte array
+        /// </summary>
+        /// <param name="Destination">The byte array to be appended to</param>
+        /// <param name="Input">The hex string value to be encoded and appended</param>
+        /// <returns>A new byte array with the given string value encoded and appended to it</returns>
+        public static byte[] AppendHexString(this byte[] Destination, string Input)
+        {
+            if (Input.Length % 2 != 0) throw new ArgumentException("Invalid hex string given");
+            byte[] tmp = HexStringToByteArray(Input);
+            return Destination.AppendBytes(tmp);
+        }
+
+        /// <summary>
+        /// Appends an encoded protobuf style varint byte array representation of an integer to the end of another byte array
+        /// </summary>
+        /// <param name="Destination">The byte array to be appended to</param>
+        /// <param name="Input">The integer value to be encoded and tappended</param>
+        /// <returns>A new byte array with the given integer value encoded and appended to it</returns>
+        public static byte[] AppendVarInt<T>(this byte[] Destination, T Input) where T : IComparable<T>
+        {
+            ulong Converted = Convert.ToUInt64(Input);
+            while (Converted >= 0x80)
+            {
+                Destination = Destination.AppendInteger((byte)(Converted & 0x7f | 0x80));
+                Converted >>= 7;
+            }
+
+            // Lazy workarounds
+            if (Converted == 0x7f) return Destination.AppendHexString("FF");
+
+            // Append final byte value
+            return Destination.AppendInteger((byte)Converted);
         }
 
         /// <summary>
@@ -202,6 +280,21 @@ namespace Canti
             byte[] Output = new byte[Length];
             Buffer.BlockCopy(Source, Offset, Output, 0, Length);
             return Output;
+        }
+
+        /// <summary>
+        /// Retrieves a section from a larger byte array
+        /// </summary>
+        /// <param name="Source">The byte array to be cut from</param>
+        /// <param name="Offset">The position to start the hex string</param>
+        /// <param name="Length">How long the next hex string should be (in bytes)</param>
+        /// <returns>A new hex string with contents copied from the source byte array</returns>
+        public static string SubHexString(this byte[] Source, int Offset, int Length = 0)
+        {
+            if (Length < 1) Length = Source.Length - Offset;
+            byte[] Output = new byte[Length];
+            Buffer.BlockCopy(Source, Offset, Output, 0, Length);
+            return ByteArrayToHexString(Output);
         }
 
         /// <summary>
@@ -299,6 +392,17 @@ namespace Canti
             Output += (uint)Buffer[1] << 8;
             Output += Buffer[0];
             return Output;
+        }
+
+        /// <summary>
+        /// Checks whether or not a string is a valid 32 byte hex string
+        /// </summary>
+        /// <param name="Value">The string to verify</param>
+        /// <returns>True if the string respresents a 32 byte hex string</returns>
+        public static bool IsKey(string Value)
+        {
+            if (Value.Length % 2 == 0 && Value.Length == 64) return true;
+            return false;
         }
 
         #endregion
