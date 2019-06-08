@@ -19,12 +19,10 @@ namespace Canti.Cryptography
                 {
                     if (File.Exists(TurtleCoinCrypto.LIBRARY_LOCATION))
                     {
-                        System.Console.WriteLine("Using TurtleCoin-Crypto");
                         _cryptoProvider = new TurtleCoinCrypto();
                     }
                     else
                     {
-                        System.Console.WriteLine("Using CS-Crypto");
                         _cryptoProvider = new NativeCrypto();
                     }
                 }
