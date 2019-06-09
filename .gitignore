@@ -3,6 +3,7 @@
 
 # Crypto library files (platform specific)
 [Ii]nclude/*.dll
+[Ii]nclude/*.a
 
 # User-specific files
 *.suo
