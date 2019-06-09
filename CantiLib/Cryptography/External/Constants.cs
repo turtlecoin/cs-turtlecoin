@@ -11,6 +11,6 @@ namespace Canti.Cryptography
         private const int MINIMUM_VARIATION_BYTES = 43 * 2;
 
         // Location of file
-        public const string LIBRARY_LOCATION = "turtlecoin-crypto-shared.dll";
+        public const string LIBRARY_LOCATION = "turtlecoin-crypto-shared";
     }
 }
