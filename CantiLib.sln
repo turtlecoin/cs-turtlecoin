@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CantiLib", "CantiLib\CantiL
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CS-TurtleCoin", "CS-TurtleCoin\CS-TurtleCoin.csproj", "{E46790A0-EB3B-40AD-96F2-3E9F936CED5E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoTests", "Tests\CryptoTests.csproj", "{BB13A2C5-707D-4DF8-9F4B-63A7D70A1E77}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoTests", "Tests\Tests.csproj", "{BB13A2C5-707D-4DF8-9F4B-63A7D70A1E77}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GenerateGenesis", "Utilities\GenerateGenesis\GenerateGenesis.csproj", "{1ED76D2B-7657-4ED6-9D2D-93AB2111F0D9}"
 EndProject

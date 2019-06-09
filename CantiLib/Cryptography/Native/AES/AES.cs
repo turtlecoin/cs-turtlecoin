@@ -111,17 +111,7 @@ namespace Canti.Cryptography.Native
             }
         }
 
-        public static unsafe void AESBSingleRoundNative(byte[] keys, byte[] input)
-        {
-            fixed(byte* roundKeyPtr = keys, valPtr = input)
-            {
-                Vector128<byte> roundKey = Sse2.LoadVector128(roundKeyPtr);
-                Vector128<byte> val = Sse2.LoadVector128(valPtr);
-                Sse2.Store(valPtr, Aes.Encrypt(val, roundKey));
-            }
-        }
-        
-        private static unsafe void AESPseudoRoundNative(byte[] keys, byte[] input)
+        public static unsafe void AESPseudoRoundNative(byte[] keys, byte[] input)
         {
             Vector128<byte>[] roundKeys = new Vector128<byte>[10];
 
@@ -329,31 +319,6 @@ namespace Canti.Cryptography.Native
                 Round(outputPtr, input, keys, 0);
                 Buffer.MemoryCopy(outputPtr, input, 16, 16);
             }
-        }
-
-        public static void AESBSingleRound(byte[] keys, byte[] input, bool enableIntrinsics = true)
-        {
-            if (Aes.IsSupported && enableIntrinsics)
-            {
-                AESBSingleRoundNative(keys, input);
-                return;
-            }
-
-            uint[] b0 = new uint[4];
-            uint[] b1 = new uint[4];
-
-            /* Copy 16 bytes from input[inputOffset] to b0 (4 uints) */
-            Buffer.BlockCopy(input, 0, b0, 0, 16);
-
-            uint[] keysAsUint = new uint[keys.Length / 4];
-
-            /* Possibly do this with a pointer instead for speed? */
-            Buffer.BlockCopy(keys, 0, keysAsUint, 0, keys.Length);
-
-            Round(b1, b0, keysAsUint, 0);
-
-            /* Copy 16 bytes from b1 to input (4 uints) */
-            Buffer.BlockCopy(b1, 0, input, 0, 16);
         }
 
         public static byte[] ExpandKey(byte[] key, bool enableIntrinsics = true)

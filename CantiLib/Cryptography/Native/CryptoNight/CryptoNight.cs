@@ -75,14 +75,29 @@ namespace Canti.Cryptography.Native.CryptoNight
 
             byte[] text = cnState.GetText();
 
-            /* Fill the scratchpad with AES encryption of text */
-            for (int i = 0; i < cnParams.InitRounds; i++)
+            if (cnParams.Intrinsics && Aes.IsSupported && Sse2.IsSupported)
             {
-                AES.AESPseudoRound(expandedKeys, text, cnParams.Intrinsics);
+                /* Fill the scratchpad with AES encryption of text */
+                for (int i = 0; i < cnParams.InitRounds; i++)
+                {
+                    AES.AESPseudoRoundNative(expandedKeys, text);
 
-                /* Write text to the scratchpad, at the offset
-                   i * InitSizeByte */
-                Buffer.BlockCopy(text, 0, scratchpad, i * Constants.INIT_SIZE_BYTE, text.Length);
+                    /* Write text to the scratchpad, at the offset
+                       i * InitSizeByte */
+                    Buffer.BlockCopy(text, 0, scratchpad, i * Constants.INIT_SIZE_BYTE, text.Length);
+                }
+            }
+            else
+            {
+                /* Fill the scratchpad with AES encryption of text */
+                for (int i = 0; i < cnParams.InitRounds; i++)
+                {
+                    AES.AESPseudoRound(expandedKeys, text, cnParams.Intrinsics);
+
+                    /* Write text to the scratchpad, at the offset
+                       i * InitSizeByte */
+                    Buffer.BlockCopy(text, 0, scratchpad, i * Constants.INIT_SIZE_BYTE, text.Length);
+                }
             }
 
             return scratchpad;
