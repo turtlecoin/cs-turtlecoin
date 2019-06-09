@@ -21,7 +21,7 @@ namespace Canti.Cryptography
 
         public string CN_FastHash(byte[] Data)
         {
-            byte[] Output = Keccak.Hash(Data);
+            byte[] Output = new Keccak().Hash(Data);
 
             return ByteArrayToHexString(Output);
         }
