@@ -4,42 +4,49 @@
 // Please see the included LICENSE file for more information.
 
 using Canti.Cryptography;
+using Canti.Cryptography.Native.CryptoNight;
 using System;
-using static Canti.Cryptography.Crypto;
 
 namespace CryptoTests
 {
     class KeyTests
     {
-        public static void RunTests()
+        public static void RunTests(KeyPair Keys, ICryptography Crypto)
         {
             Console.WriteLine("Running key tests...");
 
             Console.WriteLine();
 
-            KeyPair Keys = GenerateKeys();
+            string SEED = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
+
+            /*KeyPair Keys = Crypto.GenerateKeys();
             Console.WriteLine($"Generated Private Key: {Keys.PrivateKey}");
             Console.WriteLine($"Generated Public Key: {Keys.PublicKey}");
 
-            bool Check_Key = CheckKey(Keys.PublicKey);
+            bool Check_Key = Crypto.CheckKey(Keys.PublicKey);
             Console.WriteLine($"Check Key: {Check_Key}");
 
-            string KeyImage = GenerateKeyImage(Keys.PublicKey, Keys.PrivateKey);
+            string KeyImage = Crypto.GenerateKeyImage(Keys.PublicKey, Keys.PrivateKey);
             Console.WriteLine($"Key Image: {KeyImage}");
 
-            KeyPair ViewKeys = GenerateViewKeysFromPrivateSpendKey(Keys.PrivateKey);
+            KeyPair ViewKeys = Crypto.GenerateViewKeysFromPrivateSpendKey(Keys.PrivateKey);
             Console.WriteLine($"Generated Private View Key: {ViewKeys.PrivateKey}");
             Console.WriteLine($"Generated Public View Key: {ViewKeys.PublicKey}");
 
-            string PrivateViewKey = GeneratePrivateViewKeyFromPrivateSpendKey(Keys.PrivateKey);
-            Console.WriteLine($"Generated Private View Key: {PrivateViewKey}");
+            string PrivateViewKey = Crypto.GeneratePrivateViewKeyFromPrivateSpendKey(Keys.PrivateKey);
+            Console.WriteLine($"Generated Private View Key: {PrivateViewKey}");*/
 
-            string Signature = GenerateSignature(Keys.PublicKey, Keys.PublicKey, Keys.PrivateKey);
+            string Signature = Crypto.GenerateSignature(Keys.PublicKey, Keys.PublicKey, Keys.PrivateKey);
             Console.WriteLine($"Generated Signature: {Signature}");
 
-
-            bool Check_Signature = CheckSignature(Keys.PublicKey, Keys.PublicKey, Signature);
+            bool Check_Signature = Crypto.CheckSignature(Keys.PublicKey, Keys.PublicKey, Signature);
             Console.WriteLine($"Check Signature: {Check_Signature}");
+
+            string Reduced = Crypto.ScReduce32(SEED);
+            Console.WriteLine($"Sc Reduce 32: {Reduced}");
+
+            string Scalar = Crypto.HashToScalar(SEED);
+            Console.WriteLine($"Hash To Scalar: {Scalar}");
 
             Console.WriteLine();
         }

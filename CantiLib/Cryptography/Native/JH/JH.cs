@@ -9,7 +9,7 @@ using System;
 /* JH-256, post NIST modifications (42 rounds) */
 namespace Canti.Cryptography.Native
 {
-    public static class JH
+    public static partial class JH
     {
         public static byte[] Hash(byte[] input)
         {
@@ -197,7 +197,7 @@ namespace Canti.Cryptography.Native
             /* Initialize the round constant */
             for (int i = 0; i < 64; i++)
             {
-                state.roundConstant[i] = Constants.RoundConstantZero[i];
+                state.roundConstant[i] = RoundConstantZero[i];
             }
 
             /* Initial group at the beginning of E8, group the H value into
@@ -262,7 +262,7 @@ namespace Canti.Cryptography.Native
             for (int i = 0; i < 256; i++)
             {
                 /* Constant bits are used to determine which Sbox to use */
-                tmp[i] = Constants.S[roundConstantExpanded[i], state.A[i]];
+                tmp[i] = S[roundConstantExpanded[i], state.A[i]];
             }
 
             /* MDS Layer */
@@ -304,7 +304,7 @@ namespace Canti.Cryptography.Native
             /* Sbox layer */
             for (int i = 0; i < 64; i++)
             {
-                tmp[i] = Constants.S[0, state.roundConstant[i]];
+                tmp[i] = S[0, state.roundConstant[i]];
             }
 
             /* MDS layer */

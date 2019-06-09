@@ -7,7 +7,7 @@
 
 namespace Canti.Cryptography.Native
 {
-    public static partial class Constants
+    public static partial class JH
     {
         public static readonly byte[] RoundConstantZero =
         {

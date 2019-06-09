@@ -12,13 +12,20 @@ namespace CryptoTests
     {
         static void Main()
         {
+            KeyPair Keys = new TurtleCoinCrypto().GenerateKeys();
+            Console.WriteLine($"Generated Private Key: {Keys.PrivateKey}");
+            Console.WriteLine($"Generated Public Key: {Keys.PublicKey}");
+
+            KeyTests.RunTests(Keys, new TurtleCoinCrypto());
+            KeyTests.RunTests(Keys, new NativeCrypto());
+
             // Run pinvoke tests
-            Console.WriteLine("Pinvoked Crypto Tests:");
-            HashTests.RunTests(new TurtleCoinCrypto());
+            //Console.WriteLine("Pinvoked Crypto Tests:");
+            //HashTests.RunTests(new TurtleCoinCrypto());
 
             // Run native tests
-            Console.WriteLine("Native Crypto Tests:");
-            HashTests.RunTests(new NativeCrypto());
+            //Console.WriteLine("Native Crypto Tests:");
+            //HashTests.RunTests(new NativeCrypto());
 
             //KeyTests.RunTests();
 

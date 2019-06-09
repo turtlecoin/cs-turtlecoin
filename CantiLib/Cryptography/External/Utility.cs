@@ -35,7 +35,7 @@ namespace Canti.Cryptography
 
         public string HashToScalar(string hash)
         {
-            if (!IsKey(hash)) return null;
+            if (hash.Length % 2 != 0) return null;
 
             IntPtr scalar = new IntPtr();
 
