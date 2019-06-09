@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 using static Canti.Utils;
 using Canti.Cryptography.Native;
@@ -15,6 +17,11 @@ namespace Tests
         [TestMethod]
         public void TestCNV0()
         {
+            if (!Sse2.IsSupported || !Aes.IsSupported || !Bmi2.X64.IsSupported)
+            {
+                Assert.Inconclusive("Intrinsics not available: skipping test");
+            }
+
             var testVectors = new Dictionary<string, string>
             {
                 { "", "eb14e8a833fac6fe9a43b57b336789c46ffe93f2868452240720607b14387e11" },
@@ -43,6 +50,11 @@ namespace Tests
         [TestMethod]
         public void TestCNV1()
         {
+            if (!Sse2.IsSupported || !Aes.IsSupported || !Bmi2.X64.IsSupported)
+            {
+                Assert.Inconclusive("Intrinsics not available: skipping test");
+            }
+
             var testVectors = new Dictionary<string, string>
             {
                 { "The quick brown fox jumps over the lazy dog", "94f5dec524fad6d32004c55c035e5ea223e7315be20e2dc5b8a0ac7464ffeb1f" },
@@ -81,6 +93,11 @@ namespace Tests
         [TestMethod]
         public void TestCNLiteV0()
         {
+            if (!Sse2.IsSupported || !Aes.IsSupported || !Bmi2.X64.IsSupported)
+            {
+                Assert.Inconclusive("Intrinsics not available: skipping test");
+            }
+
             var testVectors = new Dictionary<string, string>
             {
                 { "", "4cec4a947f670ffdd591f89cdb56ba066c31cd093d1d4d7ce15d33704c090611" },
@@ -109,6 +126,11 @@ namespace Tests
         [TestMethod]
         public void TestCNLiteV1()
         {
+            if (!Sse2.IsSupported || !Aes.IsSupported || !Bmi2.X64.IsSupported)
+            {
+                Assert.Inconclusive("Intrinsics not available: skipping test");
+            }
+
             var testVectors = new Dictionary<string, string>
             {
                 { "The quick brown fox jumps over the lazy dog", "973a324237703e0f2ebe678a0000a00afb14c2c394c1859c84bcaa7b90bc56db" },
@@ -144,9 +166,15 @@ namespace Tests
             HashTests.Test(testVectors, new CNLiteV1());
         }
 
+        [Ignore]
         [TestMethod]
         public void TestCNV2()
         {
+            if (!Sse2.IsSupported || !Aes.IsSupported || !Bmi2.X64.IsSupported)
+            {
+                Assert.Inconclusive("Intrinsics not available: skipping test");
+            }
+
             var testVectors = new Dictionary<string, string>
             {
                 { "", "e34985722288be50a2068f973f02248d62e7bc6a0a0dfca2eb84909724857a72" },
@@ -172,10 +200,15 @@ namespace Tests
             HashTests.Test(testVectors, new CNV2(false));
         }
 
-        /*
+        [Ignore]
         [TestMethod]
-        public void TestCNTurtleV2()
+        public void TestCNTurtleLiteV2()
         {
+            if (!Sse2.IsSupported || !Aes.IsSupported || !Bmi2.X64.IsSupported)
+            {
+                Assert.Inconclusive("Intrinsics not available: skipping test");
+            }
+
             var testVectors = new Dictionary<string, string>
             {
                 { "", "16cba4f89786b8aa785a4085f529f757296402aca4edbaefc1470bc691071ed9" },
@@ -184,12 +217,11 @@ namespace Tests
                 { "I'd just like to interject for a moment. What you're referring to as Linux, is in fact, GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself", "decefe366f49f7fc26c8b4f87caf7da47552162c236ebc1819c851bc37861ae0" },
             };
 
-            HashTests.Test(testVectors, new CNTurtleV2());
+            HashTests.Test(testVectors, new CNTurtleLiteV2());
         }
-        */
 
         [TestMethod]
-        public void TestCNTurtleV2PlatformIndependent()
+        public void TestCNTurtleLiteV2PlatformIndependent()
         {
             var testVectors = new Dictionary<string, string>
             {
@@ -199,7 +231,7 @@ namespace Tests
                 { "I'd just like to interject for a moment. What you're referring to as Linux, is in fact, GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself", "decefe366f49f7fc26c8b4f87caf7da47552162c236ebc1819c851bc37861ae0" },
             };
 
-            HashTests.Test(testVectors, new CNTurtleV2(false));
+            HashTests.Test(testVectors, new CNTurtleLiteV2(false));
         }
     }
 }
