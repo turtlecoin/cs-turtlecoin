@@ -25,6 +25,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\Include\turtlecoin-crypto-shared.a" Condition="Exists('..\Include\turtlecoin-crypto-shared.a')">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Cryptography\Native\CryptoNight\" />
     <Folder Include="Cryptography\Native\AES\" />
     <Folder Include="Cryptography\Native\Groestl\" />
