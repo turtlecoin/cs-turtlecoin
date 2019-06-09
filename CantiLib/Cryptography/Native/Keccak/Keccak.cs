@@ -12,7 +12,7 @@ using static Canti.Utils;
 namespace Canti.Cryptography.Native
 {
     // This is pre NIST keccak before the sha-3 revisions
-    public sealed class Keccak
+    public class Keccak : IHashProvider
     {
         #region Constants
 
@@ -47,6 +47,11 @@ namespace Canti.Cryptography.Native
         #endregion
 
         #region Methods
+
+        public byte[] Hash(byte[] input)
+        {
+            return Keccak.Hash(input, 32);
+        }
 
         public static void Keccakf(ulong[] state, int rounds = KeccakRounds)
         {
