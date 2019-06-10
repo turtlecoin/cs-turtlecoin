@@ -252,17 +252,15 @@ namespace Canti.Cryptography
                     // Get bytes from this public key (also verifies it)
                     if (ge_frombytes_vartime(tmp3, PublicKeys[i]) != 0) return null;
 
-                    // Multiply first part of signature
-                    ge_double_scalarmult_base_vartime(tmp2, Signatures[i].A, tmp3, Signatures[i].B);
-
                     // Signature Part A
+                    ge_double_scalarmult_base_vartime(tmp2, Signatures[i].A, tmp3, Signatures[i].B);
                     ge_tobytes(ref Buffer[i].A, tmp2);
 
-                    // Turn public key at this index into an elliptic curve, then multiply
+                    // Convert public key to elliptic curve point
                     HashToEllipticCurve(tmp3, PublicKeys[i]);
-                    ge_double_scalarmult_precomp_vartime(tmp2, Signatures[i].B, tmp3, Signatures[i].A, Image_Pre);
 
                     // Signature Part B
+                    ge_double_scalarmult_precomp_vartime(tmp2, Signatures[i].B, tmp3, Signatures[i].A, Image_Pre);
                     ge_tobytes(ref Buffer[i].B, tmp2);
 
                     // Add to sum
