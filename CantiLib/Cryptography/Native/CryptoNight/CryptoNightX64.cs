@@ -287,22 +287,22 @@ namespace Canti.Cryptography.Native.CryptoNight
                 ulong *b = (ulong *)bByte;
                 ulong *c = (ulong *)cByte;
 
-                Vector128<byte> _a;
-                Vector128<byte> _b = Sse2.LoadVector128(bByte);
-                Vector128<byte> _b1 = Sse2.LoadVector128(bByte + 1);
-                Vector128<byte> _c;
+                CryptoNight.InitMixingState((ulong *)a, (ulong *)b, (ulong *)k);
 
                 int j;
 
                 ulong *w = (ulong *)hashState;
-
-                CryptoNight.InitMixingState((ulong *)a, (ulong *)b, (ulong *)k);
 
                 b[2] = w[8] ^ w[10];
                 b[3] = w[9] ^ w[11];
 
                 ulong divisionResult = w[12];
                 ulong sqrtResult = w[13];
+
+                Vector128<byte> _a;
+                Vector128<byte> _b = Sse2.LoadVector128(bByte);
+                Vector128<byte> _b1 = Sse2.LoadVector128(bByte + 16);
+                Vector128<byte> _c;
 
                 for (int i = 0; i < cnParams.AesRounds; i++)
                 {
