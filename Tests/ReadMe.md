@@ -2,4 +2,4 @@ Anything placed in this folder will be ignored by git, so feel free to create an
 
 Try not to modify the solution file though, these projects should be kept separate from the main solution, and entirely contained in this directory.
 
-Please see Test.csproj.example for an example project that references the main CantiLib project.
+Please see Test.sln.example and Test.csproj.example for an example solution that references the main CantiLib project.

@@ -1,12 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
+    <StartupObject>GenerateGenesis.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CantiLib\CantiLib.csproj" />
+    <ProjectReference Include="..\..\CantiLib\CantiLib.csproj" />
   </ItemGroup>
 
 </Project>

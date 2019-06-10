@@ -9,6 +9,7 @@
 # Testing directory
 [Tt]ests/*
 ![Tt]ests/ReadMe.md
+![Tt]ests/Test.sln.example
 ![Tt]ests/Test.csproj.example
 
 # User-specific files
