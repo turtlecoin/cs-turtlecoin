@@ -112,7 +112,7 @@ namespace Canti.Cryptography
             ge_double_scalarmult_base_vartime(tmp2, Sig.SubBytes(0, 32), tmp3, Sig.SubBytes(32, 32));
             ge_tobytes(ref Comm, tmp2);
 
-            byte[] tmp = Keccak.Hash(Hash.AppendBytes(PubKey).AppendBytes(Comm));
+            byte[] tmp = Keccak.KeccakHash(Hash.AppendBytes(PubKey).AppendBytes(Comm));
             sc_reduce32(ref tmp);
 
             sc_sub(ref tmp, tmp, Sig);
@@ -142,7 +142,7 @@ namespace Canti.Cryptography
 
         public void HashToScalar(ref byte[] res, byte[] data)
         {
-            res = Keccak.Hash(data);
+            res = Keccak.KeccakHash(data);
             sc_reduce32(ref res);
         }
 

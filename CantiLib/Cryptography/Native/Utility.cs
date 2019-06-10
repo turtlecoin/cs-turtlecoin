@@ -34,7 +34,7 @@ namespace Canti.Cryptography
         {
             if (hash.Length % 2 != 0) return null;
 
-            byte[] tmp = Keccak.Hash(HexStringToByteArray(hash));
+            byte[] tmp = Keccak.KeccakHash(HexStringToByteArray(hash));
 
             sc_reduce32(ref tmp);
 
