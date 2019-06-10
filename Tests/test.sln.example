@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28922.388
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test.csproj", "{BD5ED5DB-C364-43D3-8632-C9DC8A981555}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CantiLib", "..\CantiLib\CantiLib.csproj", "{2E1340BB-0C5C-4032-8A97-FEB526311585}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BD5ED5DB-C364-43D3-8632-C9DC8A981555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD5ED5DB-C364-43D3-8632-C9DC8A981555}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD5ED5DB-C364-43D3-8632-C9DC8A981555}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD5ED5DB-C364-43D3-8632-C9DC8A981555}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E1340BB-0C5C-4032-8A97-FEB526311585}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E1340BB-0C5C-4032-8A97-FEB526311585}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E1340BB-0C5C-4032-8A97-FEB526311585}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E1340BB-0C5C-4032-8A97-FEB526311585}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {22DB373E-FCE1-4277-B8D6-F1BF7E2A6AE4}
+	EndGlobalSection
+EndGlobal
