@@ -7,9 +7,9 @@
 
 
 # Testing directory
-[Tt]ests/*
-![Tt]ests/ReadMe.md
-![Tt]ests/*.example
+[Ii]gnored/*
+![Ii]gnored/ReadMe.md
+![Ii]gnored/*.example
 
 # User-specific files
 *.suo
