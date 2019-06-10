@@ -38,7 +38,7 @@ namespace Benchmark
 
             var hashes = new List<HashFunction>
             {
-                new HashFunction("Blake",                               new Blake(),                                2000000),
+                new HashFunction("Blake",                               new Blake(),                                2_000_000),
 
                 new HashFunction("CNV0 (C++ Pinvoke)",                  new CppWrapper(cpp.CN_SlowHashV0),          500),
                 new HashFunction("CNV0 (C# Platform Specific)",         new CNV0(),                                 500),
@@ -52,13 +52,13 @@ namespace Benchmark
                 new HashFunction("CNTurtle (C# Platform Specific)",     new CNTurtleLiteV2(),                       3000),
                 new HashFunction("CNTurtle (C# Platform Independent)",  new CNTurtleLiteV2(false),                  60),
 
-                new HashFunction("Groestl",                             new Groestl(),                              200000),
+                new HashFunction("Groestl",                             new Groestl(),                              200_000),
                 new HashFunction("JH",                                  new JH(),                                   50000),
 
-                new HashFunction("Keccak (C++ Pinvoke)",                new CppWrapper(cpp.CN_FastHash),            2000000),
-                new HashFunction("Keccak (C#)",                         new Keccak(),                               2000000),
+                new HashFunction("Keccak (C++ Pinvoke)",                new CppWrapper(cpp.CN_FastHash),            2_000_000),
+                new HashFunction("Keccak (C#)",                         new Keccak(),                               2_000_000),
 
-                new HashFunction("Skein",                               new Skein(),                                3000000)
+                new HashFunction("Skein",                               new Skein(),                                3_000_000)
             };
 
             while (true)
@@ -132,27 +132,16 @@ namespace Benchmark
 
         public static void HashBenchmark(HashFunction hash)
         { 
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-
-            for (int i = 0; i < hash.Iterations; i++)
-            {
+            var Result = Canti.Benchmark.Run(() => {
                 byte[] input = SecureRandom.Bytes(64);
                 hash.Function.Hash(input);
-            }
+            }, hash.Iterations);
 
-            stopwatch.Stop();
-
-            TimeSpan ts = stopwatch.Elapsed;
-
-            // Format and display the TimeSpan value.
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds / 10);
+            string elapsedTime = Result.ToString(@"hh\:mm\:ss\.ff");
 
             Console.WriteLine($"Ran {hash.Iterations} iterations of {hash.Name}:");
             Console.WriteLine($"Runtime: {elapsedTime}");
-            Console.WriteLine($"Hashes per second: {hash.Iterations / ts.TotalSeconds:F2}");
+            Console.WriteLine($"Hashes per second: {hash.Iterations / Result.TotalSeconds:F2}");
         }
     }
 
