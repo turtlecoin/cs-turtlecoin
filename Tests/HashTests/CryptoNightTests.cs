@@ -166,7 +166,6 @@ namespace Tests
             HashTests.Test(testVectors, new CNLiteV1());
         }
 
-        [Ignore]
         [TestMethod]
         public void TestCNV2()
         {
@@ -200,7 +199,6 @@ namespace Tests
             HashTests.Test(testVectors, new CNV2(false));
         }
 
-        [Ignore]
         [TestMethod]
         public void TestCNTurtleLiteV2()
         {
