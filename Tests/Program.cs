@@ -12,24 +12,47 @@ namespace CryptoTests
     {
         static void Main()
         {
+            // Currently fucking around with ring sigs :t_shrug:
+
             KeyPair Keys = new TurtleCoinCrypto().GenerateKeys();
             Console.WriteLine($"Generated Private Key: {Keys.PrivateKey}");
             Console.WriteLine($"Generated Public Key: {Keys.PublicKey}");
 
-            KeyTests.RunTests(Keys, new TurtleCoinCrypto());
-            KeyTests.RunTests(Keys, new NativeCrypto());
+            // Currently banging my head on the wall
 
-            // Run pinvoke tests
-            //Console.WriteLine("Pinvoked Crypto Tests:");
-            //HashTests.RunTests(new TurtleCoinCrypto());
+            string SEED1 = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
 
-            // Run native tests
-            //Console.WriteLine("Native Crypto Tests:");
-            //HashTests.RunTests(new NativeCrypto());
+            // Currently questioning my life choices
 
-            //KeyTests.RunTests();
+            string KeyImage = new TurtleCoinCrypto().GenerateKeyImage(Keys.PublicKey, Keys.PrivateKey);
+            Console.WriteLine($"Key Image: {KeyImage}");
 
-            //Benchmarking.RunTests();
+            // Currently seeking out the hardest alcohol I can find
+
+            ulong Mixin = 2;
+            ulong RealIndex = 0;
+            string[] PublicKeys = new string[Mixin];
+            for (int i = 0; i < PublicKeys.Length; i++)
+            {
+                PublicKeys[i] = new TurtleCoinCrypto().GenerateKeys().PublicKey;
+            }
+            PublicKeys[RealIndex] = Keys.PublicKey;
+
+            // Currentku thinjig of iother thngs
+
+            string[] RingSigs = new NativeCrypto().GenerateRingSignatures(SEED1, KeyImage, PublicKeys, Keys.PrivateKey, RealIndex);
+            Console.WriteLine($"Ring Signatures:");
+            foreach (var Sig in RingSigs)
+            {
+                Console.WriteLine($"  {Sig}");
+            }
+
+            // Curntnh klhl aaaa sdkd
+
+            bool Check_RingSigs1 = new NativeCrypto().CheckRingSignatures(SEED1, KeyImage, PublicKeys, RingSigs);
+            Console.WriteLine($"Check Ring Signatures: {Check_RingSigs1}");
+
+            // dl;f vopd $#@#$L: T@3
 
             Console.ReadLine();
         }

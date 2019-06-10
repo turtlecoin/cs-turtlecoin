@@ -17,8 +17,6 @@ namespace CryptoTests
 
             Console.WriteLine();
 
-            string SEED = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
-
             /*KeyPair Keys = Crypto.GenerateKeys();
             Console.WriteLine($"Generated Private Key: {Keys.PrivateKey}");
             Console.WriteLine($"Generated Public Key: {Keys.PublicKey}");
@@ -34,7 +32,7 @@ namespace CryptoTests
             Console.WriteLine($"Generated Public View Key: {ViewKeys.PublicKey}");
 
             string PrivateViewKey = Crypto.GeneratePrivateViewKeyFromPrivateSpendKey(Keys.PrivateKey);
-            Console.WriteLine($"Generated Private View Key: {PrivateViewKey}");*/
+            Console.WriteLine($"Generated Private View Key: {PrivateViewKey}");
 
             string Signature = Crypto.GenerateSignature(Keys.PublicKey, Keys.PublicKey, Keys.PrivateKey);
             Console.WriteLine($"Generated Signature: {Signature}");
@@ -42,11 +40,11 @@ namespace CryptoTests
             bool Check_Signature = Crypto.CheckSignature(Keys.PublicKey, Keys.PublicKey, Signature);
             Console.WriteLine($"Check Signature: {Check_Signature}");
 
-            string Reduced = Crypto.ScReduce32(SEED);
+            string Reduced = Crypto.ScReduce32(SEED1);
             Console.WriteLine($"Sc Reduce 32: {Reduced}");
 
-            string Scalar = Crypto.HashToScalar(SEED);
-            Console.WriteLine($"Hash To Scalar: {Scalar}");
+            string Scalar = Crypto.HashToScalar(SEED1);
+            Console.WriteLine($"Hash To Scalar: {Scalar}");*/
 
             Console.WriteLine();
         }
