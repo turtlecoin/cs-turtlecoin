@@ -178,17 +178,7 @@ namespace Canti.Cryptography
 
             // Create some ED25519 points
             ge_p3 Image_Unp = new ge_p3();
-            ge_cached[] Image_Pre = new ge_cached[]
-            {
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached()
-            };
+            ge_dsmp Image_Pre = new ge_dsmp();
 
             // Declare a few more variables
             byte[] Sum = new byte[32];
@@ -314,17 +304,7 @@ namespace Canti.Cryptography
 
             // Create some ED25519 points
             ge_p3 Image_Unp = new ge_p3();
-            ge_cached[] Image_Pre = new ge_cached[]
-            {
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached()
-            };
+            ge_dsmp Image_Pre = new ge_dsmp();
 
             // Declare a few more variables
             byte[] Sum = new byte[32];

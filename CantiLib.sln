@@ -7,11 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CantiLib", "CantiLib\CantiL
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CS-TurtleCoin", "CS-TurtleCoin\CS-TurtleCoin.csproj", "{E46790A0-EB3B-40AD-96F2-3E9F936CED5E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoTests", "Tests\CryptoTests.csproj", "{BB13A2C5-707D-4DF8-9F4B-63A7D70A1E77}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoTests", "UnitTests\CryptoTests.csproj", "{BB13A2C5-707D-4DF8-9F4B-63A7D70A1E77}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{FEBE6BB0-714C-47F5-91E9-2E91F59C8FC0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GenerateGenesis", "Utilities\GenerateGenesis\GenerateGenesis.csproj", "{1ED76D2B-7657-4ED6-9D2D-93AB2111F0D9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GenerateGenesis", "GenerateGenesis\GenerateGenesis.csproj", "{1ED76D2B-7657-4ED6-9D2D-93AB2111F0D9}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{29602CF1-8DF8-4095-9C7E-0A0EC6FB3A0E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{AC36C60C-631D-4172-A750-62C24D69D74D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -40,7 +42,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{1ED76D2B-7657-4ED6-9D2D-93AB2111F0D9} = {FEBE6BB0-714C-47F5-91E9-2E91F59C8FC0}
+		{BB13A2C5-707D-4DF8-9F4B-63A7D70A1E77} = {29602CF1-8DF8-4095-9C7E-0A0EC6FB3A0E}
+		{1ED76D2B-7657-4ED6-9D2D-93AB2111F0D9} = {AC36C60C-631D-4172-A750-62C24D69D74D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FF17E6A4-CE7B-410F-8151-668910AAEC8A}

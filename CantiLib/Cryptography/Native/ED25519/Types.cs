@@ -125,4 +125,36 @@ namespace Canti.Cryptography.Native
         public int[] Z;
         public int[] T2d;
     }
+
+    public class ge_dsmp
+    {
+        public ge_cached[] ge_cached;
+
+        public ge_cached this[int index]
+        {
+            get
+            {
+                return ge_cached[index];
+            }
+            set
+            {
+                ge_cached[index] = value;
+            }
+        }
+
+        public ge_dsmp()
+        {
+            ge_cached = new ge_cached[]
+            {
+                new ge_cached(),
+                new ge_cached(),
+                new ge_cached(),
+                new ge_cached(),
+                new ge_cached(),
+                new ge_cached(),
+                new ge_cached(),
+                new ge_cached()
+            };
+        }
+    }
 }

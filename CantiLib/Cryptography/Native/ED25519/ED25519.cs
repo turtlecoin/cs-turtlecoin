@@ -888,7 +888,7 @@ namespace Canti.Cryptography.Native
             }
         }
 
-        public static void ge_dsm_precomp(ref ge_cached[] r, ge_p3 s)
+        public static void ge_dsm_precomp(ref ge_dsmp r, ge_p3 s)
         {
             ge_p1p1 t = new ge_p1p1();
             ge_p3 s2 = new ge_p3();
@@ -911,17 +911,7 @@ namespace Canti.Cryptography.Native
             sbyte[] aslide = new sbyte[256];
             sbyte[] bslide = new sbyte[256];
 
-            ge_cached[] Ai = new ge_cached[]
-            {
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached()
-            }; /* A, 3A, 5A, 7A, 9A, 11A, 13A, 15A */
+            ge_dsmp Ai = new ge_dsmp(); ; /* A, 3A, 5A, 7A, 9A, 11A, 13A, 15A */
 
             ge_p1p1 t = new ge_p1p1();
             ge_p3 u = new ge_p3();
@@ -977,7 +967,7 @@ namespace Canti.Cryptography.Native
             sbyte[] aslide = new sbyte[256];
             sbyte[] bslide = new sbyte[256];
 
-            ge_cached[] Ai = new ge_cached[8]; /* A, 3A, 5A, 7A, 9A, 11A, 13A, 15A */
+            ge_dsmp Ai = new ge_dsmp(); /* A, 3A, 5A, 7A, 9A, 11A, 13A, 15A */
 
             ge_p1p1 t = new ge_p1p1();
             ge_p3 u = new ge_p3();
@@ -1737,17 +1727,7 @@ namespace Canti.Cryptography.Native
             int carry = 0;
             int carry2;
 
-            ge_cached[] Ai = new ge_cached[]
-            {
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached()
-            }; /* 1 * A, 2 * A, ..., 8 * A */
+            ge_dsmp Ai = new ge_dsmp(); /* 1 * A, 2 * A, ..., 8 * A */
             ge_p1p1 t = new ge_p1p1();
             ge_p3 u = new ge_p3();
 
@@ -1814,7 +1794,7 @@ namespace Canti.Cryptography.Native
             int carry = 0;
             int carry2;
 
-            ge_cached[] Ai = new ge_cached[8];
+            ge_dsmp Ai = new ge_dsmp();
             ge_p1p1 t = new ge_p1p1();
             ge_p3 u = new ge_p3();
             ge_p2 r = new ge_p2();
@@ -1886,7 +1866,7 @@ namespace Canti.Cryptography.Native
             }
         }
 
-        public static void ge_double_scalarmult_precomp_vartime2(ge_p2 r, byte[] a, ge_cached[] Ai, byte[] b, ge_cached[] Bi)
+        public static void ge_double_scalarmult_precomp_vartime2(ge_p2 r, byte[] a, ge_dsmp Ai, byte[] b, ge_dsmp Bi)
         {
             sbyte[] aslide = new sbyte[256];
             sbyte[] bslide = new sbyte[256];
@@ -1939,7 +1919,7 @@ namespace Canti.Cryptography.Native
             ge_p1p1_to_p2(r, t);
         }
 
-        public static void ge_double_scalarmult_precomp_vartime2_p3(ge_p3 r3, byte[] a, ge_cached[] Ai, byte[] b, ge_cached[] Bi)
+        public static void ge_double_scalarmult_precomp_vartime2_p3(ge_p3 r3, byte[] a, ge_dsmp Ai, byte[] b, ge_dsmp Bi)
         {
             sbyte[] aslide = new sbyte[256];
             sbyte[] bslide = new sbyte[256];
@@ -2000,19 +1980,9 @@ namespace Canti.Cryptography.Native
             }
         }
 
-        public static void ge_double_scalarmult_precomp_vartime(ge_p2 r, byte[] a, ge_p3 A, byte[] b, ge_cached[] Bi)
+        public static void ge_double_scalarmult_precomp_vartime(ge_p2 r, byte[] a, ge_p3 A, byte[] b, ge_dsmp Bi)
         {
-            ge_cached[] Ai = new ge_cached[]
-            {
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached(),
-                new ge_cached()
-            };
+            ge_dsmp Ai = new ge_dsmp();
 
             ge_dsm_precomp(ref Ai, A);
             ge_double_scalarmult_precomp_vartime2(r, a, Ai, b, Bi);
@@ -2149,7 +2119,7 @@ namespace Canti.Cryptography.Native
             fe_mul(ref r.X, r.X, r.Z);
         }
 
-        public static int ge_check_subgroup_precomp_vartime(ge_cached[] p)
+        public static int ge_check_subgroup_precomp_vartime(ge_dsmp p)
         {
             ge_p3 s = new ge_p3();
             ge_p1p1 t = new ge_p1p1();

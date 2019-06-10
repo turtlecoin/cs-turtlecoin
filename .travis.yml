@@ -11,6 +11,6 @@ script:
   - sudo snap alias dotnet-sdk.dotnet dotnet
   # Does the repo compile
   - dotnet build
-  - cd Tests
+  - cd UnitTests
   # Do all the tests pass
   - dotnet test
