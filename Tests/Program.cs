@@ -10,13 +10,32 @@ namespace CryptoTests
 {
     class Program
     {
+        static void TestCrypto(ICryptography Crypto)
+        {
+            // Test key generation
+            KeyPair Keys = Crypto.GenerateKeys();
+            Console.WriteLine($"Generated Private Key: {Keys.PrivateKey}");
+            Console.WriteLine($"Generated Public Key: {Keys.PublicKey}");
+
+            // Test key checking
+            bool CheckKey = Crypto.CheckKey(Keys.PublicKey);
+            Console.WriteLine($"Check Key: {CheckKey}");
+        }
+
         static void Main()
         {
+            // Test native crypto
+            ICryptography Native = new NativeCrypto();
+            TestCrypto(Native);
+
+            // Test external crypto
+            ICryptography External = new TurtleCoinCrypto();
+            TestCrypto(External);
+
+
             // Currently fucking around with ring sigs :t_shrug:
 
             KeyPair Keys = new TurtleCoinCrypto().GenerateKeys();
-            Console.WriteLine($"Generated Private Key: {Keys.PrivateKey}");
-            Console.WriteLine($"Generated Public Key: {Keys.PublicKey}");
 
             // Currently banging my head on the wall
 

@@ -4,6 +4,7 @@
 // Please see the included LICENSE file for more information.
 
 using System.Linq;
+using Canti.CryptoNote.Blockchain;
 using static Canti.Utils;
 
 namespace Canti.CryptoNote

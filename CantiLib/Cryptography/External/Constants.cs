@@ -12,5 +12,8 @@ namespace Canti.Cryptography
 
         // Location of file
         public const string LIBRARY_LOCATION = "turtlecoin-crypto-shared";
+
+        // Max string array size (in bytes)
+        private const int MAXIMUM_ARRAY_SIZE = 32 * 32; // 32 hashes (arbitrary choice)
     }
 }

@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using static Canti.Utils;
 
-namespace Canti.CryptoNote
+namespace Canti.CryptoNote.Blockchain
 {
     [Serializable]
     internal class Input

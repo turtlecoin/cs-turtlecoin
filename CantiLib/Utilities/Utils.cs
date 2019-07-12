@@ -4,7 +4,9 @@
 // Please see the included LICENSE file for more information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -192,6 +194,22 @@ namespace Canti
 
         #endregion
 
+        #region String Extensions
+
+        /// <summary>
+        /// Gets a byte array representing this string
+        /// </summary>
+        /// <param name="Input">The string to convert</param>
+        /// <param name="EncodeMethod">The method of encoding to use</param>
+        /// <returns>A byte array representing this string</returns>
+        public static byte[] GetBytes(this string Input, Encoding EncodeMethod = null)
+        {
+            if (EncodeMethod == null) EncodeMethod = Encoding.Default;
+            return EncodeMethod.GetBytes(Input);
+        }
+
+        #endregion
+
         #region Byte Array Extensions
 
         /// <summary>
@@ -205,6 +223,20 @@ namespace Canti
             byte[] Output = new byte[Input.LongLength + Destination.LongLength];
             Buffer.BlockCopy(Destination, 0, Output, 0, Destination.Length);
             Buffer.BlockCopy(Input, 0, Output, Destination.Length, Input.Length);
+            return Output;
+        }
+
+        /// <summary>
+        /// Appends a single byte to the end of another byte array
+        /// </summary>
+        /// <param name="Destination">The byte array to be appended to</param>
+        /// <param name="Input">The byte to be appended</param>
+        /// <returns>A new byte array with the given byte appended to it</returns>
+        public static byte[] AppendBytes(this byte[] Destination, byte Input)
+        {
+            byte[] Output = new byte[1 + Destination.LongLength];
+            Buffer.BlockCopy(Destination, 0, Output, 0, Destination.Length);
+            Buffer.SetByte(Output, Output.Length - 1, Input);
             return Output;
         }
 
@@ -320,6 +352,32 @@ namespace Canti
         {
             ReadOnlySpan<byte> Tmp = Self;
             return Tmp.SequenceEqual(Value);
+        }
+
+        /// <summary>
+        /// Converts this byte array to a string
+        /// </summary>
+        /// <param name="Self">The byte array to convert</param>
+        /// <param name="EncodeMethod">The encoding method to use</param>
+        /// <returns>A string representing this byte array</returns>
+        public static string ToString(this byte[] Self, Encoding EncodeMethod = null)
+        {
+            if (EncodeMethod == null) EncodeMethod = Encoding.Default;
+            return EncodeMethod.GetString(Self);
+        }
+
+        /// <summary>
+        /// Separates a byte array into chunks of a specified size
+        /// </summary>
+        /// <param name="Source">The byte array to split</param>
+        /// <param name="ChunkSize">The amount of bytes in each chunk</param>
+        /// <returns>A list of byte arrays of up to a specified length</returns>
+        public static List<byte[]> ChunkBy(this byte[] Source, int ChunkSize)
+        {
+            return Source.Select((x, i) => new { Index = i, Value = x })
+                .GroupBy(x => x.Index / ChunkSize)
+                .Select(x => x.Select(v => v.Value).ToArray())
+                .ToList();
         }
 
         #endregion

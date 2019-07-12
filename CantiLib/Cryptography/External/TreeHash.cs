@@ -11,7 +11,7 @@ using static Canti.Utils;
 namespace Canti.Cryptography
 {
     // Tree hash functions
-    public sealed partial class TurtleCoinCrypto : ICryptography
+    /*public sealed partial class TurtleCoinCrypto : ICryptography
     {
         /// <summary>
         /// Hashes a set of hashes into an asymmetric tree hash
@@ -133,5 +133,5 @@ namespace Canti.Cryptography
             // Perform final hashing
             return CN_FastHash(Buffer[0] + Buffer[1]);
         }
-    }
+    }*/
 }

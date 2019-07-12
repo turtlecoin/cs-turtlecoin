@@ -3,16 +3,13 @@
 //
 // Please see the included LICENSE file for more information.
 
-using Canti.Cryptography.Native;
-using System;
 using static Canti.Cryptography.Native.ED25519;
-using static Canti.Utils;
 
-namespace Canti.Cryptography
+namespace Canti.Cryptography.Native
 {
-    public sealed partial class NativeCrypto : ICryptography
+    public static class KeyOps
     {
-        public string GeneratePrivateViewKeyFromPrivateSpendKey(string spendPrivateKey)
+        /*public string GeneratePrivateViewKeyFromPrivateSpendKey(string spendPrivateKey)
         {
             throw new NotImplementedException();
         }
@@ -20,19 +17,24 @@ namespace Canti.Cryptography
         public KeyPair GenerateViewKeysFromPrivateSpendKey(string spendPrivateKey)
         {
             throw new NotImplementedException();
-        }
+        }*/
 
-        public KeyPair GenerateKeys()
+        public static void GenerateKeys(ref byte[] PublicKey, ref byte[] PrivateKey)
         {
-            throw new NotImplementedException();
+            ge_p3 point = new ge_p3();
+            HashBuffer k = new HashBuffer();
+            random_scalar(ref PrivateKey);
+            ge_scalarmult_base(point, PrivateKey);
+            ge_p3_tobytes(ref PublicKey, point);
         }
 
-        public bool CheckKey(string publicKey)
+        public static bool CheckKey(byte[] Key)
         {
-            throw new NotImplementedException();
+            ge_p3 point = new ge_p3();
+            return ge_frombytes_vartime(point, Key) == 0;
         }
 
-        public string SecretKeyToPublicKey(string privateKey)
+        /*public string SecretKeyToPublicKey(string privateKey)
         {
             throw new NotImplementedException();
         }
@@ -55,127 +57,116 @@ namespace Canti.Cryptography
         public string UnderivePublicKey(string derivation, uint outputIndex, string derivedKey)
         {
             throw new NotImplementedException();
-        }
+        }*/
 
-        public string GenerateSignature(string prefixHash, string publicKey, string privateKey)
+        public static byte[] GenerateSignature(byte[] PrefixHash, byte[] PublicKey, byte[] PrivateKey)
         {
+            // Create some ED25519 points
             ge_p3 Point = new ge_p3();
-            byte[] Hash = HexStringToByteArray(prefixHash);
-            byte[] PubKey = HexStringToByteArray(publicKey);
-            byte[] Comm = new byte[32];
-            byte[] SecKey = HexStringToByteArray(privateKey);
-
             ge_p3 TestPoint = new ge_p3();
-            if (sc_check(SecKey) != 0)
+
+            // Declare a few more variables
+            byte[] Comm = new byte[32];
+            byte[] Scalar = new byte[32];
+            byte[] SigBytes = new byte[64];
+
+            // Verify private key
+            if (sc_check(PrivateKey) != 0)
             {
                 // Invalid secret key
                 return null;
             }
 
-            ge_scalarmult_base(TestPoint, SecKey);
+            // Verify public key
+            ge_scalarmult_base(TestPoint, PrivateKey);
             byte[] Derived = new byte[32];
             ge_p3_tobytes(ref Derived, TestPoint);
-            if (!PubKey.Matches(Derived))
+            if (!PublicKey.Matches(Derived))
             {
                 // Invalid public key
                 return null;
             }
 
-            byte[] Scalar = new byte[32];
+            // Get a random scalar
             random_scalar(ref Scalar);
 
+            // Convert scalar to bytes
             ge_scalarmult_base(Point, Scalar);
             ge_p3_tobytes(ref Comm, Point);
 
-            byte[] tmp = Keccak.Keccak1600(Hash.AppendBytes(PubKey).AppendBytes(Comm));
-            sc_reduce32(ref tmp);
+            // Combine hashes and get another scalar
+            HashToScalar(ref SigBytes, PrefixHash.AppendBytes(PublicKey).AppendBytes(Comm));
+            HashBuffer Signature = new HashBuffer()
+            {
+                A = SigBytes.SubBytes(0, 32),
+                B = SigBytes.SubBytes(32, 32)
+            };
 
-            byte[] Sig1 = tmp.SubBytes(0, 32);
-            byte[] Sig2 = tmp.SubBytes(32, 32);
-            sc_mulsub(ref Sig2, Sig1, SecKey, Scalar);
+            // Perform final math
+            sc_mulsub(ref Signature.B, Signature.A, PrivateKey, Scalar);
 
-            return ByteArrayToHexString(Sig1.AppendBytes(Sig2));
+            // Return output signature
+            return Signature.Output;
         }
 
-        public bool CheckSignature(string prefixHash, string publicKey, string signature)
+        public static bool CheckSignature(byte[] PrefixHash, byte[] PublicKey, byte[] Signature)
         {
+            // Create some ED25519 points
             ge_p2 tmp2 = new ge_p2();
             ge_p3 tmp3 = new ge_p3();
-            byte[] Hash = HexStringToByteArray(prefixHash);
-            byte[] PubKey = HexStringToByteArray(publicKey);
+
+            // Declare a few more variables
             byte[] Comm = new byte[32];
-            byte[] Sig = HexStringToByteArray(signature);
+            byte[] SigBytes = new byte[64];
 
-            if (ge_frombytes_vartime(tmp3, PubKey) != 0) return false;
-            if (sc_check(Sig.SubBytes(0, 32)) != 0 || sc_check(Sig.SubBytes(32, 32)) != 0) return false;
+            // Verify public key
+            if (ge_frombytes_vartime(tmp3, PublicKey) != 0) return false;
 
-            ge_double_scalarmult_base_vartime(tmp2, Sig.SubBytes(0, 32), tmp3, Sig.SubBytes(32, 32));
+            // Create a signature buffer from the given signature
+            HashBuffer Buffer = new HashBuffer(Signature);
+
+            // Verify signature bytes
+            if (sc_check(Buffer.A) != 0 || sc_check(Buffer.B) != 0) return false;
+
+            // Signature Part A
+            ge_double_scalarmult_base_vartime(tmp2, Buffer.A, tmp3, Buffer.B);
             ge_tobytes(ref Comm, tmp2);
 
-            byte[] tmp = Keccak.Hash(Hash.AppendBytes(PubKey).AppendBytes(Comm));
-            sc_reduce32(ref tmp);
+            // Combine hashes and convert to a scalar
+            HashToScalar(ref SigBytes, PrefixHash.AppendBytes(PublicKey).AppendBytes(Comm));
 
-            sc_sub(ref tmp, tmp, Sig);
+            // Perform final math
+            sc_sub(ref SigBytes, SigBytes, Signature);
 
-            return sc_isnonzero(tmp) == 0;
+            // Return result
+            return sc_isnonzero(SigBytes) == 0;
         }
 
-        public string GenerateKeyImage(string publicKey, string privateKey)
+        public static byte[] GenerateKeyImage(byte[] PublicKey, byte[] PrivateKey)
         {
-            throw new NotImplementedException();
+            ge_p3 point = new ge_p3();
+            ge_p2 point2 = new ge_p2();
+            if (sc_check(PrivateKey) != 0) return null;
+            HashToEllipticCurve(point, PublicKey);
+            ge_scalarmult(point2, PrivateKey, point);
+            byte[] image = new byte[32];
+            ge_tobytes(ref image, point2);
+            return image;
         }
 
-        public string ScalarmultKey(string keyImageA, string keyImageB)
+        public static byte[] ScalarmultKey(byte[] KeyImageA, byte[] KeyImageB)
         {
-            throw new NotImplementedException();
+            ge_p3 A = new ge_p3();
+            ge_p2 R = new ge_p2();
+            ge_frombytes_vartime(A, KeyImageA);
+            ge_scalarmult(R, KeyImageB, A);
+            byte[] aP = new byte[32];
+            ge_tobytes(ref aP, R);
+            return aP;
         }
 
-        public void HashToEllipticCurve(ge_p3 res, byte[] key)
+        public static byte[][] GenerateRingSignatures(byte[] PrefixHash, byte[] KeyImage, byte[][] PublicKeys, byte[] TransactionSecretKey, ulong RealOutput)
         {
-            ge_p2 point = new ge_p2();
-            ge_p1p1 point2 = new ge_p1p1();
-            byte[] h = Keccak.Keccak1600(key);
-            ge_fromfe_frombytes_vartime(point, h);
-            ge_mul8(point2, point);
-            ge_p1p1_to_p3(res, point2);
-        }
-
-        public void HashToScalar(ref byte[] res, byte[] data)
-        {
-            res = Keccak.Hash(data);
-            sc_reduce32(ref res);
-        }
-
-        private class SignatureBuffer
-        {
-            internal byte[] A;
-            internal byte[] B;
-            internal byte[] Output
-            {
-                get
-                {
-                    return A.AppendBytes(B);
-                }
-            }
-            internal SignatureBuffer()
-            {
-                A = new byte[32];
-                B = new byte[32];
-            }
-        };
-
-        public string[] GenerateRingSignatures(string prefixHash, string keyImage, string[] publicKeys, string transactionSecretKey, ulong realOutput)
-        {
-            // Convert input variables
-            byte[] PrefixHash = HexStringToByteArray(prefixHash);
-            byte[] KeyImage = HexStringToByteArray(keyImage);
-            byte[][] PublicKeys = new byte[publicKeys.Length][];
-            for (int i = 0; i < publicKeys.Length; i++)
-            {
-                PublicKeys[i] = HexStringToByteArray(publicKeys[i]);
-            }
-            byte[] SecretKey = HexStringToByteArray(transactionSecretKey);
-
             // Create some ED25519 points
             ge_p3 Image_Unp = new ge_p3();
             ge_dsmp Image_Pre = new ge_dsmp();
@@ -186,8 +177,8 @@ namespace Canti.Cryptography
             byte[] Hash = new byte[32];
 
             // Create a signature buffer array and output array
-            SignatureBuffer[] Buffer = new SignatureBuffer[PublicKeys.Length];
-            SignatureBuffer[] Signatures = new SignatureBuffer[PublicKeys.Length];
+            HashBuffer[] Buffer = new HashBuffer[PublicKeys.Length];
+            HashBuffer[] Signatures = new HashBuffer[PublicKeys.Length];
             
             // Verify key image
             if (ge_frombytes_vartime(Image_Unp, KeyImage) != 0) return null;
@@ -199,15 +190,15 @@ namespace Canti.Cryptography
             for (ulong i = 0; i < (ulong)PublicKeys.Length; i++)
             {
                 // Assign a new signature buffers
-                Buffer[i] = new SignatureBuffer();
-                Signatures[i] = new SignatureBuffer();
+                Buffer[i] = new HashBuffer();
+                Signatures[i] = new HashBuffer();
 
                 // Create temporary points
                 ge_p2 tmp2 = new ge_p2();
                 ge_p3 tmp3 = new ge_p3();
 
                 // This is the real output index
-                if (i == realOutput)
+                if (i == RealOutput)
                 {
                     // Generate a random scalar
                     random_scalar(ref Scalar);
@@ -267,39 +258,25 @@ namespace Canti.Cryptography
             HashToScalar(ref Hash, SigHash);
 
             // Perform final math
-            sc_sub(ref Signatures[realOutput].A, Hash, Sum);
-            sc_mulsub(ref Signatures[realOutput].B, Signatures[realOutput].A, SecretKey, Scalar);
+            sc_sub(ref Signatures[RealOutput].A, Hash, Sum);
+            sc_mulsub(ref Signatures[RealOutput].B, Signatures[RealOutput].A, TransactionSecretKey, Scalar);
 
             // Create an output array and return it
-            string[] Output = new string[Signatures.Length];
+            byte[][] Output = new byte[Signatures.Length][];
             for (int i = 0; i < Signatures.Length; i++)
             {
-                Output[i] = ByteArrayToHexString(Signatures[i].Output);
+                Output[i] = Signatures[i].Output;
             }
             return Output;
         }
 
-        public bool CheckRingSignatures(string prefixHash, string keyImage, string[] publicKeys, string[] signatures)
+        public static bool CheckRingSignatures(byte[] PrefixHash, byte[] KeyImage, byte[][] PublicKeys, byte[][] Signatures)
         {
-            // Convert input variables
-            byte[] PrefixHash = HexStringToByteArray(prefixHash);
-            byte[] KeyImage = HexStringToByteArray(keyImage);
-            byte[][] PublicKeys = new byte[publicKeys.Length][];
-            for (int i = 0; i < publicKeys.Length; i++)
-            {
-                PublicKeys[i] = HexStringToByteArray(publicKeys[i]);
-            }
-
             // Convert signature list to signature buffer array
-            SignatureBuffer[] Signatures = new SignatureBuffer[signatures.Length];
-            for (int i = 0; i < Signatures.Length; i++)
+            HashBuffer[] SignaturesBuffer = new HashBuffer[Signatures.Length];
+            for (int i = 0; i < SignaturesBuffer.Length; i++)
             {
-                byte[] Signature = HexStringToByteArray(signatures[i]);
-                Signatures[i] = new SignatureBuffer
-                {
-                    A = Signature.SubBytes(0, 32),
-                    B = Signature.SubBytes(32, 32)
-                };
+                SignaturesBuffer[i] = new HashBuffer(Signatures[i]);
             }
 
             // Create some ED25519 points
@@ -311,7 +288,7 @@ namespace Canti.Cryptography
             byte[] Hash = new byte[32];
 
             // Create a signature buffer array
-            SignatureBuffer[] Buffer = new SignatureBuffer[PublicKeys.Length];
+            HashBuffer[] Buffer = new HashBuffer[PublicKeys.Length];
 
             // Verify key image
             if (ge_frombytes_vartime(Image_Unp, KeyImage) != 0) return false;
@@ -326,29 +303,29 @@ namespace Canti.Cryptography
             for (int i = 0; i < PublicKeys.Length; i++)
             {
                 // Assign a new signature buffer
-                Buffer[i] = new SignatureBuffer();
+                Buffer[i] = new HashBuffer();
 
                 // Create temporary points
                 ge_p2 tmp2 = new ge_p2();
                 ge_p3 tmp3 = new ge_p3();
 
                 // Verify information
-                if (sc_check(Signatures[i].A) != 0 || sc_check(Signatures[i].B) != 0) return false;
+                if (sc_check(SignaturesBuffer[i].A) != 0 || sc_check(SignaturesBuffer[i].B) != 0) return false;
                 if (ge_frombytes_vartime(tmp3, PublicKeys[i]) != 0) return false;
 
                 // Signature Part A
-                ge_double_scalarmult_base_vartime(tmp2, Signatures[i].A, tmp3, Signatures[i].B);
+                ge_double_scalarmult_base_vartime(tmp2, SignaturesBuffer[i].A, tmp3, SignaturesBuffer[i].B);
                 ge_tobytes(ref Buffer[i].A, tmp2);
 
                 // Convert public key to elliptic curve point
                 HashToEllipticCurve(tmp3, PublicKeys[i]);
 
                 // Signature Part B
-                ge_double_scalarmult_precomp_vartime(tmp2, Signatures[i].B, tmp3, Signatures[i].A, Image_Pre);
+                ge_double_scalarmult_precomp_vartime(tmp2, SignaturesBuffer[i].B, tmp3, SignaturesBuffer[i].A, Image_Pre);
                 ge_tobytes(ref Buffer[i].B, tmp2);
 
                 // Add to sum
-                sc_add(ref Sum, Sum, Signatures[i].A);
+                sc_add(ref Sum, Sum, SignaturesBuffer[i].A);
             }
 
             // Combine buffer and convert to a scalar
@@ -364,6 +341,22 @@ namespace Canti.Cryptography
 
             // Return result of final check
             return sc_isnonzero(Hash) == 0;
+        }
+
+        public static void HashToEllipticCurve(ge_p3 res, byte[] key)
+        {
+            ge_p2 point = new ge_p2();
+            ge_p1p1 point2 = new ge_p1p1();
+            byte[] h = Keccak.Keccak1600(key);
+            ge_fromfe_frombytes_vartime(point, h);
+            ge_mul8(point2, point);
+            ge_p1p1_to_p3(res, point2);
+        }
+
+        public static void HashToScalar(ref byte[] res, byte[] data)
+        {
+            res = Keccak.Keccak1600(data);
+            sc_reduce32(ref res);
         }
     }
 }

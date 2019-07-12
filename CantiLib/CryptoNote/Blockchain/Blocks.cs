@@ -5,6 +5,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Canti.CryptoNote.Blockchain;
 using static Canti.Utils;
 
 namespace Canti.CryptoNote

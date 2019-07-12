@@ -6,7 +6,7 @@
 using System.Collections.Generic;
 using Canti.Cryptography;
 
-namespace Canti.CryptoNote
+namespace Canti.CryptoNote.Blockchain
 {
     // Block template for local storage
     internal class Block

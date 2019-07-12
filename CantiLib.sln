@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{29602CF1
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{AC36C60C-631D-4172-A750-62C24D69D74D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CantiWallet", "CantiWallet\CantiWallet.csproj", "{159A64DF-DD86-4AD7-ADEA-CA5567EF1F88}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{1ED76D2B-7657-4ED6-9D2D-93AB2111F0D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1ED76D2B-7657-4ED6-9D2D-93AB2111F0D9}.Release|Any CPU.ActiveCfg = Debug|Any CPU
 		{1ED76D2B-7657-4ED6-9D2D-93AB2111F0D9}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{159A64DF-DD86-4AD7-ADEA-CA5567EF1F88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{159A64DF-DD86-4AD7-ADEA-CA5567EF1F88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{159A64DF-DD86-4AD7-ADEA-CA5567EF1F88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{159A64DF-DD86-4AD7-ADEA-CA5567EF1F88}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,7 +6,7 @@
 using System;
 using static Canti.Utils;
 
-namespace Canti.CryptoNote
+namespace Canti.CryptoNote.Blockchain
 {
     [Serializable]
     internal class Output

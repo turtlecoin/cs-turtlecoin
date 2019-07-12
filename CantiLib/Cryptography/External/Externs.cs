@@ -81,6 +81,12 @@ namespace Canti.Cryptography
         [DllImport(LIBRARY_LOCATION)]
         private static extern void _chukwa_slow_hash([MarshalAs(UnmanagedType.LPStr)]string input, ref IntPtr output);
 
+        [DllImport(LIBRARY_LOCATION)]
+        private static extern void _tree_hash([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)]string[] hashes, ulong hashesLength, ref IntPtr output);
+        
+        [DllImport(LIBRARY_LOCATION)]
+        private static extern void _tree_hash_from_branch([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)]string[] branches, ulong branchesLength, ulong depth, [MarshalAs(UnmanagedType.LPStr)]ref string leaf, [MarshalAs(UnmanagedType.LPStr)]ref string path, ref IntPtr output);
+
         #endregion
 
         #region KeyOps
@@ -119,14 +125,23 @@ namespace Canti.Cryptography
         private static extern bool _checkSignature([MarshalAs(UnmanagedType.LPStr)]string prefixHash, [MarshalAs(UnmanagedType.LPStr)]string publicKey, [MarshalAs(UnmanagedType.LPStr)]string signature);
 
         [DllImport(LIBRARY_LOCATION)]
+        private static extern void _generateRingSignatures([MarshalAs(UnmanagedType.LPStr)]string prefixHash, [MarshalAs(UnmanagedType.LPStr)]string keyImage, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)]string[] publicKeys, ulong publicKeysCount, [MarshalAs(UnmanagedType.LPStr)]string transactionSecretKey, ulong realOutputIndex,
+            [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)]ref IntPtr[] signatures, ref ulong signaturesCount);
+        /*
+        [DllImport(LIBRARY_LOCATION)]
+        static bool checkRingSignature(
+                const std::string prefixHash,
+                const std::string keyImage,
+                const std::vector<std::string> publicKeys,
+                const std::vector<std::string> signatures
+            );
+        */
+
+        [DllImport(LIBRARY_LOCATION)]
         private static extern void _generateKeyImage([MarshalAs(UnmanagedType.LPStr)]string publicKey, [MarshalAs(UnmanagedType.LPStr)]string privateKey, ref IntPtr keyImage);
 
         [DllImport(LIBRARY_LOCATION)]
         private static extern void _scalarmultKey([MarshalAs(UnmanagedType.LPStr)]string keyImageA, [MarshalAs(UnmanagedType.LPStr)]string keyImageB, ref IntPtr keyImageC);
-
-        #endregion
-
-        #region Utility
 
         [DllImport(LIBRARY_LOCATION)]
         private static extern void _hashToEllipticCurve([MarshalAs(UnmanagedType.LPStr)]string hash, ref IntPtr ec);

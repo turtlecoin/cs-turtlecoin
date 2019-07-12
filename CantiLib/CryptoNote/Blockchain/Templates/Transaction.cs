@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Canti.Cryptography;
 using static Canti.Utils;
 
-namespace Canti.CryptoNote
+namespace Canti.CryptoNote.Blockchain
 {
     internal sealed class Transaction
     {

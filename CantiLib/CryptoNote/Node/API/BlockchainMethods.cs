@@ -3,8 +3,7 @@
 // 
 // Please see the included LICENSE file for more information.
 
-using System;
-using System.Diagnostics;
+using Canti.CryptoNote.Blockchain;
 using Newtonsoft.Json.Linq;
 
 namespace Canti.CryptoNote

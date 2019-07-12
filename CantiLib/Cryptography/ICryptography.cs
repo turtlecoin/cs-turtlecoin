@@ -52,6 +52,8 @@ namespace Canti.Cryptography
         string UnderivePublicKey(string derivation, uint outputIndex, string derivedKey);
         string GenerateSignature(string prefixHash, string publicKey, string privateKey);
         bool CheckSignature(string prefixHash, string publicKey, string signature);
+        string[] GenerateRingSignatures(string PrefixHash, string KeyImage, string[] PublicKeys, string TransactionSecretKey, ulong realOutput);
+        public bool CheckRingSignatures(string PrefixHash, string KeyImage, string[] PublicKeys, string[] Signatures);
         string GenerateKeyImage(string publicKey, string privateKey);
         string ScalarmultKey(string keyImageA, string keyImageB);
 
