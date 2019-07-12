@@ -26,7 +26,7 @@ namespace Canti.CryptoNote
             Buffer = Buffer.AppendBytes(HexStringToByteArray(PublicViewKey));
 
             // Append buffer checksum to buffer
-            Buffer = Buffer.AppendBytes(Keccak.Hash(Buffer, 4));
+            Buffer = Buffer.AppendBytes(Keccak.KeccakHash(Buffer, 4));
 
             /* Now we have to encode our address in base58 - but we do it in
                a bit of an odd way, in blocks. We take 8 bytes at a time,

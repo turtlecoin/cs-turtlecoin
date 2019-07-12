@@ -9,45 +9,6 @@ using System;
 
 namespace Canti.Cryptography.Native.CryptoNight
 {
-    public class MixScratchpadState
-    {
-        public static MixScratchpadState GetScratchpadState(CNState cnState)
-        {
-            if (cachedState == null)
-            {
-                cachedState = new MixScratchpadState(cnState);
-            }
-
-            return cachedState;
-        }
-
-        public unsafe MixScratchpadState(CNState cnState)
-        {
-            k = cnState.GetK();
-
-            fixed (byte* aPtr = a, bPtr = b, kPtr = k)
-            {
-                ulong *_a = (ulong *)aPtr;
-                ulong *_b = (ulong *)bPtr;
-                ulong *_k = (ulong *)kPtr;
-
-                _a[0] = (_k + 0)[0] ^ (_k + 4)[0];
-                _a[1] = (_k + 0)[1] ^ (_k + 4)[1];
-                _b[0] = (_k + 2)[0] ^ (_k + 6)[0];
-                _b[1] = (_k + 2)[1] ^ (_k + 6)[1];
-            }
-        }
-
-        public byte[] a = new byte[AES.BLOCK_SIZE];
-        public byte[] b = new byte[AES.BLOCK_SIZE * 2];
-        public byte[] c = new byte[AES.BLOCK_SIZE];
-        public byte[] d = new byte[AES.BLOCK_SIZE];
-
-        public byte[] k;
-
-        private static MixScratchpadState cachedState = null;
-    }
-
     /* This class encapsulates the different ways we index the 200 byte
        state buffer. There are different bits we use each section for,
        of different lengths and offsets. */

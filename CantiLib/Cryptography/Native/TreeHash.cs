@@ -20,7 +20,7 @@ namespace Canti.Cryptography.Native
             if (Hashes.Length == 1) return Hashes[0];
 
             // If input length is 2, hash only those two values
-            if (Hashes.Length == 2) return Keccak.Hash(Hashes[0].AppendBytes(Hashes[1]));
+            if (Hashes.Length == 2) return Keccak.KeccakHash(Hashes[0].AppendBytes(Hashes[1]));
 
             // Declare some values
             int InputIndex, OutputIndex;
@@ -46,7 +46,7 @@ namespace Canti.Cryptography.Native
             // Perform first round of hashing
             for (InputIndex = val, OutputIndex = val; OutputIndex < Count; InputIndex += 2, OutputIndex++)
             {
-                Buffer[OutputIndex] = Keccak.Hash(Hashes[InputIndex].AppendBytes(Hashes[InputIndex + 1]));
+                Buffer[OutputIndex] = Keccak.KeccakHash(Hashes[InputIndex].AppendBytes(Hashes[InputIndex + 1]));
             }
 
             // Sanity check
@@ -61,12 +61,12 @@ namespace Canti.Cryptography.Native
                 Count >>= 1;
                 for (InputIndex = 0, OutputIndex = 0; OutputIndex < Count; InputIndex += 2, OutputIndex++)
                 {
-                    Buffer[OutputIndex] = Keccak.Hash(Buffer[InputIndex].AppendBytes(Buffer[InputIndex + 1]));
+                    Buffer[OutputIndex] = Keccak.KeccakHash(Buffer[InputIndex].AppendBytes(Buffer[InputIndex + 1]));
                 }
             }
 
             // Perform final hash
-            return Keccak.Hash(Buffer[0].AppendBytes(Buffer[1]));
+            return Keccak.KeccakHash(Buffer[0].AppendBytes(Buffer[1]));
         }
 
         public static byte[] HashFromBranch(byte[][] Branch, int Depth, ref byte[] Leaf, ref byte[] Path)
@@ -97,7 +97,7 @@ namespace Canti.Cryptography.Native
                     }
                     else
                     {
-                        Buffer.B = Keccak.Hash(Buffer.Output);
+                        Buffer.B = Keccak.KeccakHash(Buffer.Output);
                     }
                     Branch[Depth] = Buffer.A;
                 }
@@ -110,14 +110,14 @@ namespace Canti.Cryptography.Native
                     }
                     else
                     {
-                        Buffer.A = Keccak.Hash(Buffer.Output);
+                        Buffer.A = Keccak.KeccakHash(Buffer.Output);
                     }
                     Branch[Depth] = Buffer.B;
                 }
             }
 
             // Perform final hashing
-            return Keccak.Hash(Buffer.Output);
+            return Keccak.KeccakHash(Buffer.Output);
         }
     }
 }

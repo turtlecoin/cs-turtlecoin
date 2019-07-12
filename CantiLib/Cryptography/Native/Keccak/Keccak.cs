@@ -12,7 +12,7 @@ using static Canti.Utils;
 namespace Canti.Cryptography.Native
 {
     // This is pre NIST keccak before the sha-3 revisions
-    public sealed class Keccak
+    public sealed class Keccak : IHashProvider
     {
         #region Constants
 
@@ -180,7 +180,12 @@ namespace Canti.Cryptography.Native
         /* Hashes the given input with keccak, into an output hash of 32 bytes.
            Copies outputLength bytes of the output and returns it. Output
            length cannot be larger than 32. */
-        public static byte[] Hash(byte[] input, int outputLength = 32)
+        public byte[] Hash(byte[] input)
+        {
+            return KeccakHash(input, 32);
+        }
+
+        public static byte[] KeccakHash(byte[] input, int outputLength = 32)
         {
             if (outputLength > 32)
             {

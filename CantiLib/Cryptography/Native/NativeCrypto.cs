@@ -24,7 +24,7 @@ namespace Canti.Cryptography
 
         public string CN_FastHash(byte[] Data)
         {
-            byte[] Output = Keccak.Hash(Data);
+            byte[] Output = Keccak.KeccakHash(Data);
 
             return ByteArrayToHexString(Output);
         }
@@ -249,7 +249,7 @@ namespace Canti.Cryptography
         public string GeneratePrivateViewKeyFromPrivateSpendKey(string SpendPrivateKey)
         {
             byte[] b = HexStringToByteArray(SpendPrivateKey);
-            byte[] h = Keccak.Hash(b);
+            byte[] h = Keccak.KeccakHash(b);
             sc_reduce32(ref h);
             return ByteArrayToHexString(h);
         }
@@ -257,7 +257,7 @@ namespace Canti.Cryptography
         public KeyPair GenerateViewKeysFromPrivateSpendKey(string SpendPrivateKey)
         {
             byte[] b = HexStringToByteArray(SpendPrivateKey);
-            byte[] h = Keccak.Hash(b);
+            byte[] h = Keccak.KeccakHash(b);
             sc_reduce32(ref h);
             KeyPair k = new KeyPair();
             k.PrivateKey = ByteArrayToHexString(h);
