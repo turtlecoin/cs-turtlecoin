@@ -29,9 +29,9 @@ using System.Security.Cryptography;
 /* This is post NIST blake256, with 14 rounds */
 namespace Canti.Cryptography.Native
 {
-    public static class Blake
+    public class Blake : IHashProvider
     {
-        public static byte[] Hash(byte[] input)
+        public byte[] Hash(byte[] input)
         {
             _Blake b = new _Blake();
             return b.ComputeHash(input);

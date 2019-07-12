@@ -20,9 +20,9 @@ using System.IO;
 
 namespace Canti.Cryptography.Native
 {
-    public static partial class Groestl
+    public partial class Groestl : IHashProvider
     {
-        public static byte[] Hash(byte[] input)
+        public byte[] Hash(byte[] input)
         {
             // The following variables follow the same naming convention used in the
             // specification:

@@ -113,19 +113,19 @@ namespace Canti.Cryptography.Native.CryptoNight
             {
                 case 0:
                 {
-                    return Blake.Hash(state);
+                    return new Blake().Hash(state);
                 }
                 case 1:
                 {
-                    return Groestl.Hash(state);
+                    return new Groestl().Hash(state);
                 }
                 case 2:
                 {
-                    return JH.Hash(state);
+                    return new JH().Hash(state);
                 }
                 default:
                 {
-                    return Skein.Hash(state);
+                    return new Skein().Hash(state);
                 }
             }
         }

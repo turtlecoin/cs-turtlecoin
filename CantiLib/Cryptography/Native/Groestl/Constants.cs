@@ -17,7 +17,7 @@ permissions and limitations under the License.
 
 namespace Canti.Cryptography.Native
 {
-    public static partial class Groestl
+    public partial class Groestl
     {
         public static readonly byte[] IV = {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

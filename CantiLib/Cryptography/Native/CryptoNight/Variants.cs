@@ -49,7 +49,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNV0
+    public class CNV0 : IHashProvider
     {
         public CNV0() : this(true)
         {
@@ -84,7 +84,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNV1
+    public class CNV1 : IHashProvider
     {
         public CNV1() : this(true)
         {
@@ -119,7 +119,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNV2
+    public class CNV2 : IHashProvider
     {
         public CNV2() : this(true)
         {
@@ -154,7 +154,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNLiteV0
+    public class CNLiteV0 : IHashProvider
     {
         public CNLiteV0() : this(true)
         {
@@ -189,7 +189,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNLiteV1
+    public class CNLiteV1 : IHashProvider
     {
         public CNLiteV1() : this(true)
         {
@@ -224,7 +224,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNLiteV2
+    public class CNLiteV2 : IHashProvider
     {
         public CNLiteV2() : this(true)
         {
@@ -259,7 +259,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNDarkV0
+    public class CNDarkV0 : IHashProvider
     {
         public CNDarkV0() : this(true)
         {
@@ -294,7 +294,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNDarkV1
+    public class CNDarkV1 : IHashProvider
     {
         public CNDarkV1() : this(true)
         {
@@ -329,7 +329,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNDarkV2
+    public class CNDarkV2 : IHashProvider
     {
         public CNDarkV2() : this(true)
         {
@@ -364,7 +364,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNDarkLiteV0
+    public class CNDarkLiteV0 : IHashProvider
     {
         public CNDarkLiteV0() : this(true)
         {
@@ -401,7 +401,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNDarkLiteV1
+    public class CNDarkLiteV1 : IHashProvider
     {
         public CNDarkLiteV1() : this(true)
         {
@@ -438,7 +438,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNDarkLiteV2
+    public class CNDarkLiteV2 : IHashProvider
     {
         public CNDarkLiteV2() : this(true)
         {
@@ -475,7 +475,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNTurtleV0
+    public class CNTurtleV0 : IHashProvider
     {
         public CNTurtleV0() : this(true)
         {
@@ -510,7 +510,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNTurtleV1
+    public class CNTurtleV1 : IHashProvider
     {
         public CNTurtleV1() : this(true)
         {
@@ -545,7 +545,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNTurtleV2
+    public class CNTurtleV2 : IHashProvider
     {
         public CNTurtleV2(): this(true)
         {
@@ -580,7 +580,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNTurtleLiteV0
+    public class CNTurtleLiteV0 : IHashProvider
     {
         public CNTurtleLiteV0() : this(true)
         {
@@ -617,7 +617,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNTurtleLiteV1
+    public class CNTurtleLiteV1 : IHashProvider
     {
         public CNTurtleLiteV1() : this(true)
         {
@@ -654,7 +654,7 @@ namespace Canti.Cryptography.Native.CryptoNight
         }
     }
 
-    public class CNTurtleLiteV2
+    public class CNTurtleLiteV2 : IHashProvider
     {
         public CNTurtleLiteV2() : this(true)
         {

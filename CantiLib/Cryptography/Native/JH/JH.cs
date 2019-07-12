@@ -9,9 +9,9 @@ using System;
 /* JH-256, post NIST modifications (42 rounds) */
 namespace Canti.Cryptography.Native
 {
-    public static partial class JH
+    public partial class JH : IHashProvider
     {
-        public static byte[] Hash(byte[] input)
+        public byte[] Hash(byte[] input)
         {
             HashState state = new HashState();
 

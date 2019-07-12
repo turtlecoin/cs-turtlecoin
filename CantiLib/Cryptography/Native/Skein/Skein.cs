@@ -20,9 +20,9 @@ using Canti.Cryptography.Native.SkeinFish;
 
 namespace Canti.Cryptography.Native
 {
-    public static class Skein
+    public class Skein : IHashProvider
     {
-        public static byte[] Hash(byte[] input)
+        public byte[] Hash(byte[] input)
         {
             Skein512_256 s = new Skein512_256();
             return s.ComputeHash(input);
