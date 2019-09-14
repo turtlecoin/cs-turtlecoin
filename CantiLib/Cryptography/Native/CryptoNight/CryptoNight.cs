@@ -166,10 +166,10 @@ namespace Canti.Cryptography.Native.CryptoNight
 
         public static unsafe void InitMixingState(ulong *a, ulong *b, ulong *k)
         {
-            a[0] = (k + 0)[0] ^ (k + 4)[0];
-            a[1] = (k + 0)[1] ^ (k + 4)[1];
-            b[0] = (k + 2)[0] ^ (k + 6)[0];
-            b[1] = (k + 2)[1] ^ (k + 6)[1];
+            a[0] = k[0] ^ k[4];
+            a[1] = k[1] ^ k[5];
+            b[0] = k[2] ^ k[6];
+            b[1] = k[3] ^ k[7];
         }
 
         public static int StateIndex(ulong j, int modulus)
