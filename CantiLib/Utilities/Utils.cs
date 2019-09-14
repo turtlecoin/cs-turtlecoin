@@ -192,6 +192,28 @@ namespace Canti
             return Hex.ToString();
         }
 
+        /// <summary>
+        /// Converts a string into a byte array
+        /// </summary>
+        /// <param name="Input">The string to be converted</param>
+        /// <returns>A byte array equivalent of the input string</returns>
+        public static byte[] StringToByteArray(string Input)
+        {
+            return Encoding.UTF8.GetBytes(Input);
+        }
+
+        /// <summary>
+        /// Converts a byte array into a string
+        /// </summary>
+        /// <param name="Input">The byte array to be converted</param>
+        /// <returns>A string equivalent of the input byte array</returns>
+        public static string ByteArrayToString(byte[] Input)
+        {
+            string Output = "";
+            foreach (byte b in Input) Output += (char)b;
+            return Output;
+        }
+
         #endregion
 
         #region String Extensions
